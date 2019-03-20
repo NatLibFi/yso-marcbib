@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:allars-meta="http://www.yso.fi/onto/allars-meta/"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:dct="http://purl.org/dc/terms/"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/"
+   xmlns:owl="http://www.w3.org/2002/07/owl#"
+   xmlns:rdau="http://rdaregistry.info/Elements/u/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+   xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+   xmlns:ysa="http://www.yso.fi/onto/ysa/"
+   xmlns:yso="http://www.yso.fi/onto/yso/"
+   xmlns="http://www.yso.fi/onto/allars/">
+  <rdf:Property rdf:about="http://rdaregistry.info/Elements/u/P60683">
+    <rdfs:label xml:lang="fi">edeltäjä</rdfs:label>
+    <rdfs:label xml:lang="sv">företrädare</rdfs:label>
+    <rdfs:label xml:lang="en">has predecessor</rdfs:label>
+  </rdf:Property>
+  <rdf:Property rdf:about="http://rdaregistry.info/Elements/u/P60686">
+    <rdfs:label xml:lang="sv">efterträdare</rdfs:label>
+    <rdfs:label xml:lang="en">has successor</rdfs:label>
+    <rdfs:label xml:lang="fi">seuraaja</rdfs:label>
+  </rdf:Property>
+  <owl:Class rdf:about="http://www.yso.fi/onto/allars-meta/GeographicalConcept">
+    <rdfs:label xml:lang="sv">Geografisk plats</rdfs:label>
+    <rdfs:label xml:lang="en">Geographical location</rdfs:label>
+    <rdfs:label xml:lang="fi">Maantieteellinen paikka</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+  </owl:Class>
+  <skos:ConceptScheme rdf:about="http://www.yso.fi/onto/allars/">
+    <dc:creator xml:lang="fi">Kansalliskirjasto</dc:creator>
+    <dc:creator xml:lang="en">National Library of Finland</dc:creator>
+    <dc:creator xml:lang="sv">Nationalbiblioteket i Finland</dc:creator>
+    <dc:creator xml:lang="en">Åbo Academy University Library</dc:creator>
+    <dc:creator xml:lang="fi">Åbo Akademin kirjasto</dc:creator>
+    <dc:creator xml:lang="sv">Åbo Akademis bibliotek</dc:creator>
+    <dc:description xml:lang="sv">Allmän tesaurus på svenska (ALLÄRS) är en tvåspråkig, allmän tesaurus, som täcker alla ämnesområden.
+
+Allmän tesaurus på svenska är avsedd att användas för indexering och sökning av böcker, artiklar och andra typer av material. Tesaurusen hjälper såväl inmatarna av information som användarna att använda sig av ett gemensamt språk.
+
+Tesaurusen är uppgjord enligt standarden Suomenkielisen tesauruksen laatimis- ja ylläpito-ohjeet (SFS 5471).
+
+Du kan föreslå nya begrepp och ändringar till Allärs och ALLFO med &lt;a href="//ehdotus.finto.fi/"&gt;denna blankett&lt;/a&gt;. Begreppsförslag som är under behandling kan du också söka &lt;a href="../yse/sv"&gt;i Finto&lt;/a&gt;.</dc:description>
+    <dc:publisher xml:lang="fi">Kansalliskirjasto</dc:publisher>
+    <dc:publisher xml:lang="en">National Library of Finland</dc:publisher>
+    <dc:publisher xml:lang="sv">Nationalbiblioteket i Finland</dc:publisher>
+    <dc:title xml:lang="fi">Allärs - Allmän tesaurus på svenska</dc:title>
+    <dc:title xml:lang="sv">Allärs - Allmän tesaurus på svenska</dc:title>
+    <dc:title xml:lang="en">Allärs - General thesaurus in Swedish</dc:title>
+    <dct:language rdf:resource="http://lexvo.org/id/iso639-3/swe"/>
+    <dct:license rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/"/>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2019-01-28T04:49:13+00:00</dct:modified>
+    <dct:relation rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <dct:subject rdf:resource="http://www.yso.fi/onto/yso/p19469"/>
+    <foaf:homepage rdf:resource="http://www.nationalbiblioteket.fi/bibliotek/tesaurer/allars.html"/>
+  </skos:ConceptScheme>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/allars/Y14889">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2004-03-12</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2016-03-29T16:30:54+03:00</dct:modified>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/allars/Y17035"/>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/allars/Y29957"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y130041"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p8941"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/allars/"/>
+    <skos:prefLabel xml:lang="sv">agility</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/allars/Y34475">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1990-06-18</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2016-03-29T16:38:42+03:00</dct:modified>
+    <rdf:type rdf:resource="http://www.yso.fi/onto/allars-meta/GeographicalConcept"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y105847"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p105847"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/allars/"/>
+    <skos:note xml:lang="sv">Tjeckoslovakien delades 1992</skos:note>
+    <skos:prefLabel xml:lang="sv">Tjeckoslovakien</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/allars/Y30613"/>
+    <skos:related rdf:resource="http://www.yso.fi/onto/allars/Y30781"/>
+  </skos:Concept>
+</rdf:RDF>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:dct="http://purl.org/dc/terms/"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/"
+   xmlns:musa-meta="http://www.yso.fi/onto/musa-meta/"
+   xmlns:musa="http://www.yso.fi/onto/musa/"
+   xmlns:owl="http://www.w3.org/2002/07/owl#"
+   xmlns:rdau="http://rdaregistry.info/Elements/u/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+   xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+   xmlns:ysa="http://www.yso.fi/onto/ysa/"
+   xmlns:yso="http://www.yso.fi/onto/yso/">
+  <skos:ConceptScheme rdf:about="http://www.yso.fi/onto/musa/">
+    <dc:creator xml:lang="fi">Kansalliskirjasto</dc:creator>
+    <dc:creator xml:lang="en">Luumu working group</dc:creator>
+    <dc:creator xml:lang="sv">Luumu-arbetsgruppen</dc:creator>
+    <dc:creator xml:lang="fi">Luumu-työryhmä</dc:creator>
+    <dc:creator xml:lang="en">National Library of Finland</dc:creator>
+    <dc:creator xml:lang="sv">Nationalbiblioteket i Finland</dc:creator>
+    <dc:description xml:lang="fi">Musiikin asiasanasto (MUSA) on yksikielinen musiikin indeksointiin tarkoitettu erikoissanasto, joka noudattaa Yleisen suomalaisen asiasanaston (YSA) periaatteita ja rakennetta.
+
+Musiikin asiasanasto on tarkoitettu käytettäväksi musiikkia käsittelevien kirjojen ja artikkelien sekä kaikkien musiikkitallenteiden (nuottijulkaisut, äänitteet jne.) indeksointiin ja tiedonhakuun. Sanasto ohjaa tiedontallentajia ja -hakijoita käyttämään yhteistä kieltä.
+
+Musiikin asiasanaston laadinnassa on noudatettu Suomenkielisen tesauruksen laatimis- ja ylläpito-ohjeita (SFS 5471).
+
+Ruotsinkieliset CILLA-termit löydät vaihtamalla sisällön kielen &lt;a href="../musa/sv/?clang=sv"&gt;ruotsiksi&lt;/a&gt;.</dc:description>
+    <dc:description xml:lang="sv">Specialtesaurus för musik (CILLA) är ett specialregister för indexering av musikmaterial. Registret är uppgjort efter samma principer och har samma tesaurusstruktur som Yleinen suomalainen asiasanasto (YSA) och Allmän tesaurus på svenska (Allärs).
+
+Specialtesaurus för musik är avsedd för indexering och sökning av böcker och artiklar om musik, musikalier, inspelningar etc. i bibliotek, kartotek och bibliografier av olika slag. Registret hjälper inmatare av information och informationssökare att använda ett gemensamt språk.
+
+Specialtesaurus för musik är uppgjord enligt standarden Suomenkielisen tesauruksen laatimis- ja ylläpito-ohjeita (SFS 5471).</dc:description>
+    <dc:publisher xml:lang="fi">Kansalliskirjasto</dc:publisher>
+    <dc:publisher xml:lang="en">National Library of Finland</dc:publisher>
+    <dc:publisher xml:lang="sv">Nationalbiblioteket i Finland</dc:publisher>
+    <dc:title xml:lang="sv">CILLA/MUSA - Specialtesaurus för musik</dc:title>
+    <dc:title xml:lang="en">MUSA/CILLA - Finnish Music thesaurus</dc:title>
+    <dc:title xml:lang="fi">MUSA/CILLA - Musiikin asiasanasto</dc:title>
+    <dct:language rdf:resource="http://lexvo.org/id/iso639-3/fin"/>
+    <dct:language rdf:resource="http://lexvo.org/id/iso639-3/swe"/>
+    <dct:license rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/"/>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2018-11-02T13:51:00+00:00</dct:modified>
+    <dct:relation rdf:resource="http://www.yso.fi/onto/allars/"/>
+    <dct:relation rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <dct:subject rdf:resource="http://www.yso.fi/onto/yso/p21510"/>
+    <foaf:homepage rdf:resource="http://www.kansalliskirjasto.fi/kirjastoala/asiasanastot/musacilla.html"/>
+    <foaf:homepage rdf:resource="http://www.nationalbiblioteket.fi/bibliotek/tesaurer/musacilla.html"/>
+  </skos:ConceptScheme>
+  <skos:ConceptScheme rdf:about="http://www.yso.fi/onto/musa/deprecatedconceptscheme"/>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/musa/p10">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1996-02-08</dct:created>
+    <dct:isReplacedBy rdf:resource="http://www.yso.fi/onto/ysa/Y216501"/>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-07-12T15:18:39+03:00</dct:modified>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/musa/p508"/>
+    <skos:definition xml:lang="fi">1800-luvun alussa Böömissä syntynyt paritanssi.</skos:definition>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/musa/"/>
+    <skos:prefLabel xml:lang="fi">polkka (tanssit)</skos:prefLabel>
+    <skos:scopeNote>deprecated on 2018.10.24</skos:scopeNote>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/musa/p844">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1996-02-08</dct:created>
+    <dct:isReplacedBy rdf:resource="http://www.yso.fi/onto/ysa/Y214680"/>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-09-04T13:29:32+03:00</dct:modified>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/musa/p323"/>
+    <skos:definition xml:lang="fi">Trinidadilainen öljytynnyreistä viritetty rumpu, joita normaalissa soittotilanteessa on useampia eri sävelkorkeudelle viritettyinä "steel band" -yhtyeen soitettavana.</skos:definition>
+    <skos:exactMatch rdf:resource="http://id.loc.gov/authorities/subjects/sh94002502"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/musa/"/>
+    <skos:note xml:lang="fi">Steel pan -soittimista koostuvasta yhtyeestä käytetään asiasanaa steel bandit.</skos:note>
+    <skos:prefLabel xml:lang="sv">steel drums</skos:prefLabel>
+    <skos:prefLabel xml:lang="fi">steel pan</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/musa/p535"/>
+    <skos:scopeNote>deprecated on 2018.10.24</skos:scopeNote>
+  </skos:Concept>
+</rdf:RDF>

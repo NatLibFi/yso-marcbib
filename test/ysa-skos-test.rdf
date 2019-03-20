@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:dct="http://purl.org/dc/terms/"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/"
+   xmlns:owl="http://www.w3.org/2002/07/owl#"
+   xmlns:rdau="http://rdaregistry.info/Elements/u/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+   xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+   xmlns:ysa-meta="http://www.yso.fi/onto/ysa-meta/"
+   xmlns:yso="http://www.yso.fi/onto/yso/"
+   xmlns="http://www.yso.fi/onto/ysa/">
+  <rdf:Property rdf:about="http://rdaregistry.info/Elements/u/P60683">
+    <rdfs:label xml:lang="fi">edeltäjä</rdfs:label>
+    <rdfs:label xml:lang="sv">företrädare</rdfs:label>
+    <rdfs:label xml:lang="en">has predecessor</rdfs:label>
+  </rdf:Property>
+  <rdf:Property rdf:about="http://rdaregistry.info/Elements/u/P60686">
+    <rdfs:label xml:lang="sv">efterträdare</rdfs:label>
+    <rdfs:label xml:lang="en">has successor</rdfs:label>
+    <rdfs:label xml:lang="fi">seuraaja</rdfs:label>
+  </rdf:Property>
+  <owl:Class rdf:about="http://www.yso.fi/onto/ysa-meta/GeographicalConcept">
+    <rdfs:label xml:lang="en">Geographical location</rdfs:label>
+    <rdfs:label xml:lang="fi">Maantieteellinen paikka</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+  </owl:Class>
+  <skos:ConceptScheme rdf:about="http://www.yso.fi/onto/ysa/">
+    <dc:creator xml:lang="fi">Kansalliskirjasto</dc:creator>
+    <dc:creator xml:lang="en">National Library of Finland</dc:creator>
+    <dc:creator xml:lang="sv">Nationalbiblioteket i Finland</dc:creator>
+    <dc:description xml:lang="fi">Yleinen suomalainen asiasanasto (YSA) on yksikielinen, kaikki tieteen- ja tiedonalat kattava yleissanasto, johon on koottu eri alojen yleisin terminologia.
+
+Yleinen suomalainen asiasanasto on tarkoitettu käytettäväksi kirjojen, artikkeleiden, elektronisen aineiston ja muiden aineistotyyppien indeksointiin sekä tiedonhakuun. Sanasto auttaa tietojen tallentajia ja tiedonhakijoita käyttämään yhteistä kieltä. Lisäksi sen tarkoituksena on toimia perussanastona eri alojen erikoissanastoja laadittaessa.
+
+Sanaston laadinnassa on noudatettu Suomenkielisen tesauruksen laatimis- ja ylläpito-ohjeita (SFS 5471).
+
+Voit ehdottaa uusia käsitteitä ja muutoksia YSAan ja YSOon oheisen &lt;a href="//ehdotus.finto.fi/"&gt;lomakkeen avulla&lt;/a&gt;. Käsittelyssä olevia käsite-ehdotuksia voit selata &lt;a href="../yse/fi"&gt;myös Fintossa&lt;/a&gt;.</dc:description>
+    <dc:publisher xml:lang="fi">Kansalliskirjasto</dc:publisher>
+    <dc:publisher xml:lang="en">National Library of Finland</dc:publisher>
+    <dc:publisher xml:lang="sv">Nationalbiblioteket i Finland</dc:publisher>
+    <dc:title xml:lang="en">YSA - General Finnish thesaurus</dc:title>
+    <dc:title xml:lang="fi">YSA - Yleinen suomalainen asiasanasto</dc:title>
+    <dc:title xml:lang="sv">YSA - Yleinen suomalainen asiasanasto</dc:title>
+    <dct:language rdf:resource="http://lexvo.org/id/iso639-3/fin"/>
+    <dct:license rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/"/>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2019-02-04T04:06:05+00:00</dct:modified>
+    <dct:relation rdf:resource="http://www.yso.fi/onto/allars/"/>
+    <dct:subject rdf:resource="http://www.yso.fi/onto/yso/p19469"/>
+    <foaf:homepage rdf:resource="http://www.kansalliskirjasto.fi/kirjastoala/asiasanastot/ysa.html"/>
+  </skos:ConceptScheme>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y105847">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1990-06-18</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2016-05-23T16:13:52+03:00</dct:modified>
+    <rdf:type rdf:resource="http://www.yso.fi/onto/ysa-meta/GeographicalConcept"/>
+    <skos:altLabel xml:lang="fi">Tshekkoslovakia</skos:altLabel>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y34475"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p105847"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:note xml:lang="fi">Tšekkoslovakia jakaantui kahtia vuoden 1992 lopussa</skos:note>
+    <skos:prefLabel xml:lang="fi">Tšekkoslovakia</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/ysa/Y107479"/>
+    <skos:related rdf:resource="http://www.yso.fi/onto/ysa/Y107480"/>
+  </skos:Concept>
+    <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y214800">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1997-10-01</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2018-06-12T16:08:41+03:00</dct:modified>
+    <skos:altLabel xml:lang="fi">ragat</skos:altLabel>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/ysa/Y104491"/>
+    <skos:definition xml:lang="fi">Intialaisen musiikin säveljärjestelmä, joka antaa sävellyksessä tai improvisaatiossa käytettävän melodisen materiaalin.</skos:definition>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y51813"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p30038"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:prefLabel xml:lang="sv">ragor</skos:prefLabel>
+    <skos:prefLabel xml:lang="fi">rāgat</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y506087">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2018-06-27</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2018-06-27T14:09:19+03:00</dct:modified>
+    <skos:altLabel xml:lang="fi">roudaaminen</skos:altLabel>
+    <skos:altLabel xml:lang="fi">roudaus</skos:altLabel>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y52651"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:prefLabel xml:lang="fi">roudarit</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y154986">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2007-10-25</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-05-29T15:23:24+03:00</dct:modified>
+    <skos:altLabel xml:lang="fi">membraanit</skos:altLabel>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y35470"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p21156"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p22892"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/ysa/Y106918"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/ysa/Y107000"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/ysa/Y133744"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/ysa/Y505165"/>
+    <skos:prefLabel xml:lang="fi">kalvot</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y182338">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2011-11-10</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2016-05-23T16:34:08+03:00</dct:modified>
+    <skos:altLabel xml:lang="fi">ratakiskot</skos:altLabel>
+    <skos:altLabel xml:lang="fi">rautatiekiskot</skos:altLabel>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y41021"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p24897"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:prefLabel xml:lang="fi">raiteet</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/ysa/Y104119"/>
+    <skos:related rdf:resource="http://www.yso.fi/onto/ysa/Y182339"/>
+    <skos:related rdf:resource="http://www.yso.fi/onto/ysa/Y98537"/>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y109631">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1996-03-25</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-02-24T10:19:54+02:00</dct:modified>
+    <rdf:type rdf:resource="http://www.yso.fi/onto/ysa-meta/GeographicalConcept"/>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/ysa/Y94137"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y31669"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p109631"/>
+    <skos:hiddenLabel xml:lang="fi">Helsinki Töölö</skos:hiddenLabel>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:prefLabel xml:lang="fi">Helsinki -- Töölö</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y216501">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1996-02-08</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-11-13T15:48:05+02:00</dct:modified>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/ysa/Y99309"/>
+    <skos:definition xml:lang="fi">1800-luvun alussa Böömissä syntynyt paritanssi.</skos:definition>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y52202"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p5647"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:prefLabel xml:lang="fi">polkka (tanssit)</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y214680">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1996-02-08</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-09-19T16:09:37+03:00</dct:modified>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/ysa/Y102769"/>
+    <skos:definition xml:lang="fi">Trinidadilainen öljytynnyreistä viritetty rumpu, joita normaalissa soittotilanteessa on useampia eri sävelkorkeudelle viritettyinä "steel band" -yhtyeen soitettavana.</skos:definition>
+    <skos:exactMatch rdf:resource="http://id.loc.gov/authorities/subjects/sh94002502"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y51865"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p29959"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:note xml:lang="fi">Steel pan -soittimista koostuvasta yhtyeestä käytetään asiasanaa steel bandit.</skos:note>
+    <skos:prefLabel xml:lang="fi">steel pan</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/ysa/Y214679"/>
+  </skos:Concept>
+</rdf:RDF>  
