@@ -46,6 +46,12 @@ class VocabulariesTest(unittest.TestCase):
         return super(VocabulariesTest, cls).setUpClass()
 
     def test_search(self):
+        result =  self.vocabularies.search('1900-luku', ['numeric', 'ysa', 'allars'], True)
+        self.assertEqual(result['label'], "1900-luku")
+        result =  self.vocabularies.search('1900', ['numeric', 'ysa', 'allars'], True)
+        self.assertEqual(result['label'], "1900")
+        result =  self.vocabularies.search('400 fKr.', ['numeric', 'allars', 'ysa', 'numeric'], True)
+        self.assertEqual(result['label'], "400 fKr.")
         result =  self.vocabularies.search('ragat', ['ysa'], True)
         self.assertEqual(result['label'], "rāgat")
         result =  self.vocabularies.search('ragat', ['slm_fi', 'ysa', 'allars'], True)
