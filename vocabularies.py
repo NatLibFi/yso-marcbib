@@ -107,6 +107,7 @@ class Vocabularies:
                     if len(response['uris']) > 1:
                         raise ValueError("MULTIPLE_CONCEPTS")
                     if len(response['uris']) == 1:
+                        response['label'] = self.normalize_characters(response['label'])
                         return response
                 if "numeric" in response:
                     response.update({'geographical': geographical_concept})
@@ -161,7 +162,9 @@ class Vocabularies:
             """
         return numeric
 
-    def decomposedÅÄÖtoUnicodeCharacters(self, string):
+    def normalize_characters(self, string):
+        #koodaa skandinaaviset merkit yksiosaisiksi ja muut kaksiosaisiksi: 
+        string = unicodedata.normalize('NFD', string)
         return (string.replace("A\u030a", "Å").replace("a\u030a", "å").
             replace("A\u0308", "Ä").replace("a\u0308", "ä").
             replace("O\u0308", "Ö").replace("o\u0308", "ö"))

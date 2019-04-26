@@ -71,12 +71,12 @@ class ConceptConverter():
         musa_graph.parse('musa-skos.rdf')
 
         print("sanastot parsittu")
-        self.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
-        self.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
-        self.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
-        self.parse_vocabulary(allars_graph, 'allars', ['sv'])
-        self.parse_vocabulary(slm_graph, 'slm_fi', ['fi', 'sv'], 'fi')
-        self.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
+        self.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
+        self.vocabularies.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
+        self.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
+        self.vocabularies.parse_vocabulary(allars_graph, 'allars', ['sv'])
+        self.vocabularies.parse_vocabulary(slm_graph, 'slm_fi', ['fi', 'sv'], 'fi')
+        self.vocabularies.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
         self.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
         self.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
 
@@ -93,6 +93,17 @@ class ConceptConverter():
                 subfields_list.append({"code": subfields[idx], "value": subfields[idx+1]})
         return subfields_list         
     
+    def remove_field_link_and_code(self, subfields):
+        trimmed_subfields = []
+        for subfield in self.subfields_to_dict(subfields):
+            if subfield['code'] not in ['0', '2']:
+                trimmed_subfields.append({"code": subfield['code'], "value": subfield['value']})
+        return trimmed_subfields
+    
+    def is_equal_field(self, first_subfields, second_subfields):
+        return self.sort_subfields(self.subfields_to_dict(first_subfields)) == \
+               self.sort_subfields(self.subfields_to_dict(second_subfields))
+
     def process_record(self, record):
         if record['001']:
             tags_of_fields_to_convert = ['385', '567', '648', '650', '651', '655']
@@ -114,21 +125,25 @@ class ConceptConverter():
             leader_type = record.leader[6]
             record_type = None
             fiction = False
+            convertible_record = False
             if leader_type in ['a', 't']:
                 record_type = "text"
                 if record.leader[7] not in ['b', 'i', 's']:
                     if record['006']:
-                        if record['006'].data[16] not in ['0', 'u', '|']:
-                            fiction = True
+                        if len(record['006'].data) > 16:
+                            if record['006'].data[16] not in ['0', 'u', '|']:
+                                fiction = True
                     elif record['008']:
-                        if record['008'].data[33] not in ['0', 'u', '|']:
-                            fiction = True
+                        if len(record['008'].data) > 33:
+                            if record['008'].data[33] not in ['0', 'u', '|']:
+                                fiction = True
             elif leader_type in ['c', 'd', 'i', 'j']: 
                 record_type = "music"
                 if leader_type == "i":
                     if record['008']:
-                        if any (lf in record['008'].data[30:31] for lf in ['d', 'f', 'p']):
-                            fiction = True
+                        if len(record['008'].data) > 31:
+                            if any (lf in record['008'].data[30:31] for lf in ['d', 'f', 'p']):
+                                fiction = True
             elif leader_type == "g":
                 record_type = "image"            
             if record_type != "text":
@@ -175,9 +190,9 @@ class ConceptConverter():
                                 original_fields.update({tag: [field]})
                 #järjestetään uudet ja alkuperäiset rivit:   
                 altered_fields = sorted(altered_fields)
-
                 for tag in altered_fields:
                     record.remove_fields(tag)
+                for tag in altered_fields:
                     original_fields_with_tag = []
                     new_fields_with_tag = []
                     if tag in original_fields:
@@ -185,13 +200,27 @@ class ConceptConverter():
                     if tag in new_fields:
                         new_fields_with_tag = new_fields[tag]
                     sorted_fields = self.sort_fields(tag, original_fields_with_tag, new_fields_with_tag)        
-                    added_fields = set()
-                    for f in sorted_fields:
-                        if str(f) not in added_fields:
-                            
-                            record.add_ordered_field(f)
-                        added_fields.add(str(f))
-                #TODO:poista samanlaiset kentät!
+                    #poistetaan identtiset rivit:
+                    removable_fields = set()
+                    for m in range(len(sorted_fields)):
+                        for n in range(m + 1, len(sorted_fields)):
+                            if m not in removable_fields and n not in removable_fields:
+                                if self.is_equal_field(sorted_fields[m].subfields, sorted_fields[n].subfields):
+                                    if sorted_fields[m].indicators == sorted_fields[n].indicators:
+                                        removable_fields.add(n)
+                                    if sorted_fields[m].indicators[1] == " " and not sorted_fields[n].indicators[1] == " ":
+                                        removable_fields.add(m)
+                                    if sorted_fields[n].indicators[1] == " " and not sorted_fields[m].indicators[1] == " ":
+                                        removable_fields.add(n)
+                                elif self.sort_subfields(self.remove_field_link_and_code(sorted_fields[m].subfields)) == \
+                                    self.sort_subfields(self.remove_field_link_and_code(sorted_fields[n].subfields)):
+                                    if sorted_fields[m]['2'] and sorted_fields[m]['0']:
+                                        removable_fields.add(n)
+                                    if sorted_fields[n]['2'] and sorted_fields[n]['0']:
+                                        removable_fields.add(m)
+                    for idx in range(len(sorted_fields)):
+                        if idx not in removable_fields:
+                            record.add_ordered_field(sorted_fields[idx])   
             else:
                 return
             record.add_ordered_field(
@@ -204,8 +233,9 @@ class ConceptConverter():
                         'q', self.isil_identifier,
                         'u', self.conversion_url
             ]))
-        #TODO: tarkista ja tilastoi, onko tietue muuttunut
-        return record
+            #TODO: tarkista ja tilastoi, onko tietue muuttunut
+            return record
+        
                  
                   
     def read_marcxml_file(self):
@@ -219,19 +249,17 @@ class ConceptConverter():
             open(self.output_file, 'wb') as out_file:
             reader = MARCReader(in_file, force_utf8=True, to_unicode=True)
             writer = MARCWriter(out_file)
-
-            #record = next(reader, None)
             record = Record()
             while record:                
                 try:
                     #TODO: kirjoittaminen MARCXML-formaattiin, jos valittu
                     #xml_writer.write(record)
                     record = next(reader, None)
-                    new_record = self.process_record(record)
-                    if new_record:
-                        writer.write(new_record)
-                    else:
-                        writer.write(record)
+                    if record:
+                        new_record = self.process_record(record)
+                        if new_record:
+                            writer.write(new_record)
+                        #TODO: kirjoitetaanko konvertoimattomatkin tietueet?
                 except BaseAddressInvalid:  
                     pass
                 except RecordLengthInvalid:    
@@ -243,6 +271,8 @@ class ConceptConverter():
                 except NoFieldsFound:
                     pass
                 except FieldNotFound: 
+                    pass
+                except UnicodeDecodeError:
                     pass
                 except AttributeError:
                     print(id)        
@@ -425,6 +455,9 @@ class ConceptConverter():
         return new_fields
         
     def process_subfield(self, record_id, original_field, subfield, vocabulary_code, fiction=False):
+        #TODO: log error
+        if not subfield['value']:
+            return
         #alustetaan ensin hakuparametrien oletusarvot
         vocabulary_order = [] #hakujärjestys, jos sanaa haetaan useammasta sanastosta 
         language = None

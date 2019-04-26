@@ -362,4 +362,4 @@ class Vocabulary():
             code = "fin"
         if code == "sv":
             code = "swe"
-        return code  
+        return code
