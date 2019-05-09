@@ -12,20 +12,50 @@ from vocabularies import Vocabularies
 import datetime
 import copy
 import os.path
+import logging
+import sys
 
 class ConceptConverter():
 
-    def __init__(self, input_file=None, output_file=None):      
-
+    def __init__(self, input_file, output_file, file_format):      
+        
         self.input_file = input_file
         self.output_file = output_file
+        #TODO: tiedoston nimeäminen aikaleimalla
+        #TODO: tarkista ylikirjoitus!
         self.vocabularies = Vocabularies()
+        self.file_format = file_format.lower()
+        if self.file_format == "marc21":
+            self.writer = MARCWriter(open(self.output_file,'wb'))
+        elif self.file_format == "marcxml":
+            self.writer = XMLWriter(open(self.output_file,'wb'))
+        else:
+            print("Anna tiedostoformaatti muodossa marc21 tai marcxml")
+            sys.exit(0)
         self.conversion_time = datetime.datetime.now().replace(microsecond=0).isoformat()
         self.marcdate = str(datetime.date.today()).replace("-","")
         self.conversion_name = "yso-konversio"
         self.isil_identifier = "FI-NL"
         self.conversion_url = "http://kiwi.fi/display/ysall2yso"
-        
+        self.error_logger = logging.getLogger()
+        self.conversion_time
+        #korvataan kaksoispisteet Windows-tiedostonimeä varten:
+        time = self.conversion_time.replace(":", "")
+        self.error_log = self.conversion_name + "_error-log_" + time + ".log"
+        self.removed_fields_log = self.conversion_name + "_removed-fields-log_" + time + ".log"
+        self.new_fields_log = self.conversion_name + "_new-fields-log_" + time + ".log"
+        self.results_log = self.conversion_name + "_results-log_" + time + ".log"
+        error_handler = logging.FileHandler(self.error_log)
+        error_handler.setLevel(logging.ERROR)
+        self.error_logger.addHandler(error_handler)
+        self.statistics = {}
+        self.statistics.update({"konvertoituja tietueita": 0})
+        self.statistics.update({"käsiteltyjä tietueita": 0})
+        self.statistics.update({"käsiteltyjä asiasanakenttiä": 0})
+        self.statistics.update({"poistettuja asiasanakenttiä": 0})
+        self.statistics.update({"uusia asiasanakenttiä": 0})
+        self.statistics.update({"virheitä": 0})
+        self.statistics.update({"virheluokkia": {}})
         """
         self.input_file = input('Input file name? ')
         if not os.path.isfile(self.input_file):
@@ -79,12 +109,85 @@ class ConceptConverter():
         self.vocabularies.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
         self.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
         self.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
+                  
+    def read_records(self):
+        with open(self.error_log, 'w', encoding = 'utf-8-sig') as self.error_handler, \
+            open(self.removed_fields_log, 'w', encoding = 'utf-8-sig') as self.rf_handler, \
+            open(self.new_fields_log, 'w', encoding = 'utf-8-sig') as self.nf_handler:
+            
+            error_logger = logging.getLogger("error logger")
+            error_handler = logging.FileHandler(self.error_log)
+            error_logger.setLevel(logging.ERROR)
+
+
+            if self.file_format == "marcxml":
+                try:
+                    pymarc.map_xml(self.read_and_write_record, self.input_file)
+                except SAXParseException as e:
+                    print(e)
+                    #TODO: tarkempi virheilmoitus
+            if self.file_format == "marc21":
+                reader = MARCReader(self.input_file, force_utf8=True, to_unicode=True)
+                record = Record()
+                while record:                
+                    try:
+                        record = next(reader, None)
+                        self.read_and_write_record(self, record)
+                            #TODO: kirjoitetaanko konvertoimattomatkin tietueet?
+                    except (BaseAddressInvalid, 
+                            RecordLeaderInvalid, 
+                            BaseAddressNotFound, 
+                            RecordDirectoryInvalid,
+                            NoFieldsFound, 
+                            UnicodeDecodeError,
+                            RecordLengthInvalid) as e:
+                        if e.__class__.__name__ in self.statistics["error classes"]:
+                            self.statistics[e.__class__.__name__] += 1
+                        else:
+                            #self.statistics.update({e.__class__.__name__: 1})
+                            self.statistics["error classes"][e.__class__.__name__] += 1
+                        self.statistics['virheitä'] += 1
+
+        self.writer.close()
+        rf_handler.close()
+        nf_handler.close()
+        error_handler.close()
+        with open(self.results_log, 'w', encoding = 'utf-8-sig') as result_handler:
+            self.statistics["käsiteltyjä asiasanakenttiä"] = \
+            self.statistics["poistettuja asiasanakenttiä"] + \
+            self.statistics["uusia asiasanakenttiä"]
+            for stat in self.statistics:
+                if stat == "virheluokkia":
+                    result_handler.write("Virhetilastot: \n")
+                    for e in self.statistics[stat]:
+                        result_handler.write("Virhetyyppi: %s, määrä: %s  \n"%(e, statistics[stat][e]))
+
+                else:
+                    result_handler.write("%s: %s \n"%(stat, statistics[stat]))
+
+            result_handler
+        result_handler.close()
+        #TODO: ohjelma suoritettu
+
+    def read_and_write_record(self, record):
+        #tarkistetaan, löytääkö pymarc XML-muotoisesta tietueesta MARC21-virheitä:
+        if self.file_format == "marcxml":
+            try:
+                raw = record.as_marc()
+                new_record = Record(data=raw)
+            except ValueError:
+                self.statistics['virheitä'] += 1
+        #TODO: XML-tietueiden lukeminen yksittäisinä tiedostoina
+        new_record = self.process_record(record)
+        self.statistics['käsiteltyjä tietueita'] += 1
+        if new_record:
+            self.writer.write(new_record)
+            self.statistics['konvertoituja tietueita'] += 1
 
     def subfields_to_dict(self, subfields):
         """
-        muuntaa helpommin käsiteltäväksi pymarcin "osakenttälistan" eli listan, 
-        jossa joka toinen alkio on osakenttäkoodi ja joka toinen osakenttä,
-        listaksi, jossa on avainarvopareja (osakenttäkoodi, osakenttä) 
+        muuntaa pymarc-kirjaston käyttämän osakenttälistan, jossa joka toinen alkio on osakenttäkoodi ja joka toinen osakenttä,
+        konversio-ohjelmalle helpommin käsiteltävään muotoon listaksi, jossa on avainarvopareja {osakenttäkoodi, osakenttä} 
         """
         subfields_list = []
         #Testattava, jos subfields-listassa pariton määrä alkioita! 
@@ -94,6 +197,7 @@ class ConceptConverter():
         return subfields_list         
     
     def remove_field_link_and_code(self, subfields):
+        #apufunktio identtisten rivien poistamiseen, kun konvertoidut kentät ovat valmiina
         trimmed_subfields = []
         for subfield in self.subfields_to_dict(subfields):
             if subfield['code'] not in ['0', '2']:
@@ -101,6 +205,7 @@ class ConceptConverter():
         return trimmed_subfields
     
     def is_equal_field(self, first_subfields, second_subfields):
+        #apufunktio identtisten rivien poistamiseen, kun konvertoidut kentät ovat valmiina
         return self.sort_subfields(self.subfields_to_dict(first_subfields)) == \
                self.sort_subfields(self.subfields_to_dict(second_subfields))
 
@@ -175,9 +280,11 @@ class ConceptConverter():
                             if vocabulary_code:
                                 #TODO: vanha, konvertoitava kenttä lokiin!
                                 converted_fields = self.process_field(record_id, field, vocabulary_code, fiction)
+                                self.statistics['käsiteltyjä asiasanakenttiä'] += 1
                                 if converted_fields:
                                     altered_fields.add(tag)
                                     for cf in converted_fields:
+                                        self.statistics['uusia asiasanakenttiä'] += 1
                                         altered_fields.add(cf.tag)
                                         if cf.tag in new_fields:
                                             new_fields[cf.tag].append(cf)
@@ -221,72 +328,12 @@ class ConceptConverter():
                     for idx in range(len(sorted_fields)):
                         if idx not in removable_fields:
                             record.add_ordered_field(sorted_fields[idx])   
+                        #TODO: älä poista muiden sanastokoodien duplikaattirivejä
+                        #TODO: älä tilastoi tässä kohtaa poistettavia rivejä: poista uusien rivien tilastosta nyt poistettava rivi?
+                        #else:     
             else:
                 return
-            record.add_ordered_field(
-                Field(
-                    tag = '884',
-                    indicators = [' ',' '],
-                    subfields = [
-                        'a', self.conversion_name,
-                        'g', self.marcdate,
-                        'q', self.isil_identifier,
-                        'u', self.conversion_url
-            ]))
-            #TODO: tarkista ja tilastoi, onko tietue muuttunut
             return record
-        
-                 
-                  
-    def read_marcxml_file(self):
-        #TODO: varaudu XML-epäsäännöllisyyksiin, esim. except xml.sax._exceptions.SAXParseException
-        reader = XmlHandler(self.input_file)
-        pymarc.map_xml(self.process_record, self.input_file)
-        #reader = pymarc.parse_xml_to_array(self.input_file)
-
-    def read_mrc_files(self):
-        with open(self.input_file, 'rb') as in_file, \
-            open(self.output_file, 'wb') as out_file:
-            reader = MARCReader(in_file, force_utf8=True, to_unicode=True)
-            writer = MARCWriter(out_file)
-            record = Record()
-            while record:                
-                try:
-                    #TODO: kirjoittaminen MARCXML-formaattiin, jos valittu
-                    #xml_writer.write(record)
-                    record = next(reader, None)
-                    if record:
-                        new_record = self.process_record(record)
-                        if new_record:
-                            writer.write(new_record)
-                        #TODO: kirjoitetaanko konvertoimattomatkin tietueet?
-                except BaseAddressInvalid:  
-                    pass
-                except RecordLengthInvalid:    
-                    pass     
-                except BaseAddressNotFound:
-                    pass
-                except RecordDirectoryInvalid:
-                    pass
-                except NoFieldsFound:
-                    pass
-                except FieldNotFound: 
-                    pass
-                except UnicodeDecodeError:
-                    pass
-                except AttributeError:
-                    print(id)        
-        in_file.close()
-        out_file.close()
-
-    def mrc_to_mrcx(self, input_file, output_file):
-        print("converting %s" %input_file) 
-        records = pymarc.parse_xml_to_array(input_file)
-        mrc_writer = pymarc.MARCWriter(open(output_file, 'wb'))
-        for r in records:
-            mrc_writer.write(r)
-        mrc_writer.close() 
-        print("file written") 
         
     def process_field(self, record_id, field, vocabulary_code, fiction=False):
         #record_id: tietueen numero virheiden lokitusta varten
@@ -294,6 +341,11 @@ class ConceptConverter():
         new_fields = []
         tag = field.tag
         subfields = self.subfields_to_dict(field.subfields)
+        #jos ei-numeerisia arvoja on enemmän kuin yksi, kyseessä on asiasanaketju:
+        non_digit_codes = []
+        for subfield in subfields:
+            if not subfield['code'].isdigit():
+                non_digit_codes.append(subfield['code'])    
         #tallennetaan numeroilla koodatut osakentät, jotka liitetään jokaiseen uuteen kenttään, paitsi $0 ja $2:
         control_subfield_codes = ['1', '3', '4', '5', '6', '7', '8', '9']
         if tag == "567":
@@ -308,7 +360,9 @@ class ConceptConverter():
             if field[csc]:
                 for sf in field.get_subfields(csc):
                     if "<DROP>" in sf and csc == "9":
-                        continue
+                        #jos kyseessä on ketju, <DROP>-merkityt jätetään pois:
+                        if len(non_digit_codes) > 1:
+                            continue
                     if csc in control_subfields:
                         try:
                             control_subfields[csc].append(sf)
@@ -317,30 +371,32 @@ class ConceptConverter():
                     else:
                         control_subfields.update({csc: [sf]})      
         #etsitään paikkaketjut ja muodostetaan niistä yksiosainen käsite:
-        #TODO: katsotaan mahdollisest imyös muita kuin maantieteellisiä termejä
-        if tag == "650" or tag == "651":
-            combined_subfields = []
-            while len(subfields) > 0:
-                if len(subfields) > 1:
-                    if subfields[0]['code'] == "a" or subfields[0]['code'] == "z":
-                        first = subfields[0]['value']
-                        if subfields[1]['code'] == "z":
-                            second = subfields[1]['value']
-                            combined_concept = first + " -- " + second
-                            if combined_concept in \
-                                self.vocabularies.vocabularies['ysa'].geographical_chained_labels | \
-                                self.vocabularies.vocabularies['allars'].geographical_chained_labels:
-                                combined_subfields.append({'code': subfields[0]['code'], 'value': combined_concept})
-                                del subfields[0]
-                                del subfields[0]
-                                continue
-                combined_subfields.append({'code': subfields[0]['code'], 'value': subfields[0]['value']})
-                del subfields[0]
-            subfields = combined_subfields
+        #TODO: katsotaan mahdollisesti myös muita kuin maantieteellisiä termejä
+        if len(non_digit_codes) > 1:
+            if tag == "650" or tag == "651":
+                combined_subfields = []
+                while len(subfields) > 0:
+                    if len(subfields) > 1:
+                        if subfields[0]['code'] == "a" or subfields[0]['code'] == "z":
+                            first = subfields[0]['value']
+                            if subfields[1]['code'] == "z":
+                                second = subfields[1]['value']
+                                combined_concept = first + " -- " + second
+                                if combined_concept in \
+                                    self.vocabularies.vocabularies['ysa'].geographical_chained_labels | \
+                                    self.vocabularies.vocabularies['allars'].geographical_chained_labels:
+                                    combined_subfields.append({'code': subfields[0]['code'], 'value': combined_concept})
+                                    del subfields[0]
+                                    del subfields[0]
+                                    continue
+                    combined_subfields.append({'code': subfields[0]['code'], 'value': subfields[0]['value']})
+                    del subfields[0]
+                subfields = combined_subfields
         #jos kaikki osakenttäkoodit ovat numeroita, tulostetaan kenttä sellaisenaan ilman 0- ja 2-osakenttiä:
         if all(subfield['code'].isdigit() for subfield in subfields):
-            return [self.strip_vocabulary_codes(field)]
-            #TODO: tulosta rivi virhelokiin
+            field = self.strip_vocabulary_codes(field)
+            logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], field))
+            return [field]
         
         #poikkeuksellisesti käsiteltävät kentät: 385, 567 ja 648:
         if tag == "648":
@@ -387,8 +443,6 @@ class ConceptConverter():
                     field = new_field
                 """
                 subfields = self.subfields_to_dict(field.subfields)
-                
-  
                 if not any (not subfield['code'].isdigit() for subfield in subfields):
                     return new_fields
         if tag == "385":
@@ -455,8 +509,8 @@ class ConceptConverter():
         return new_fields
         
     def process_subfield(self, record_id, original_field, subfield, vocabulary_code, fiction=False):
-        #TODO: log error
         if not subfield['value']:
+            logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
             return
         #alustetaan ensin hakuparametrien oletusarvot
         vocabulary_order = [] #hakujärjestys, jos sanaa haetaan useammasta sanastosta 
@@ -574,15 +628,17 @@ class ConceptConverter():
                 vocabulary_order = slm_vocabulary_order[language]
                 if tag == '650' or tag == '651':
                     if subfield['value'].lower() == "fiktio":
-                        return #TODO: log error REMOVED
+                        logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
+                        return
             if tag == "650" and subfield['code'] == "a" and fiction:
                 vocabulary_order = slm_vocabulary_order[language]
         if tag == "650" or tag == "651": 
             if subfield['code'] == "e":
-                return #TODO: log error REMOVED
+                logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
+                return 
             elif subfield['code'] == "g":
                 field = self.field_without_voc_code("653", [' ', ' '], subfield)   
-                print("täällä jotain")
+                logging.error("%s;%s;%s;%s;%s"%("7", record_id, subfield['value'], original_field, field))
                 return field
             if subfield['code'] in ['a', 'b', 'c', 'x', 'z']:
                 vocabulary_order.append('numeric')
@@ -595,16 +651,16 @@ class ConceptConverter():
         #TODO: määriteltävä tähän kentät ja osakentät, joista haetaan numeerisia arvoja 
             try:
                 response = self.vocabularies.search(subfield['value'], vocabulary_order, search_geographical_concepts)
-                
                 if tag == "650" and fiction and subfield['code'] == "a":
                     tag == "655"
                 field = self.field_with_voc_code(tag, response)
             except ValueError as e:
                 #TODO: määriteltävä tähän kentät ja osakentät, joista haetaan numeerisia arvoja
-                if str(e) == "MULTIPLE_CONCEPTS":
+                field = None
+                if str(e) in ['2', '3', '4', '5']:
                     #TODO: korjattava tagi! Sulkutarkenteettomat monitulkintaiset myös tähän!
                     field = self.field_without_voc_code(tag, [' ', '4'], subfield)
-                elif str(e) == "NOT_FOUND":
+                elif str(e) in ['1']:
                     if tag == "385" or tag == "567":
                         field = self.field_without_voc_code(tag, [' ', ' '], subfield)      
                     if tag in ['648', '650', '651']:
@@ -623,8 +679,11 @@ class ConceptConverter():
                             field = self.field_without_voc_code("653", [' ', '0'], subfield)   
                         if subfield['code'] in ['z']:
                             field = self.field_without_voc_code("370", [' ', ' '], subfield)      
+                else:
+                    logging.info("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
+                logging.error("%s;%s;%s;%s;%s"%(e, record_id, subfield['value'], original_field, field))
         else:
-            #TODO: log error
+            logging.error("%s;%s;%s;%s;%s"%("8", record_id, subfield['value'], original_field, field))
             original_field.indicators[1] = "4"
             original_field.delete_subfield('2')
             

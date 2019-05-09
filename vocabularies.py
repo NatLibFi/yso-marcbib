@@ -57,6 +57,18 @@ class Vocabularies:
         self.vocabularies.update({vocabulary_code: vocabulary})
 
     def search(self, keyword, vocabulary_codes, search_geographical_concepts=False):
+        """
+        Virhekoodit:
+        1: termille ei löytynyt vastinetta sanastoista
+        2: termille useampi mahdollinen vastine (termille on useampi samanlainen normalisoitu käytettävä termi tai ohjaustermi) 
+        3: termillä ei vastinetta, mutta termillä on täsmälleen yksi sulkutarkenteellinen muoto
+        4: termillä ei vastinetta, mutta termillä on sulkutarkenteellinen muoto kahdessa tai useammassa käsitteessä
+        5: termille löytyy vastine, mutta sille on olemassa myös sulkutarkenteellinen muoto eri käsitteessä
+        6: ketjun osakentän termi poistettu tarpeettomana (fiktio, aiheet, musiikki ja ketjun $e-osakenttä)
+        7: kentän 650/651 osakentän $g "muut tiedot" on viety kenttään 653
+        8: Kenttä sisältää MARC-formaattiin kuulumattomia osakenttäkoodeja tai ei sisällä asiasanaosakenttiä
+        9: tyhjä osakenttä
+        """
         keyword = unicodedata.normalize('NFKC', keyword)
         keyword = keyword.strip()
         
@@ -72,16 +84,16 @@ class Vocabularies:
                         response.update({'code': 'yso/fin'})
                     else:
                         response.update({'code': 'yso/swe'})
-            if vc == "ysa" or vc == "allars":
-                if vc == "ysa":
+            if vc in ['ysa', 'allars', 'musa', 'cilla']:
+                if vc in ['ysa', 'musa']:
                     language = "fi"
-                if vc == "allars":
+                if vc in ['allars', 'cilla']:
                     language = "sv"
                 response = self.vocabularies[vc].get_uris_with_concept(keyword)
                 if response:
                     if "uris" in response:
                         if len(response['uris']) > 1:
-                            raise ValueError("MULTIPLE_CONCEPTS")
+                            raise ValueError("2")
                         if response["uris"][0] in self.vocabularies[vc].geographical_concepts:
                             if search_geographical_concepts:
                                 response = self.vocabularies['yso_paikat'].get_concept_with_uri(response["uris"][0], language) 
@@ -105,14 +117,14 @@ class Vocabularies:
                     response.update({'geographical': geographical_concept})
                     #HUOM! Vocabularyn on palautettava vastauksessa sanastokoodi, esim. YSO-paikat
                     if len(response['uris']) > 1:
-                        raise ValueError("MULTIPLE_CONCEPTS")
+                        raise ValueError("2")
                     if len(response['uris']) == 1:
                         response['label'] = self.normalize_characters(response['label'])
                         return response
                 if "numeric" in response:
                     response.update({'geographical': geographical_concept})
                     return response
-        raise ValueError("NOT_FOUND")
+        raise ValueError("1")
 
     def is_numeric(self, keyword):
         numeric = False

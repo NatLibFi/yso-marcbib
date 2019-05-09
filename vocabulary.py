@@ -30,6 +30,10 @@ class Vocabulary():
         self.labels_lowercase = {}
         #labelit ilman diakriittejä diakriitittömän hakua varten
         self.stripped_labels = {}
+        #asiasanat, joilla tarkenteellisia ja tarkenteettomia muotoja:
+        self.labels_with_and_without_specifiers = {}
+        #asiasanat, joilla vain tarkenteellisia muotoja:
+        self.labels_with_specifiers = {}
         #self.alt_labels = {}
         #self.chained_terms = {}
         self.dct = Namespace("http://purl.org/dc/terms/")
@@ -74,7 +78,6 @@ class Vocabulary():
                     pref_label = str(pref_label[0][1])
                     self.labels.update({pref_label: replacers})     
         self.create_additional_dicts()
-        
 
     def parse_yso_vocabulary(self, g):
         aggregateconceptscheme = URIRef("http://www.yso.fi/onto/yso/aggregateconceptscheme")
@@ -239,24 +242,35 @@ class Vocabulary():
     
     def create_additional_dicts(self):
         #luo sanahakuja varten 2 dictionaryä, joissa avaimet pienillä kirjaimilla ja ilman diakriittejä
+        temp_labels = {}
         for label in self.labels:
             uris = self.labels[label]
             ll = label.lower()
             if ll in self.labels_lowercase:
                 self.labels_lowercase[ll].update(uris)
-                #self.labels_lowercase[ll].append(self.labels[label])
             else:
                 self.labels_lowercase.update({ll: self.labels[label]})
+            #sanasto ilman diakriittejä:
             stripped_label = self.remove_diacritical_chars(label).lower()
             if stripped_label in self.stripped_labels:
-                #uris = self.labels[label]
-                #for uri in uris:
-                #print(self.stripped_labels[stripped_label])
                 self.stripped_labels[stripped_label].update(uris)
-                    #self.stripped_labels[stripped_label].append(self.labels[label])
             else:
                 self.stripped_labels.update({stripped_label: uris})     
-        
+            #sanasto ilman diakriittejä ja sulkutarkenteita:
+            stripped_label = re.sub("[\(].*?[\)]", "", stripped_label)
+            stripped_label = stripped_label.strip()
+            
+            if stripped_label in temp_labels:
+                temp_labels[stripped_label].update(uris)
+            else:
+                temp_labels.update({stripped_label: uris})
+        for tl in temp_labels:
+            if tl in self.stripped_labels:
+                if len(temp_labels[tl]) > len(self.stripped_labels[tl]):
+                    self.labels_with_and_without_specifiers.update({tl: temp_labels[tl]})
+            else:
+                self.labels_with_specifiers.update({tl: temp_labels[tl]})
+
     def get_concept_with_uri(self, uri, language):
         #muutetaan kaksikirjaimiset kielikoodit kolmikirjaimiseksi sanastokoodia varten:
           
@@ -270,12 +284,6 @@ class Vocabulary():
                     if not r in self.deprecated_concepts:
                         valid_uris.append(r)
             if valid_uris:
-                """
-                if len(uris) > 1:
-                    raise ValueError("asiasanalla on useampi voimassaoleva YSO-vastine")  
-                else:
-                """    
-
                 label = self.labels[valid_uris[0]][language]
                 return {"label": label, "uris": valid_uris, "code": "yso/"+self.convert_to_ISO_639_2(language)}  
             else:
@@ -286,15 +294,15 @@ class Vocabulary():
             if language in self.labels[uri]:
                 label = self.labels[uri][language]
                 return {"label": label, "uris": [uri], "code": "yso/"+self.convert_to_ISO_639_2(language)}      
-        """
-        else:
-            raise ValueError("ei löydy YSO-vastinetta")      
-        """
 
     def get_concept_with_label(self, label, language):
         concept = None
         uris = []
         valid_uris = []
+        if label.lower() in self.labels_with_and_without_specifiers:
+            uris = self.labels_with_and_without_specifiers[label.lower()]["uris"]
+            if len(uris) > 1:
+                raise ValueError("5")
         if label in self.labels:
             uris = [self.labels[label]["uris"]]
             for uri in uris:
@@ -308,6 +316,13 @@ class Vocabulary():
         elif label.lower() in self.stripped_labels:
             uris = self.stripped_labels[label.lower()]["uris"]
             label = self.stripped_labels[label.lower()][language]
+        
+        elif label.lower() in self.labels_with_specifiers:
+            uris = self.labels_with_specifiers[label.lower()]["uris"]
+            if len(uris) > 1:
+                raise ValueError("4")
+            else:
+                raise ValueError("3")
         for uri in uris:
             if uri not in self.deprecated_concepts:
                 valid_uris.append(uri)     
@@ -327,22 +342,26 @@ class Vocabulary():
 
     def get_uris_with_concept(self, concept):
         uris = []
+        if concept.lower() in self.labels_with_and_without_specifiers:
+            uris = self.labels_with_and_without_specifiers[concept.lower()]
+            if len(uris) > 1:
+                raise ValueError("5")
         if concept in self.labels:
             uris = self.labels[concept]
         elif concept.lower() in self.labels_lowercase:
             uris = self.labels_lowercase[concept.lower()]
         elif concept.lower() in self.stripped_labels:
             uris = self.stripped_labels[concept.lower()]
+        elif concept.lower() in self.labels_with_specifiers:
+            uris = self.labels_with_specifiers[concept.lower()]
+            if len(uris) > 1:
+                raise ValueError("4")
+            else:
+                raise ValueError("3")
         valid_uris = []
         for uri in uris:
             if uri not in self.deprecated_concepts:
                 valid_uris.append(uri)    
-        """
-        if len(valid_uris) > 1:
-            raise ValueError("asiasanalla on useampi voimassaoleva YSO-vastine")
-        elif len(valid_uris) == 0:
-            raise ValueError("asiasanalla ei ole voimassaolevia YSO-vastineita")
-        """
         if valid_uris:
             return {"uris": valid_uris}
 

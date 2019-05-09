@@ -12,7 +12,7 @@ class FieldConversionTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         #cls.vocabulary = Vocabularies()
-        cls.cc = ConceptConverter()
+        cls.cc = ConceptConverter("test.mrc", "output.mrc", "marc21")
         """
         cls.cc.vocabularies.parse_vocabulary('yso-skos-test.rdf', 'yso', ['fi', 'sv'])
         cls.cc.vocabularies.parse_vocabulary('yso-paikat-skos-test.rdf', 'yso_paikat', ['fi', 'sv'])
@@ -23,27 +23,16 @@ class FieldConversionTest(unittest.TestCase):
         cls.cc.vocabularies.parse_vocabulary('musa-skos.rdf', 'musa', ['fi'], 'fi', 'ysa-skos.rdf')
         """
         cls.vocabularies = Vocabularies()
-        print("parsitaan YSOa")
         yso_graph = Graph()
         yso_graph.parse('test/yso-skos-test.rdf')
-
-        print("parsitaan YSO-paikkoja")
         yso_paikat_graph = Graph()
         yso_paikat_graph.parse('test/yso-paikat-skos-test.rdf')
-
-        print("parsitaan YSaa")
         ysa_graph = Graph()
         ysa_graph.parse('test/ysa-skos-test.rdf')
-
-        print("parsitaan Allärsia")
         allars_graph = Graph()
         allars_graph.parse('test/allars-skos-test.rdf')
-
-        print("parsitaan SLM_ää")
         slm_graph = Graph()
         slm_graph.parse('test/slm-skos-test.rdf')
-       
-        print("parsitaan Musaa")
         musa_graph = Graph()
         musa_graph.parse('test/musa-skos-test.rdf')
         cls.cc.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
@@ -59,16 +48,11 @@ class FieldConversionTest(unittest.TestCase):
         cls.records = [
             {'original': ['=648  17$a1980-luku$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
                           '=648  \\7$a1900-luku$2yso',
-                          '=648  \\7$a1900-luku$2ysa',
+                          '=648  \\7$a1900-luku$2ysa'
                          ],
-             'converted': ['=650  \\7$a1900-luku$2yso',
-                          '=650  \\7$a1900-luku$2ysa',
-                          '=650  \\7$a1900$2allars',
-                          '=650  \\7$a1800-1900-luku$bragat$2allars',
-                          '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$2ysa',
-                          '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$9FENNI<KEEP>$2ysa'
-                          '=648  17$a1980-luku$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
-                          '=648  17$a1980-luku$vragat$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>'
+             'converted': ['=388  1\$8järjestysnumero$a1980-luku$2yso/fin$9FENNI<KEEP>',
+                           '=648  \\7$a1900-luku$2yso',
+                           '=648  \\7$a1900-luku$2yso/fin'
                          ]
             },
             {'original': ['=648  17$a1980-luku$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
@@ -80,50 +64,65 @@ class FieldConversionTest(unittest.TestCase):
                           '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$2ysa',
                           '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$9FENNI<KEEP>$2ysa'
                          ],
-             'converted': ['=650  \\7$a1900-luku$2yso',
-                          '=650  \\7$a1900-luku$2ysa',
-                          '=650  \\7$a1900$2allars',
-                          '=650  \\7$a1800-1900-luku$bragat$2allars',
-                          '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$2ysa',
-                          '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$9FENNI<KEEP>$2ysa'
-                          '=648  17$a1980-luku$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
-                          '=648  17$a1980-luku$vragat$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>'
+             'converted': ['=388  1\$8järjestysnumero$a1980-luku$2yso/fin$9FENNI<KEEP>',
+                            '=648  \\7$a1900-luku$2yso/fin',
+                            '=648  \\7$a1900$2yso/swe',
+                            '=648  \\7$a1800-1900-luku$2yso/swe',
+                            '=650  \\7$a1900-luku$2yso',
+                            '=650  \\7$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038',
+                            '=651  \\7$aTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847$9FENNI<KEEP>',
+                            '=651  \\7$aTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847$9FENNI<KEEP>$9FENNI<KEEP>',
+                            '=655  \\7$8järjestysnumero$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786$9FENNI<KEEP>'
                          ]
             },
             {'original': ['=650  \\7$a1800-1900-luku$bragat$2allars'
                          ],
-             'converted': ['=650  \\7$a1900-luku$2yso'
+             'converted': ['=648  \\7$a1800-1900-luku$2yso/swe',
+                            '=650  \\7$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038'
                          ]
             },
             {'original': ['=650  \\8$amembraanit$2yso',
                           '=650  \\7$amembraanit$2ysa$9SAVON<KEEP>$9FENNI<DROP>'
                          ],
-             'converted': ['=650  \\7$a1900-luku$2yso',
-                          '=650  \\7$a1900-luku$2ysa',
-                          '=650  \\7$a1900$2allars',
-                          '=650  \\7$a1800-1900-luku$bragat$2allars',
-                          '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$2ysa',
-                          '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$9FENNI<KEEP>$2ysa'
-                          '=648  17$a1980-luku$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
-                          '=648  17$a1980-luku$vragat$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>'
+             'converted': ['=650  \\4$amembraanit$9SAVON<KEEP>$9FENNI<DROP>',
+                            '=650  \\8$amembraanit$2yso'
+                         ]
+            },
+            {'original': ['=650  \\8$amembraanit$2yso',
+                          '=650  \\7$amembraanit$bjotain$2ysa$9SAVON<KEEP>$9FENNI<DROP>'
+                         ],
+             'converted': ['=650  \\4$amembraanit$9SAVON<KEEP>',
+                            '=650  \\8$amembraanit$2yso',
+                            '=653  \\0$ajotain$9SAVON<KEEP>'
                          ]
             },
             {'original': ['=650  \\7$a1800-1900-luku$bragat$2allars',
                           '=650  \\7$arāgat$2yso/fin'
                          ],
-             'converted': ['=650  \\7$a1900-luku$2yso']
+             'converted': ['=648  \\7$a1800-1900-luku$2yso/swe',
+                            '=650  \\7$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038'
+                        ]
             },
             {'original': ['=650  \\7$aHelsinki$zTöölö$bpolkka (tanssit)$2ysa',
                           '=245  00$aSkogsradion och genom kaminröret :$bmidsommar 1942.',
                           '=648  \\7$a1900-talet$2allars',
-                          '=338  \\$anide$bnc$2rdacarrier'
-                         ]
+                          '=338  \\\\$anide$bnc$2rdacarrier'
+                         ],
+             'converted': ['=245  00$aSkogsradion och genom kaminröret :$bmidsommar 1942.',
+                           '=338  \\\\$anide$bnc$2rdacarrier',
+                           '=648  \\7$a1900-talet$2yso/swe',
+                           '=650  \\7$apolkka (tanssit)$2yso/fin$0http://www.yso.fi/onto/yso/p5647',
+                           '=651  \\7$aTöölö (Helsinki)$2yso/fin$0http://www.yso.fi/onto/yso/p109631'
+                        ]
             }
         ]
 
         cls.exceptional_fields = [
             {'original': '=650  \\7$a1900-luku$2ysa',
              'results': ['=648  \\7$a1900-luku$2yso/fin']
+            },
+            {'original': '=650  \\7$a$2allars',
+             'results': ['=648  \\7$a1900$2yso/swe']
             },
             {'original': '=650  \\7$a1900$2allars',
              'results': ['=648  \\7$a1900$2yso/swe']
@@ -217,58 +216,6 @@ class FieldConversionTest(unittest.TestCase):
             }
         ]
 
-        """
-        cls.convertible_subfields = [
-            {"tag": "650", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'Tšekkoslovakia', '2', 'ysa'],
-             "results": '=651  \\7$aTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847'},
-            {"tag": "650", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'membraanit', '2', 'ysa'],
-             "results": '=650  \\4$amembraanit'},
-            {"tag": "650", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'membraanit', '9', 'FENNI<KEEP>', '2', 'ysa'],
-             "results": '=650  \\4$amembraanit$9FENNI<KEEP>'},
-            {"tag": "655", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'rāgat', '2', 'ysa'],
-             "results": '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'},
-            {"tag": "650", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['g', 'jotain', '2', 'allars'],
-             "results": '=653  \\\\$ajotain'},
-            {"tag": "650", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'Tjeckoslovakien', '2', 'ysa'],
-             "results": '=651  \\7$aTjeckoslovakien$2yso/swe$0http://www.yso.fi/onto/yso/p105847'},
-            {"tag": "385", 
-             "indicators": [ ' ', ' ' ], 
-             "subfields": ['a', 'RAGAT', '2', 'ysa'],
-             "results": '=385  \\\\$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038'},
-            {"tag": "650", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['v', 'rāgat', '2', 'ysa'],
-             "results": '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'},
-            {"tag": "650", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'steel pan', '2', 'musa'],
-             "results": '=650  \\7$asteel pan$2yso/fin$0http://www.yso.fi/onto/yso/p29959'},
-            {"tag": "650", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'ragat', '2', 'musa'],
-             "results": '=650  \\7$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038'},
-            {"tag": "655", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'rāgat', '2', 'ysa'],
-             "results": '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'},
-            {"tag": "655", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'rāgat', '2', 'ysa'],
-             "results": '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'}           
-        ]
-        
         cls.inconvertible_subfields = [
             {"tag": "655", 
              "indicators": [ ' ', '7' ], 
@@ -279,7 +226,7 @@ class FieldConversionTest(unittest.TestCase):
              "subfields": ['a', 'membraanit', '2', 'ysa'],
              "results": '=653  \\6$amembraanit'}          
         ]     
-        """
+        
         cls.deletable_fields = [
             {"tag": "651", 
             "indicators": [ ' ', '7' ], 
@@ -289,7 +236,7 @@ class FieldConversionTest(unittest.TestCase):
             "subfields": ['v', 'fiktio', '2', 'ysa']}
         ]
 
-        """
+        
         cls.numeric_fields = [
             {"tag": "650", 
              "indicators": [ ' ', '7' ], 
@@ -299,16 +246,16 @@ class FieldConversionTest(unittest.TestCase):
              "indicators": [ ' ', '7' ], 
              "subfields": ['y', '1900', '2', 'allars'],
              "results": ['=648  \\7$a1900$2yso/swe']},
-            {"tag": "651", 
+            {"tag": "655", 
              "indicators": [ ' ', '7' ], 
-             "subfields": ['a', '1800-1900-luku', 'b', 'ragat', '2', 'allars'],
+             "subfields": ['a', 'ragat', 'y', '1800-1900-luku', '2', 'allars'],
              "results": 
-                ['=648  \\7$a1900$2yso/swe',
+                ['=388  1\\$a1800-1900-luku',
                  '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786']
             }
         
         ]
-        """
+        
         return super(FieldConversionTest, cls).setUpClass()
 
     def test_subfields_to_dict(self):
@@ -346,7 +293,7 @@ class FieldConversionTest(unittest.TestCase):
         
         result_fields = self.cc.process_field("00000001", field, "ysa")
         self.assertEqual(str(result_fields[0]), test_result)
-    
+    """ 
     def test_convert_field(self):
         #testataan useampia asiasanaosakenttiä sisältävien kenttien konvertoimista:
         for test_field in self.convertible_subfields:
@@ -370,7 +317,7 @@ class FieldConversionTest(unittest.TestCase):
             vocabulary_code = test_field['subfields'][-1]
             result_fields = self.cc.process_field("00000001", field, vocabulary_code)
             self.assertEqual(result_fields, [])
-            
+          
     """
     def test_convert_numeric_fields(self):
         valid_time_fields = {
@@ -389,33 +336,36 @@ class FieldConversionTest(unittest.TestCase):
                     self.assertEqual(str(result_fields[0]), '=648  \\7$a1900-luku$2yso/fin')
                 else:
                     self.assertNotEqual(str(result_fields[0]), '=648  \\7$a1900-luku$2yso/fin')
-        
-
+    
         for test_field in self.numeric_fields:
             field = self.new_field(test_field['tag'], test_field['indicators'], test_field['subfields']) 
             vocabulary_code = test_field['subfields'][-1]
             result_fields = self.cc.process_field("00000001", field, vocabulary_code)
             result_field = str(result_fields[0])
-            for r in result_fields:
-                print(str(r))
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
     
-    """
     def test_process_record(self):
         for r in self.records:
             record = Record()
             record.add_field( Field(tag='001', data='00000001'))
+            original_fields = []
             for field in r['original']:
+                original_fields.append(field)
                 record.add_field(self.str_to_marc(field))
             #nimiön 6. paikasta katsotaan tietuetyyppi:
             record.leader = "wefweeawfewfewfwefwg"
-            print(str(record))
             new_record = self.cc.process_record(record)
+            new_fields = []
+            result_fields = []
+            for field in new_record.get_fields():
+                new_fields.append(str(field))
+            result_fields.append(str(Field(tag='001', data='00000001')))
+            for field in r['converted']:
+                result_fields.append(field)   
+            self.assertEqual(result_fields, new_fields)
             
-            print(str(new_record))
-    
     def new_field(self, tag, indicators, subfields): 
         return Field(
             tag = tag,
