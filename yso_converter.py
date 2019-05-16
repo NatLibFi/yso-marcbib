@@ -29,7 +29,7 @@ class YsoConverter():
         self.vocabularies = Vocabularies()
         self.file_format = file_format.lower()
         if not self.file_format == "marc21" and not self.file_format == "marcxml":
-            logging.info("Anna tiedostoformaatti muodossa marc21 tai marcxml")
+            print("Anna tiedostoformaatti muodossa marc21 tai marcxml")
             sys.exit(0)
         self.conversion_time = datetime.datetime.now().replace(microsecond=0).isoformat()
         self.marcdate = str(datetime.date.today()).replace("-","")
@@ -69,31 +69,31 @@ class YsoConverter():
                     except EOFError:
                         pass
         if not vocabularies_dump_loaded:    
-            logging.info("parsitaan YSOa") 
+            print("parsitaan YSOa") 
             yso_graph = Graph()
             yso_graph.parse('yso-skos.rdf')
 
-            logging.info("parsitaan YSO-paikkoja")
+            print("parsitaan YSO-paikkoja")
             yso_paikat_graph = Graph()
             yso_paikat_graph.parse('yso-paikat-skos.rdf')
 
-            logging.info("parsitaan YSAa")
+            print("parsitaan YSAa")
             ysa_graph = Graph()
             ysa_graph.parse('ysa-skos.rdf')
 
-            logging.info("parsitaan Allärsia")
+            print("parsitaan Allärsia")
             allars_graph = Graph()
             allars_graph.parse('allars-skos.rdf')
 
-            logging.info("parsitaan SLM_ää")
+            print("parsitaan SLM_ää")
             slm_graph = Graph()
             slm_graph.parse('slm-skos.rdf')
 
-            logging.info("parsitaan Musaa")
+            print("parsitaan Musaa")
             musa_graph = Graph()
             musa_graph.parse('musa-skos.rdf')
 
-            logging.info("sanastot parsittu")
+            print("sanastot parsittu")
             
             self.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
             self.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
@@ -122,7 +122,7 @@ class YsoConverter():
                 try:
                     pymarc.map_xml(self.read_and_write_record, self.input_file)
                 except SAXParseException as e:
-                    logging.info(e)
+                    print(e)
                     #TODO: tarkempi virheilmoitus
                 self.writer.close()
             if self.file_format == "marc21":
@@ -173,7 +173,7 @@ class YsoConverter():
                 else:
                     result_handler.write("%s: %s \n"%(stat, self.statistics[stat]))
         result_handler.close()
-        logging.info("konversio tehty")
+        print("konversio tehty")
 
     def read_and_write_record(self, record):
         #tarkistetaan, löytääkö pymarc XML-muotoisesta tietueesta MARC21-virheitä:
@@ -373,7 +373,7 @@ class YsoConverter():
                         try:
                             control_subfields[csc].append(sf)
                         except TypeError:
-                            logging.info("type error "+str(sf))
+                            print("type error "+str(sf))
                     else:
                         control_subfields.update({csc: [sf]})      
         #etsitään paikkaketjut ja muodostetaan niistä yksiosainen käsite:
@@ -686,7 +686,7 @@ class YsoConverter():
                         if subfield['code'] in ['z']:
                             field = self.field_without_voc_code("370", [' ', ' '], subfield)      
                 else:
-                    logging.info("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
+                    print("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
                 logging.error("%s;%s;%s;%s;%s"%(e, record_id, subfield['value'], original_field, field))
         else:
             logging.error("%s;%s;%s;%s;%s"%("8", record_id, subfield['value'], original_field, field))

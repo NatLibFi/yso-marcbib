@@ -1,5 +1,6 @@
 from rdflib import Graph, URIRef, Namespace, RDF
 from rdflib.namespace import SKOS, XSD, OWL, DC
+import copy
 import re
 import unicodedata
 import unidecode
@@ -153,13 +154,13 @@ class Vocabulary():
                     if rdf_type[1] in geographical_namespaces:
                         is_geographical = True
                 except IndexError:
-                    print("viallinen käsite: %s" %conc)
+                    logging.info("viallinen käsite: %s" %conc)
             for lc in self.language_codes:
                 alt_labels = g.preferredLabel(conc, lang=lc, labelProperties=[SKOS.altLabel])
                 matches = g.preferredLabel(conc, labelProperties=[SKOS.exactMatch]) 
                 uris = set()
                 for m in matches:
-                    #lisää YSO-linkit:
+                    #lisätään YSO-vastineiden linkit:
                     if self.namespace in str(m[1]):
                         uris.add(str(m[1]))
                         if is_geographical:
@@ -175,11 +176,13 @@ class Vocabulary():
                 pref_label = g.preferredLabel(conc, lang=lc)
                 if pref_label:
                     pref_label = str(pref_label[0][1])
+                    uris = copy.copy(uris)
                     self.labels.update({pref_label: uris})
                     if "--" in pref_label and is_geographical:
                         self.geographical_chained_labels.add(pref_label)
+                       
         self.create_additional_dicts()
-
+    
     def parse_slm_vocabulary(self, g, language):
         """
         JOS KÄÄNNÖKSIÄ EI TARVITA:
@@ -251,6 +254,7 @@ class Vocabulary():
             else:
                 self.labels_lowercase.update({ll: self.labels[label]})
             #sanasto ilman diakriittejä:
+            uris = copy.copy(uris)
             stripped_label = self.remove_diacritical_chars(label).lower()
             if stripped_label in self.stripped_labels:
                 self.stripped_labels[stripped_label].update(uris)
@@ -259,7 +263,7 @@ class Vocabulary():
             #sanasto ilman diakriittejä ja sulkutarkenteita:
             stripped_label = re.sub("[\(].*?[\)]", "", stripped_label)
             stripped_label = stripped_label.strip()
-            
+            uris = copy.copy(uris)
             if stripped_label in temp_labels:
                 temp_labels[stripped_label].update(uris)
             else:

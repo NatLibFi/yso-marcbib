@@ -12,27 +12,27 @@ class Vocabularies:
         yso_graph = Graph()
         yso_graph.parse('yso-skos.rdf')
 
-        print("parsitaan YSO-paikkoja")
+        logging.info("parsitaan YSO-paikkoja")
         yso_paikat_graph = Graph()
         yso_paikat_graph.parse('yso-paikat-skos.rdf')
 
-        print("parsitaan YSaa")
+        logging.info("parsitaan YSaa")
         ysa_graph = Graph()
         ysa_graph.parse('ysa-skos.rdf')
 
-        print("parsitaan Allärsia")
+        logging.info("parsitaan Allärsia")
         allars_graph = Graph()
         allars_graph.parse('allars-skos.rdf')
 
-        print("parsitaan SLM_ää")
+        logging.info("parsitaan SLM_ää")
         slm_graph = Graph()
         slm_graph.parse('slm-skos.rdf')
 
-        print("parsitaan Musaa")
+        logging.info("parsitaan Musaa")
         musa_graph = Graph()
         musa_graph.parse('musa-skos.rdf')
 
-        print("sanastot parsittu")
+        logging.info("sanastot parsittu")
         self.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
         self.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
         self.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
@@ -104,7 +104,7 @@ class Vocabularies:
                             response = self.vocabularies['yso'].get_concept_with_uri(response["uris"][0], language)    
                 #except ValueError as e:
                     #logging.warning
-                    #print(e)
+                    #logging.info(e)
                     #return response          
             elif vc == "slm_fi" or vc == "slm_sv":
                 if vc == "slm_fi":

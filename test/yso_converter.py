@@ -5,14 +5,14 @@ from rdflib import Graph, URIRef, Namespace, RDF
 from pymarc import Record, Field
 from concept_converter import ConceptConverter
 
-class FieldConversionTest(unittest.TestCase):
+class YsoConversionTest(unittest.TestCase):
 
     #def setUp(self):
         
     @classmethod
     def setUpClass(cls):
         #cls.vocabulary = Vocabularies()
-        cls.cc = ConceptConverter("test.mrc", "output.mrc", "marc21")
+        cls.cc = YsoConverter("test.mrc", "output.mrc", "marc21")
         """
         cls.cc.vocabularies.parse_vocabulary('yso-skos-test.rdf', 'yso', ['fi', 'sv'])
         cls.cc.vocabularies.parse_vocabulary('yso-paikat-skos-test.rdf', 'yso_paikat', ['fi', 'sv'])
@@ -44,7 +44,6 @@ class FieldConversionTest(unittest.TestCase):
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
-
         cls.records = [
             {'original': ['=648  17$a1980-luku$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
                           '=648  \\7$a1900-luku$2yso',
