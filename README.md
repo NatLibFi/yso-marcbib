@@ -12,7 +12,7 @@ Muunnosprosessi on kuvattu Kiwissä: https://www.kiwi.fi/display/ysall2yso
 - Konversiosäännöt on kuvaillaan erillisessä sääntödokumentissa, musiikki- ja elokuva-aineistolle on oma erillinen säännöstönsä
 - Konversio kohdistuu kaikkiin aineistotyyppeihin
 - Asiasanakenttiä järjestetään uudelleen mm. sanaston ja kielen mukaan
-Ohjelma käyttää Musa (sisältää Cillan), Ysa-, Allärs-, Yso-, SEKO- ja SLM-sanastoja, jotka testiversiossa on ladattava ohjelman pääkansioon Finton sivulta: https://finto.fi/
+Ohjelma käyttää Musa (sisältää Cillan), Ysa-, Allärs-, Yso-, SEKO- ja SLM-sanastoja, jotka testiversiossa on ladattava ohjelman pääkansioon rdf-muodossa Finton sivulta: https://finto.fi/
 Ohjelma käyttää Python-kirjastoja pymarc, rdflib, unidecode, jotka on asennettava ennen käyttöä, esim. `pip install <kirjaston nimi>`.
     
 **Ohjelman käynnistysparametrit**
@@ -22,6 +22,8 @@ Annetaan komentorivillä `python yso_converter.py -i="input-tiedostopolku" -o="o
 Ohjelma tuottaa automaattisesti lokitiedostot logs-kansion työhakemistoon aikaleimoilla.
           
 **Ohjelman tuottamat tulosteet ja raportit**
+
+Ohjelma tallentaa 1. ajokerralla sanastot väliaikaiseen tiedostoon vocabularies.pkl, josta sanastot on nopeampi ladata käyttöön uudelleen samana päivänä. Tämän jälkeen ohjelma lataa ja käsittelee sanastot päivän 1. ajokerralla uudelleen ja tallentaa väliaikaisen tiedoston uudestaan.
 
 Ohjelman lokitiedostot tuotetaan logs-nimiseen alikansioon. 
 Jokaiseen lokitiedoston nimeen lisätään ohjelman suorittamisen päivä ja aloitusaika:
