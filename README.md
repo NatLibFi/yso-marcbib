@@ -37,14 +37,14 @@ Tarkistettaviin kenttiin kirjataan a) virhekoodi, b) sanastokoodi, c) virheen ai
 Tällaiset kentät vaativat manuaalisen käsittelyn konversion jälkeen. 
           
 Tarkistuskoodit:
-1: termille ei löytynyt vastinetta sanastoista
-2: termille useampi mahdollinen vastine (termille on useampi samanlainen normalisoitu käytettävä termi tai ohjaustermi) 
-3: termillä ei vastinetta, mutta termillä on täsmälleen yksi sulkutarkenteellinen muoto
-4: termillä ei vastinetta, mutta termillä on sulkutarkenteellinen muoto kahdessa tai useammassa käsitteessä
-5: termille löytyy vastine, mutta sille on olemassa myös sulkutarkenteellinen muoto eri käsitteessä
-6: ketjun osakentän termi poistettu tarpeettomana (fiktio, aiheet, musiikki ja ketjun $e-osakenttä sekä tyhjä osakenttä)
-7: kentän 650/651 osakentän $g "muut tiedot" on viety kenttään 653
-8: Kenttä sisältää MARC-formaattiin kuulumattomia osakenttäkoodeja tai ei sisällä asiasanaosakenttiä
+1 = termille ei löytynyt vastinetta sanastoista
+2 = termille useampi mahdollinen vastine (termille on useampi samanlainen normalisoitu käytettävä termi tai ohjaustermi) 
+3 = termillä ei vastinetta, mutta termillä on täsmälleen yksi sulkutarkenteellinen muoto
+4 = termillä ei vastinetta, mutta termillä on sulkutarkenteellinen muoto kahdessa tai useammassa käsitteessä
+5 = termille löytyy vastine, mutta sille on olemassa myös sulkutarkenteellinen muoto eri käsitteessä
+6 = ketjun osakentän termi poistettu tarpeettomana (fiktio, aiheet, musiikki ja ketjun $e-osakenttä sekä tyhjä osakenttä)
+7 = kentän 650/651 osakentän $g "muut tiedot" on viety kenttään 653
+8 = Kenttä sisältää MARC-formaattiin kuulumattomia osakenttäkoodeja tai ei sisällä asiasanaosakenttiä
  
 Tilastot:
     
