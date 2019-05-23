@@ -56,7 +56,7 @@ Mittarit:
         
 - käsiteltyjä tietueita: lähdetietueiden lukumäärä
 - konvertoitujen tietueiden lukumäärä: kuinka moneen tietueeseen tehtiin muutoksia
-- käsiteltyjä asiasanakenttiä: kai
+- käsiteltyjä asiasanakenttiä
 - poistettuja asiasanakenttiä
 - uusia asiasanakenttiä
 - viallisia tietueita:
