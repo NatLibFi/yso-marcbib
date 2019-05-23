@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from rdflib import Graph, URIRef, Namespace, RDF
 import pymarc
 from pymarc import XmlHandler
@@ -29,15 +30,12 @@ class YsoConverter():
         self.vocabularies = Vocabularies()
         self.file_format = file_format.lower()
         if not self.file_format == "marc21" and not self.file_format == "marcxml":
-            print("Anna tiedostoformaatti muodossa marc21 tai marcxml")
-            sys.exit(0)
+            logging.info("Anna tiedostoformaatti muodossa marc21 tai marcxml")
+            sys.exit(2)
         self.conversion_time = datetime.datetime.now().replace(microsecond=0).isoformat()
         self.marcdate = str(datetime.date.today()).replace("-","")
         self.conversion_name = "yso-konversio"
-        self.isil_identifier = "FI-NL"
-        self.conversion_url = "http://kiwi.fi/display/ysall2yso"
         self.error_logger = logging.getLogger()
-        self.conversion_time
         #korvataan kaksoispisteet Windows-tiedostonimeä varten:
         time = self.conversion_time.replace(":", "")
         self.error_log = self.conversion_name + "_error-log_" + time + ".log"
@@ -69,31 +67,31 @@ class YsoConverter():
                     except EOFError:
                         pass
         if not vocabularies_dump_loaded:    
-            print("parsitaan YSOa") 
+            logging.info("parsitaan YSOa") 
             yso_graph = Graph()
             yso_graph.parse('yso-skos.rdf')
 
-            print("parsitaan YSO-paikkoja")
+            logging.info("parsitaan YSO-paikkoja")
             yso_paikat_graph = Graph()
             yso_paikat_graph.parse('yso-paikat-skos.rdf')
 
-            print("parsitaan YSAa")
+            logging.info("parsitaan YSAa")
             ysa_graph = Graph()
             ysa_graph.parse('ysa-skos.rdf')
 
-            print("parsitaan Allärsia")
+            logging.info("parsitaan Allärsia")
             allars_graph = Graph()
             allars_graph.parse('allars-skos.rdf')
 
-            print("parsitaan SLM_ää")
+            logging.info("parsitaan SLM_ää")
             slm_graph = Graph()
             slm_graph.parse('slm-skos.rdf')
 
-            print("parsitaan Musaa")
+            logging.info("parsitaan Musaa")
             musa_graph = Graph()
             musa_graph.parse('musa-skos.rdf')
 
-            print("sanastot parsittu")
+            logging.info("sanastot parsittu")
             
             self.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
             self.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
@@ -122,7 +120,7 @@ class YsoConverter():
                 try:
                     pymarc.map_xml(self.read_and_write_record, self.input_file)
                 except SAXParseException as e:
-                    print(e)
+                    logging.info(e)
                     #TODO: tarkempi virheilmoitus
                 self.writer.close()
             if self.file_format == "marc21":
@@ -133,7 +131,7 @@ class YsoConverter():
                         reader = MARCReader(fh, force_utf8=True, to_unicode=True)
                     except TypeError:
                         logging.error("Tiedosto ei ole MARC21-muodossa")
-                        sys.exit(0)
+                        sys.exit(2)
                     record = Record()
                     while record:                
                         try:
@@ -173,7 +171,7 @@ class YsoConverter():
                 else:
                     result_handler.write("%s: %s \n"%(stat, self.statistics[stat]))
         result_handler.close()
-        print("konversio tehty")
+        logging.info("konversio tehty")
 
     def read_and_write_record(self, record):
         #tarkistetaan, löytääkö pymarc XML-muotoisesta tietueesta MARC21-virheitä:
@@ -202,11 +200,11 @@ class YsoConverter():
                 subfields_list.append({"code": subfields[idx], "value": subfields[idx+1]})
         return subfields_list         
     
-    def remove_field_link_and_code(self, subfields):
+    def remove_subfields(self, codes, subfields):
         #apufunktio identtisten rivien poistamiseen, kun konvertoidut kentät ovat valmiina
         trimmed_subfields = []
         for subfield in self.subfields_to_dict(subfields):
-            if subfield['code'] not in ['0', '2']:
+            if subfield['code'] not in codes:
                 trimmed_subfields.append({"code": subfield['code'], "value": subfield['value']})
         return trimmed_subfields
     
@@ -325,11 +323,17 @@ class YsoConverter():
                                         removable_fields.add(m)
                                     if sorted_fields[n].indicators[1] == " " and not sorted_fields[m].indicators[1] == " ":
                                         removable_fields.add(n)
-                                elif self.sort_subfields(self.remove_field_link_and_code(sorted_fields[m].subfields)) == \
-                                    self.sort_subfields(self.remove_field_link_and_code(sorted_fields[n].subfields)):
+                                elif self.sort_subfields(self.remove_subfields(['0'], sorted_fields[m].subfields)) == \
+                                    self.sort_subfields(self.remove_subfields(['0'], sorted_fields[n].subfields)):
                                     if sorted_fields[m]['2'] and sorted_fields[m]['0']:
                                         removable_fields.add(n)
-                                    if sorted_fields[n]['2'] and sorted_fields[n]['0']:
+                                    elif sorted_fields[n]['2'] and sorted_fields[n]['0']:
+                                        removable_fields.add(m)
+                                elif self.sort_subfields(self.remove_subfields(['9'], sorted_fields[m].subfields)) == \
+                                    self.sort_subfields(self.remove_subfields(['9'], sorted_fields[n].subfields)):
+                                    if sorted_fields[m]['9'] and not sorted_fields[n]['9']:
+                                        removable_fields.add(n)
+                                    if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
                                         removable_fields.add(m)
                     for idx in range(len(sorted_fields)):
                         if idx not in removable_fields:
@@ -373,7 +377,7 @@ class YsoConverter():
                         try:
                             control_subfields[csc].append(sf)
                         except TypeError:
-                            print("type error "+str(sf))
+                            logging.info("type error "+str(sf))
                     else:
                         control_subfields.update({csc: [sf]})      
         #etsitään paikkaketjut ja muodostetaan niistä yksiosainen käsite:
@@ -451,6 +455,8 @@ class YsoConverter():
                 subfields = self.subfields_to_dict(field.subfields)
                 if not any (not subfield['code'].isdigit() for subfield in subfields):
                     return new_fields
+        #TODO: tarkista, jos kentässä ei ole a-osakenttää
+
         if tag == "385":
             if not any(subfield['code'] == "a" for subfield in subfields):
                 field = self.strip_vocabulary_codes(field)
@@ -563,58 +569,6 @@ class YsoConverter():
         
         if tag == "385" or tag == "567":
             search_geographical_concepts = False
-        """    
-            #385- ja 567-kenttien erikoiskäsittely:  
-            #tulostetaan käsiteltävät osakentät jokainen omalle riville ja kaikkiin kenttiin muut osakentät sellaisenaan
-            
-            subfield_code = None
-            new_subfields = []
-            if tag == "385" :
-                subfield_code = "a"
-                valid_subfield_codes = ['a', 'b', 'm', 'n', '0', '1', '2', '3', '5', '6', '8', '9']
-            if tag == "567":
-                subfield_code = "b"
-                valid_subfield_codes = ['a', 'b', '0', '1', '2', '5', '6', '8', '9']
-            try:
-                response = self.vocabularies.search(subfield['value'], vocabulary_order, search_geographical_concepts)
-                original_subfields = self.subfields_to_dict(original_field.subfields) 
-                for subfield in original_subfields:
-                    if subfield['code'] not in valid_subfield_codes:        
-                        #TODO: log error
-                        continue
-                    if subfield['code'] == "0" or subfield['code'] == "2" or subfield['code'] == subfield_code:
-                        continue
-                    new_subfields.append({'code': subfield['code'], 'value': subfield['value']})
-                new_subfields.append({'code': subfield_code, 'value': response['label']}) 
-                new_subfields.append({'code': "0", 'value': response['uris'][0]})
-                new_subfields.append({'code': "2", 'value': response['code']})
-                               
-            except ValueError as e:
-                if str(e) == "MULTIPLE_CONCEPTS":
-                    field = self.field_without_voc_code("653", [' ', '4'], subfield)
-                    #TODO: puuttuu konversiosäännöistä
-                    return field
-                elif str(e) == "NOT_FOUND":
-                    original_subfields = self.subfields_to_dict(original_field.subfields)
-                    
-                    for sf in original_subfields:
-                        if sf['code'] == "0" or sf['code'] == "2" or sf['code'] == subfield_code:
-                            continue
-                        else:
-                            new_subfields.append(sf)
-                    new_subfields.append({'code': subfield_code, 'value': subfield['value']})
-                    #TODO: palautetaan virheellinen asiasana???
-                    #TODO: log error
-            #aakkkostetaan uudet ja vanhat osakenttäkoodit numerot viimeiseksi:
-            #new_subfields = self.sort_subfields(new_subfields)
-            field = Field(
-                tag = tag,
-                indicators = [' ',' '],
-            )
-            for ns in new_subfields:
-                field.add_subfield(ns['code'], ns['value'])            
-            return field    
-        """    
         if tag == "655":
             if subfield['code'] in ['a', 'v', 'x']:
                 search_geographical_concepts = False
@@ -686,7 +640,7 @@ class YsoConverter():
                         if subfield['code'] in ['z']:
                             field = self.field_without_voc_code("370", [' ', ' '], subfield)      
                 else:
-                    print("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
+                    logging.info("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
                 logging.error("%s;%s;%s;%s;%s"%(e, record_id, subfield['value'], original_field, field))
         else:
             logging.error("%s;%s;%s;%s;%s"%("8", record_id, subfield['value'], original_field, field))

@@ -78,4 +78,16 @@ Du kan föreslå nya begrepp och ändringar till Allärs och ALLFO med &lt;a hre
     <skos:related rdf:resource="http://www.yso.fi/onto/allars/Y30613"/>
     <skos:related rdf:resource="http://www.yso.fi/onto/allars/Y30781"/>
   </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/allars/Y34083">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1990-11-16</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2016-03-29T16:38:34+03:00</dct:modified>
+    <rdf:type rdf:resource="http://www.yso.fi/onto/allars-meta/GeographicalConcept"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y105361"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p105361"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/allars/"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y51212"/>
+    <skos:note xml:lang="sv">Somerniemi sammanslogs med Somero 1.1.1977</skos:note>
+    <skos:prefLabel xml:lang="sv">Somero</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/allars/Y34082"/>
+  </skos:Concept>
 </rdf:RDF>

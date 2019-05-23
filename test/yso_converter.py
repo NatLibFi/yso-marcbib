@@ -3,7 +3,7 @@ import re
 from vocabularies import Vocabularies
 from rdflib import Graph, URIRef, Namespace, RDF
 from pymarc import Record, Field
-from concept_converter import ConceptConverter
+from yso_converter import YsoConverter
 
 class YsoConversionTest(unittest.TestCase):
 
@@ -45,6 +45,22 @@ class YsoConversionTest(unittest.TestCase):
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
         cls.records = [
+                        {'original': ['=651  \\7$aSomero$2ysa'],
+             'converted': ['=651  \\7$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361']
+            },
+            {'original': ['=651  \\7$aSomero$2ysa',
+                          '=651  \\7$aSomero$2allars'
+                ],
+             'converted': ['=651  \\7$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
+                           '=651  \\7$aSomero$2yso/swe$0http://www.yso.fi/onto/yso/p105361'
+                         ]
+            },
+            {'original': ['=648  \\7$a1980-luku$2ysa$9FENNI<KEEP>',
+                '=648  \\7$a1980-luku$2ysa'
+                ],
+             'converted': ['=648  \\7$a1980-luku$2yso/fin$9FENNI<KEEP>'
+                         ]
+            },
             {'original': ['=648  17$a1980-luku$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
                           '=648  \\7$a1900-luku$2yso',
                           '=648  \\7$a1900-luku$2ysa'
@@ -255,7 +271,7 @@ class YsoConversionTest(unittest.TestCase):
         
         ]
         
-        return super(FieldConversionTest, cls).setUpClass()
+        return super(YsoConversionTest, cls).setUpClass()
 
     def test_subfields_to_dict(self):
         
@@ -358,11 +374,17 @@ class YsoConversionTest(unittest.TestCase):
             new_record = self.cc.process_record(record)
             new_fields = []
             result_fields = []
+           
             for field in new_record.get_fields():
                 new_fields.append(str(field))
+               
             result_fields.append(str(Field(tag='001', data='00000001')))
+          
             for field in r['converted']:
-                result_fields.append(field)   
+                result_fields.append(field)  
+              
+           
+             
             self.assertEqual(result_fields, new_fields)
             
     def new_field(self, tag, indicators, subfields): 
@@ -393,7 +415,7 @@ class YsoConversionTest(unittest.TestCase):
 
     """
 def suite():
-    test_suite = unittest.makeSuite(FieldConversionTest, 'test')
+    test_suite = unittest.makeSuite(YsoConversionTest, 'test')
     return test_suite
     """
 if __name__ == "__main__":
