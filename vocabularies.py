@@ -54,6 +54,8 @@ class Vocabularies:
             vocabulary.parse_musa_vocabulary(graph, secondary_graph)    
         elif vocabulary_code.startswith("slm"):
             vocabulary.parse_slm_vocabulary(graph, language_code)
+        elif vocabulary_code.startswith("seko"):
+            vocabulary.parse_seko_vocabulary(graph)
         self.vocabularies.update({vocabulary_code: vocabulary})
 
     def search(self, keyword, vocabulary_codes, search_geographical_concepts=False):

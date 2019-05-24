@@ -24,6 +24,8 @@ class VocabulariesTest(unittest.TestCase):
         slm_graph.parse('test/slm-skos-test.rdf')
         musa_graph = Graph()
         musa_graph.parse('test/musa-skos-test.rdf')
+        seko_graph = Graph()
+        seko_graph.parse('test/seko-skos-test.rdf')
         cls.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
         cls.vocabularies.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
         cls.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
@@ -32,6 +34,7 @@ class VocabulariesTest(unittest.TestCase):
         cls.vocabularies.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
         cls.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
         cls.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
+        cls.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
         return super(VocabulariesTest, cls).setUpClass()
 
     def test_search(self):

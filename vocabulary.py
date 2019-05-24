@@ -132,14 +132,6 @@ class Vocabulary():
                 self.get_replacers(container, replacers, r)
         else: 
             return
-        """
-        for t in tree:
-            if tree[t]:
-                replacers.add_node(t)
-                get_replacers(replacers, tree[t])
-            else:
-                return    
-        """
 
     def parse_origin_vocabulary(self, g):
         geographical_namespaces = [URIRef("http://www.yso.fi/onto/ysa-meta/GeographicalConcept"),
@@ -183,6 +175,24 @@ class Vocabulary():
                        
         self.create_additional_dicts()
     
+    def parse_seko_vocabulary(self, g):
+        for conc in g.subjects(RDF.type, SKOS.Concept):
+            uri = str(conc)
+            for lc in self.language_codes:
+                alt_labels = g.preferredLabel(conc, lang=lc, labelProperties=[SKOS.altLabel])
+                for al in alt_labels:
+                    alt_label = str(al[1])
+                    if alt_label in self.labels:
+                        self.labels[alt_label].update({uri})
+                    else:
+                        self.labels.update({alt_label: {uri}})
+                pref_label = g.preferredLabel(conc, lang=lc)
+                if pref_label:
+                    pref_label = str(pref_label[0][1])
+                    self.labels.update({pref_label: {uri}})
+                       
+        self.create_additional_dicts()
+
     def parse_slm_vocabulary(self, g, language):
         """
         JOS KÄÄNNÖKSIÄ EI TARVITA:
@@ -287,6 +297,8 @@ class Vocabulary():
                 for r in replacers:
                     if not r in self.deprecated_concepts:
                         valid_uris.append(r)
+                if len(valid_uris) == 0 or len(valid_uris) > 1:
+                    raise ValueError("9")
             if valid_uris:
                 label = self.labels[valid_uris[0]][language]
                 return {"label": label, "uris": valid_uris, "code": "yso/"+self.convert_to_ISO_639_2(language)}  

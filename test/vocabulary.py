@@ -22,6 +22,8 @@ class VocabularyTest(unittest.TestCase):
         slm_graph.parse('test/slm-skos-test.rdf')
         musa_graph = Graph()
         musa_graph.parse('test/musa-skos-test.rdf')
+        seko_graph = Graph()
+        seko_graph.parse('test/seko-skos-test.rdf')
         cls.yso = Vocabulary(['fi', 'sv'])
         cls.yso.parse_yso_vocabulary(yso_graph)
         cls.yso_paikat = Vocabulary(['fi', 'sv'])
@@ -36,7 +38,9 @@ class VocabularyTest(unittest.TestCase):
         cls.slm_sv.parse_slm_vocabulary(slm_graph, 'sv')
         cls.musa = Vocabulary(['fi'])
         cls.musa.parse_musa_vocabulary(musa_graph, ysa_graph)
-        
+        cls.seko = Vocabulary(['fi'])
+        cls.seko.parse_seko_vocabulary(seko_graph)
+
         return super(VocabularyTest, cls).setUpClass()
 
     def test_get_concept_with_uri(self):
@@ -50,11 +54,6 @@ class VocabularyTest(unittest.TestCase):
     def test_get_concept_with_wrong_uri(self):    
         result = self.yso.get_concept_with_uri('http://www.yso.fi/onto/yso/p13y5y3007', 'sv')
         self.assertEqual(result, None)
-
-    def test_get_concept_with_concept_with_multiple_replacedby(self):    
-        print("testit")
-        result = self.yso.get_concept_with_uri('http://www.yso.fi/onto/yso/p113','fi')
-        self.assertTrue(len(result['uris']) > 1)    
 
     def test_get_concept_with_label(self):
         result = self.slm_fi.get_concept_with_label('ragat', 'fi')
@@ -83,7 +82,14 @@ class VocabularyTest(unittest.TestCase):
         self.assertTrue('http://www.yso.fi/onto/yso/p29959' in result['uris'])
         result = self.ysa.get_uris_with_concept('tsekkoslovakia')
         self.assertTrue('http://www.yso.fi/onto/yso/p105847' in result['uris'])
-    
+        result = self.seko.get_uris_with_concept('kurttu')  
+        self.assertTrue('http://urn.fi/urn:nbn:fi:au:seko:00001' in result['uris'])
+
+    def test_search_label_with_multiple_replacers(self):
+        with self.assertRaises(ValueError) as e:
+            result = self.yso.get_concept_with_uri('http://www.yso.fi/onto/yso/p113', 'fi')
+        self.assertTrue("9" in str(e.exception)) 
+
     def test_get_uris_with_concept_without_replacedby(self):
         result = self.ysa.get_uris_with_concept('roudarit')
         self.assertEqual(result, None)    

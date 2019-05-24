@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:afometa="http://www.yso.fi/onto/afo-meta/"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:dct="http://purl.org/dc/terms/"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/"
+   xmlns:gtkmeta="http://www.yso.fi/onto/gtk-meta/"
+   xmlns:isothes="http://purl.org/iso25964/skos-thes#"
+   xmlns:juhometa="http://www.yso.fi/onto/juho-meta/"
+   xmlns:jupometa="http://www.yso.fi/onto/jupo-meta/"
+   xmlns:kauno="http://www.yso.fi/onto/kauno/"
+   xmlns:kaunometa="http://www.yso.fi/onto/kauno-meta/"
+   xmlns:kitometa="http://www.yso.fi/onto/kito-meta/"
+   xmlns:ktometa="http://www.yso.fi/onto/kto-meta/"
+   xmlns:kulometa="http://www.yso.fi/onto/kulo-meta/"
+   xmlns:liitometa="http://www.yso.fi/onto/liito-meta/"
+   xmlns:lukemeta="http://www.yso.fi/onto/luke-meta/"
+   xmlns:maometa="http://www.yso.fi/onto/mao-meta/"
+   xmlns:merometa="http://www.yso.fi/onto/mero-meta/"
+   xmlns:musometa="http://www.yso.fi/onto/muso-meta/"
+   xmlns:myrdfs="http://www.w3.org/2000/01/rdf-schema#"
+   xmlns:oikometa="http://www.yso.fi/onto/oiko-meta/"
+   xmlns:owl="http://www.w3.org/2002/07/owl#"
+   xmlns:puhometa="http://www.yso.fi/onto/puho-meta/"
+   xmlns:rdau="http://rdaregistry.info/Elements/u/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:seko="http://urn.fi/urn:nbn:fi:au:seko:"
+   xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+   xmlns:skosext="http://purl.org/finnonto/schema/skosext#"
+   xmlns:sotometa="http://www.yso.fi/onto/soto-meta/"
+   xmlns:taometa="http://www.yso.fi/onto/tao-meta/"
+   xmlns:termed="termed:property:"
+   xmlns:terometa="http://www.yso.fi/onto/tero-meta/"
+   xmlns:tsrmeta="http://www.yso.fi/onto/tsr-meta/"
+   xmlns:urn="http://urn.fi/urn:nbn:fi:au:sek-meta/"
+   xmlns:valometa="http://www.yso.fi/onto/valo-meta/"
+   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+   xmlns:yso-meta="http://www.yso.fi/onto/yso-meta/"
+   xmlns:yso="http://www.yso.fi/onto/yso/"
+   xmlns:ysokehitys="http://www.yso.fi/onto/yso-kehitys/"
+   xmlns:ysometa="http://www.yso.fi/onto/yso-meta/2007-03-02/"
+   xmlns:ysotranslate="http://www.yso.fi/onto/yso-translate/"
+   xmlns:ysoupdate="http://www.yso.fi/onto/yso-update/">
+  <skos:ConceptScheme rdf:about="http://urn.fi/urn:nbn:fi:au:seko">
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2019-05-24T03:01:22+00:00</dct:modified>
+    <skos:hasTopConcept rdf:resource="http://urn.fi/urn:nbn:fi:au:seko:01225"/>
+  </skos:ConceptScheme>
+  <skos:ConceptScheme rdf:about="http://urn.fi/urn:nbn:fi:au:seko:">
+    <dc:creator xml:lang="fi">Helsingin yliopiston kirjasto</dc:creator>
+    <dc:creator xml:lang="fi">Kansalliskirjasto</dc:creator>
+    <dc:creator xml:lang="fi">Valtakunnallinen musiikin luetteloinnin ja sisällönkuvailun Luumu-ryhmä</dc:creator>
+    <dc:description xml:lang="fi">Suomalainen esityskokoonpanosanasto (SEKO) on yksikielinen musiikin esityskokoonpanot kattava sanasto. Sanasto on tarkoitettu käytettäväksi nuotti- ja av-aineiston sisältämien sävellysten esityskokoonpanojen täsmälliseen indeksointiin ja tiedonhakuun.
+
+Sanasto on ensisijassa tarkoitettu käytettäväksi esityskokoonpanon ilmaisemiseen MARC 21:n bibliografisten tietueiden ja auktoriteettitietueiden kentässä 382, mutta sitä voi käyttää myös esittäjähuomautuksissa (MARC 21:n bibliografisten tietueiden kentässä 511). Sanasto on käytettävissä sekä RDA-kuvailuohjeiden että vanhojen suomalaisten luettelointisääntöjen mukaisissa tietueissa.
+
+SEKO perustuu soitinnimien ohjeluetteloon Aidatrumpetista zimbalomiin. Ohjeluettelon rakenne on täysin uudistettu, sanastoon on lisätty uusia termejä ja joitakin vanhoja termejä on poistettu.</dc:description>
+    <dc:publisher xml:lang="fi">Kansalliskirjasto</dc:publisher>
+    <dc:publisher xml:lang="en">National Library of Finland</dc:publisher>
+    <dc:publisher xml:lang="sv">Nationalbiblioteket i Finland</dc:publisher>
+    <dc:title xml:lang="fi">SEKO - Suomalainen esityskokoonpanosanasto</dc:title>
+    <dct:language rdf:resource="http://lexvo.org/id/iso639-3/fin"/>
+    <dct:license rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/"/>
+    <foaf:homepage rdf:resource="https://www.kiwi.fi/display/Asiasanastotjaontologiat/"/>
+  </skos:ConceptScheme>
+  <skos:Concept rdf:about="http://urn.fi/urn:nbn:fi:au:seko:00001">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2016-03-15</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-09-04T13:25:38+03:00</dct:modified>
+    <skos:altLabel xml:lang="fi">1-rivinen hanuri</skos:altLabel>
+    <skos:altLabel xml:lang="fi">kurttu</skos:altLabel>
+    <skos:altLabel xml:lang="fi">yksirivinen hanuri</skos:altLabel>
+    <skos:altLabel xml:lang="fi">yksirivinen harmonikka</skos:altLabel>
+    <skos:broader rdf:resource="http://urn.fi/urn:nbn:fi:au:seko:00710"/>
+    <skos:closeMatch rdf:resource="http://id.loc.gov/authorities/performanceMediums/mp2013015108"/>
+    <skos:definition xml:lang="fi">Näppäinharmonikka, jonka diskanttipuolella on vain yksi rivi näppäimiä. Näppäimistä muodostuu yleensä diatoninen asteikko.</skos:definition>
+    <skos:inScheme rdf:resource="http://urn.fi/urn:nbn:fi:au:seko"/>
+    <skos:narrower rdf:resource="http://urn.fi/urn:nbn:fi:au:seko:00609"/>
+    <skos:narrower rdf:resource="http://urn.fi/urn:nbn:fi:au:seko:00891"/>
+    <skos:prefLabel xml:lang="fi">1-rivinen harmonikka</skos:prefLabel>
+  </skos:Concept>
+</rdf:RDF>

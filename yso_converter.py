@@ -42,7 +42,7 @@ class YsoConverter():
         self.removed_fields_log = self.conversion_name + "_removed-fields-log_" + time + ".log"
         self.new_fields_log = self.conversion_name + "_new-fields-log_" + time + ".log"
         self.results_log = self.conversion_name + "_results-log_" + time + ".log"
-        error_handler = logging.FileHandler(self.error_log)
+        error_handler = logging.FileHandler(self.error_log, 'w', 'utf-8')
         error_handler.setLevel(logging.ERROR)
         self.error_logger.addHandler(error_handler)
         self.statistics = {}
@@ -91,6 +91,10 @@ class YsoConverter():
             musa_graph = Graph()
             musa_graph.parse('musa-skos.rdf')
 
+            logging.info("parsitaan SEKOa")
+            seko_graph = Graph()
+            seko_graph.parse('seko-skos.rdf')
+
             logging.info("sanastot parsittu")
             
             self.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
@@ -101,7 +105,8 @@ class YsoConverter():
             self.vocabularies.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
             self.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
             self.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
-            
+            self.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
+
             with open('vocabularies.pkl', 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self.vocabularies, output, pickle.HIGHEST_PROTOCOL)
             output.close()
@@ -216,7 +221,7 @@ class YsoConverter():
     def process_record(self, record):
         if record['001']:
             tags_of_fields_to_convert = ['385', '567', '648', '650', '651', '655']
-            tags_of_fields_to_process = ['370', '385', '388', '567', '648', '650', '651', '653', '655']
+            tags_of_fields_to_process = ['257', '370', '382', '385', '388', '567', '648', '650', '651', '653', '655']
             original_fields = {}
             new_fields = {}
             altered_fields = set()
@@ -522,7 +527,7 @@ class YsoConverter():
         
     def process_subfield(self, record_id, original_field, subfield, vocabulary_code, fiction=False):
         if not subfield['value']:
-            logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
+            logging.error("%s;%s;%s;%s"%("1", record_id, subfield['value'], original_field))
             return
         #alustetaan ensin hakuparametrien oletusarvot
         vocabulary_order = [] #hakujärjestys, jos sanaa haetaan useammasta sanastosta 
