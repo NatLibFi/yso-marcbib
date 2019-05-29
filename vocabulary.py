@@ -312,6 +312,7 @@ class Vocabulary():
                 return {"label": label, "uris": [uri], "code": "yso/"+self.convert_to_ISO_639_2(language)}      
 
     def get_concept_with_label(self, label, language):
+        #TODO: optio toisen/kummankin kielen vastineen lisäämiseen
         concept = None
         uris = []
         valid_uris = []
@@ -357,6 +358,7 @@ class Vocabulary():
             return {"label": label[0], "uris": valid_uris, "code": "slm/"+self.convert_to_ISO_639_2(language)}      
 
     def get_uris_with_concept(self, concept):
+        #TODO: optio toisen/kummankin kielen vastineen lisäämiseen
         uris = []
         if concept.lower() in self.labels_with_and_without_specifiers:
             uris = self.labels_with_and_without_specifiers[concept.lower()]

@@ -44,8 +44,24 @@ class YsoConversionTest(unittest.TestCase):
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
-        cls.records = [
-                        {'original': ['=651  \\7$aSomero$2ysa'],
+        cls.records = {
+            "music":
+            [{'original': ['=650  \\7$aragat$zSomero$y1900$2musa',
+                         ],
+             'converted': ['=648  \\7$81\\u$a1900$2yso/fin',
+                           '=650  \\7$81\\u$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038',
+                           '=651  \\7$81\\u$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361'
+                         ]
+            },
+            {'original': ['=650  \\7$aragat$zSomero$y1900$2musa$81\\u',
+                         ],
+                          'converted': ['=648  \\7$82\\u$81\\u$a1900$2yso/fin',
+                                        '=650  \\7$82\\u$81\\u$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038',
+                                        '=651  \\7$82\\u$81\\u$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361'
+                         ]
+            }],
+            "text":
+            [{'original': ['=651  \\7$aSomero$2ysa'],
              'converted': ['=651  \\7$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361']
             },
             {'original': ['=651  \\7$aSomero$2ysa',
@@ -61,11 +77,39 @@ class YsoConversionTest(unittest.TestCase):
              'converted': ['=648  \\7$a1980-luku$2yso/fin$9FENNI<KEEP>'
                          ]
             },
+            {'original': ['=648  \\7$a1980luku$y1990-luku$2ysa'],
+             'converted': ['=648  \\7$a1990-luku$2yso/fin',
+                 '=653  \\0$a1980luku',
+             ]
+            },
+            {'original': ['=648  \\7$a1990$zSomero$zAtlantis$vragat$vouto muototermi$2ysa'],
+             'converted': ['=648  \\7$a1990$2yso/fin',
+                 '=651  \\7$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
+                 '=653  \\5$aAtlantis',
+                 '=653  \\6$aouto muototermi',
+                 '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'
+             ]
+            },
+            {'original': ['=648  17$a1980-luku$xragat$y1990-luku$2ysa'],
+             'converted': ['=388  17$a1980-luku$2yso/fin',
+                           '=648  \\7$a1990-luku$2yso/fin',
+                           '=650  \\7$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038'
+                         ]
+            },
+            {'original': ['=648  \\7$x1980-luku$2ysa'],
+             'converted': ['=648  \\7$a1980-luku$2yso/fin']
+            },
+            {'original': ['=648  \\7$y11.9.2001$2allars'],
+             'converted': ['=648  \\7$a11.9.2001$2yso/swe']
+            },
+            {'original': ['=648  \\7$a1980luku$2ysa'],
+             'converted': ['=653  \\0$a1980luku']
+            },
             {'original': ['=648  17$a1980-luku$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
                           '=648  \\7$a1900-luku$2yso',
                           '=648  \\7$a1900-luku$2ysa'
                          ],
-             'converted': ['=388  1\$8järjestysnumero$a1980-luku$2yso/fin$9FENNI<KEEP>',
+             'converted': ['=388  17$8järjestysnumero$a1980-luku$2yso/fin$9FENNI<KEEP>',
                            '=648  \\7$a1900-luku$2yso',
                            '=648  \\7$a1900-luku$2yso/fin'
                          ]
@@ -79,7 +123,7 @@ class YsoConversionTest(unittest.TestCase):
                           '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$2ysa',
                           '=650  \\7$atsekkoslovakia$0linkitys$9FENNI<KEEP>$9FENNI<KEEP>$2ysa'
                          ],
-             'converted': ['=388  1\$8järjestysnumero$a1980-luku$2yso/fin$9FENNI<KEEP>',
+             'converted': ['=388  17$8järjestysnumero$a1980-luku$2yso/fin$9FENNI<KEEP>',
                             '=648  \\7$a1900-luku$2yso/fin',
                             '=648  \\7$a1900$2yso/swe',
                             '=648  \\7$a1800-1900-luku$2yso/swe',
@@ -129,8 +173,8 @@ class YsoConversionTest(unittest.TestCase):
                            '=650  \\7$apolkka (tanssit)$2yso/fin$0http://www.yso.fi/onto/yso/p5647',
                            '=651  \\7$aTöölö (Helsinki)$2yso/fin$0http://www.yso.fi/onto/yso/p109631'
                         ]
-            }
-        ]
+            }]
+        }
 
         cls.exceptional_fields = [
             {'original': '=650  \\7$a1900-luku$2ysa',
@@ -182,6 +226,16 @@ class YsoConversionTest(unittest.TestCase):
             }
         ]
         #HUOM! sanastokoodi viimeiseksi osakentäksi
+        cls.convertible_music_subfields = [
+                {'original': '=650  \\7$aTšekkoslovakia$vragat$2ysa',
+                'results': ['=651  \\7$81\\u$aTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847',
+                            '=655  \\7$81\\u$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786']
+            },
+            {'original': '=648  \\7$aTšekkoslovakia$vragat$2ysa',
+                'results': ['=651  \\7$aTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847',
+                            '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786']
+            },
+        ]
         cls.convertible_subfields = [
             {'original': '=650  \\7$aTšekkoslovakia$2ysa',
                 'results': ['=651  \\7$aTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847']
@@ -251,7 +305,6 @@ class YsoConversionTest(unittest.TestCase):
             "subfields": ['v', 'fiktio', '2', 'ysa']}
         ]
 
-        
         cls.numeric_fields = [
             {"tag": "650", 
              "indicators": [ ' ', '7' ], 
@@ -268,7 +321,6 @@ class YsoConversionTest(unittest.TestCase):
                 ['=388  1\\$a1800-1900-luku',
                  '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786']
             }
-        
         ]
         
         return super(YsoConversionTest, cls).setUpClass()
@@ -308,7 +360,7 @@ class YsoConversionTest(unittest.TestCase):
         
         result_fields = self.cc.process_field("00000001", field, "ysa")
         self.assertEqual(str(result_fields[0]), test_result)
-    """ 
+     
     def test_convert_field(self):
         #testataan useampia asiasanaosakenttiä sisältävien kenttien konvertoimista:
         for test_field in self.convertible_subfields:
@@ -318,6 +370,16 @@ class YsoConversionTest(unittest.TestCase):
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
+        #testataan musiikkiaineistoa:
+        for test_field in self.convertible_music_subfields:
+            field = self.str_to_marc(test_field['original'])
+            vocabulary_code = field['2']
+            result_fields = self.cc.process_field("00000001", field, vocabulary_code, "1")
+            self.assertTrue(len(test_field['results']) == len(result_fields))
+            for r in test_field['results']:
+                self.assertTrue(any(r == str(rf) for rf in result_fields))
+         
+        """
         for test_field in self.exceptional_fields:
             field = self.str_to_marc(test_field['original'])
             vocabulary_code = field['2']
@@ -325,7 +387,7 @@ class YsoConversionTest(unittest.TestCase):
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
-
+        """
         #testaa rivit, joita ei konvertoida    
         for test_field in self.deletable_fields: 
             field = self.new_field(test_field['tag'], test_field['indicators'], test_field['subfields'])  
@@ -333,7 +395,6 @@ class YsoConversionTest(unittest.TestCase):
             result_fields = self.cc.process_field("00000001", field, vocabulary_code)
             self.assertEqual(result_fields, [])
           
-    """
     def test_convert_numeric_fields(self):
         valid_time_fields = {
             '648': ['a', 'z', 'y', 'v'],
@@ -362,30 +423,39 @@ class YsoConversionTest(unittest.TestCase):
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
     
     def test_process_record(self):
-        for r in self.records:
-            record = Record()
-            record.add_field( Field(tag='001', data='00000001'))
-            original_fields = []
-            for field in r['original']:
-                original_fields.append(field)
-                record.add_field(self.str_to_marc(field))
-            #nimiön 6. paikasta katsotaan tietuetyyppi:
-            record.leader = "wefweeawfewfewfwefwg"
-            new_record = self.cc.process_record(record)
-            new_fields = []
-            result_fields = []
-           
-            for field in new_record.get_fields():
-                new_fields.append(str(field))
-               
-            result_fields.append(str(Field(tag='001', data='00000001')))
-          
-            for field in r['converted']:
-                result_fields.append(field)  
-              
-           
-             
-            self.assertEqual(result_fields, new_fields)
+        for record_type in self.records:
+            for r in self.records[record_type]:
+                original_record = Record()
+                #nimiön 6. paikasta katsotaan tietuetyyppi:
+                if record_type == "music":
+                    original_record.leader = "XXXXXXcX"
+                elif record_type == "text":
+                    original_record.leader = "XXXXXXaX"
+                else:
+                    raise ValueError("Testattava aineistotyyppi on tuntematon")
+                original_record.add_field( Field(tag='001', data='00000001'))
+                original_fields = []
+                for field in r['original']:
+                    original_fields.append(field)
+                    original_record.add_field(self.str_to_marc(field))
+                print("vanha")
+                print(original_record)
+                new_record = self.cc.process_record(original_record)
+                new_fields = []
+                result_fields = []
+                
+                print("uusi")
+                print(new_record)
+                for field in new_record.get_fields():
+                    new_fields.append(str(field))
+                
+                result_fields.append(str(Field(tag='001', data='00000001')))
+            
+                for field in r['converted']:
+                    result_fields.append(field)  
+                
+            
+                self.assertEqual(result_fields, new_fields)
             
     def new_field(self, tag, indicators, subfields): 
         return Field(

@@ -48,9 +48,9 @@ class YsoConverter():
         self.statistics = {}
         self.statistics.update({"konvertoituja tietueita": 0})
         self.statistics.update({"käsiteltyjä tietueita": 0})
-        self.statistics.update({"käsiteltyjä asiasanakenttiä": 0})
-        self.statistics.update({"poistettuja asiasanakenttiä": 0})
-        self.statistics.update({"uusia asiasanakenttiä": 0})
+        self.statistics.update({"käsiteltyjä kenttiä": 0})
+        self.statistics.update({"poistettuja kenttiä": 0})
+        self.statistics.update({"uusia kenttiä": 0})
         self.statistics.update({"virheitä": 0})
         self.statistics.update({"virheluokkia": {}})
 
@@ -165,9 +165,9 @@ class YsoConverter():
         self.nf_handler.close()
         error_handler.close()
         with open(self.results_log, 'w', encoding = 'utf-8-sig') as result_handler:
-            self.statistics["käsiteltyjä asiasanakenttiä"] = \
-            self.statistics["poistettuja asiasanakenttiä"] + \
-            self.statistics["uusia asiasanakenttiä"]
+            self.statistics["käsiteltyjä kenttiä"] = \
+            self.statistics["poistettuja kenttiä"] + \
+            self.statistics["uusia kenttiä"]
             for stat in self.statistics:
                 if stat == "virheluokkia":
                     result_handler.write("Virhetilastot: \n")
@@ -227,6 +227,8 @@ class YsoConverter():
             altered_fields = set()
             record_status = record.leader[5]
             record_id = record['001'].data
+            linking_number = None #käytetään musiikkiaineiston hajotettujen ketjujen yhdistämiseen 8-osakentällä
+            linking_numbers = [] #merkitään 8-osakenttien numerot, joita tietueessa on jo ennestään
             if record_status == "d":
                 return
             """
@@ -239,43 +241,99 @@ class YsoConverter():
             leader_type = record.leader[6]
             record_type = None
             fiction = False
+            control_field_genres = []
             convertible_record = False
             if leader_type in ['a', 't']:
                 record_type = "text"
                 if record.leader[7] not in ['b', 'i', 's']:
+                    """ 
+                    008 (BK) merkkipaikka 34 arvo on erittäin oleellinen ja paljon käytetty 
+                    a, niin 655 $a kenttään voidaan tallettaa muistelmat  http://urn.fi/URN:NBN:fi:au:slm:s286
+                    b tai c niin 655 $a kenttään elämäkerrat http://urn.fi/URN:NBN:fi:au:slm:s1006
+                    008 (BK) merkkipaikka 33 samaten
+                    d -  näytelmät  http://urn.fi/URN:NBN:fi:au:slm:s929
+                    f - romaanit http://urn.fi/URN:NBN:fi:au:slm:s518
+                    h - huumori http://urn.fi/URN:NBN:fi:au:slm:s1128
+                    j - novellit http://urn.fi/URN:NBN:fi:au:slm:s27
+                    p - runot  http://urn.fi/URN:NBN:fi:au:slm:s1150
+                    s - puheet http://urn.fi/URN:NBN:fi:au:slm:s775   tai esitelmät  http://urn.fi/URN:NBN:fi:au:slm:s313
+                    """
                     if record['006']:
                         if len(record['006'].data) > 16:
                             if record['006'].data[16] not in ['0', 'u', '|']:
                                 fiction = True
                     elif record['008']:
-                        if len(record['008'].data) > 33:
+                        if len(record['008'].data) > 34:
                             if record['008'].data[33] not in ['0', 'u', '|']:
                                 fiction = True
-            elif leader_type in ['c', 'd', 'i', 'j']: 
-                record_type = "music"
-                if leader_type == "i":
-                    if record['008']:
-                        if len(record['008'].data) > 31:
-                            if any (lf in record['008'].data[30:31] for lf in ['d', 'f', 'p']):
+                            
+            elif leader_type == "i":
+                record_type = "text"
+                if record['006']:
+                    if len(record['008'].data) > 14:
+                        for char in ['d', 'f', 'p']:
+                            if char in record['008'].data[13:14]:
                                 fiction = True
+                elif record['008']:
+                    if len(record['008'].data) > 31:
+                        for char in ['d', 'f', 'p']:
+                            if char in record['008'].data[30:31]:
+                                fiction = True
+            elif leader_type == "m":
+                #Konsolipelien tunnistaminen 
+                #Leader/06 on m JA kenttä 008/26 on g (eli peli)
+                if record['008']:
+                    if len(record['008'].data) > 33:
+                        if record['008'].data[26] == "g":
+                            fiction = True
+            elif leader_type == "r":
+                #Lautapelien tunnistaminen
+                #leader/06 on r JA 008/33 on g
+                if record['008']:
+                    if len(record['008'].data) > 33:
+                        if record['008'].data[33] == "g":
+                            fiction = True
+
+            elif leader_type in ['c', 'd', 'j']: 
+                record_type = "music"
             elif leader_type == "g":
-                record_type = "image"            
-            if record_type != "text":
-                return
+                if record['007']:
+                    if len(record['007'].data) > 0:
+                        if record['007'].data[0] == "v":
+                            record_type = "movie"
+                            for field in record.get_fields('084'):
+                                for subfield in field.get_subfields('a'):
+                                    if subfield.startswith("78"):
+                                        record_type = "music"
+            if not record_type:
+                record_type = "text"
+
             for tag in tags_of_fields_to_convert:
                 for field in record.get_fields(tag):
-                    if any ("ysa" in sf for sf in field.get_subfields("2")) or \
-                        any ("allars" in sf for sf in field.get_subfields("2")):
+                    if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
                         convertible_record = True
-            #TODO: musiikkiaineistoa ei käsitellä vielä
-            if record_type == "music":
-                convertible_record = False
 
-            if record_type == "text" and convertible_record:   
+            if convertible_record:  
+                if record_type == "music":
+                    for field in record.get_fields():
+                        if hasattr(field, 'subfields'):
+                            for subfield in self.subfields_to_dict(field.subfields):
+                                if subfield['code'] == "8":
+                                    value = subfield['value']
+                                    if "\\" in value:
+                                        value = value.split("\\")[0]
+                                    if "." in value:
+                                        value = value.split(".")[0] 
+                                    if value.isdigit():
+                                        linking_numbers.append(int(value))
+                    linking_numbers = sorted(linking_numbers)
+                    if linking_numbers:
+                        linking_number = str(linking_numbers[len(linking_numbers) - 1] + 1)
+                    else:
+                        linking_number = "1"
                 subfields = []
-                #TODO: vaihtoehto: säilytetään alkup. YSA-rivi, jos valittu optio
-                for tag in tags_of_fields_to_process:
-                    
+                #TODO: vaihtoehto: säilytetään alkup. YSA-rivi, jos valittu optio?
+                for tag in tags_of_fields_to_process:                    
                     for field in record.get_fields(tag):
                         converted_fields = []
                         if tag in tags_of_fields_to_convert:
@@ -288,12 +346,12 @@ class YsoConverter():
                             #TODO: rekisteröi tässä onko tietuetta muutettu?
                             if vocabulary_code:
                                 #TODO: vanha, konvertoitava kenttä lokiin!
-                                converted_fields = self.process_field(record_id, field, vocabulary_code, fiction)
-                                self.statistics['käsiteltyjä asiasanakenttiä'] += 1
+                                converted_fields = self.process_field(record_id, field, vocabulary_code, linking_number, fiction)
+                                self.statistics['käsiteltyjä kenttiä'] += 1
                                 if converted_fields:
                                     altered_fields.add(tag)
                                     for cf in converted_fields:
-                                        self.statistics['uusia asiasanakenttiä'] += 1
+                                        self.statistics['uusia kenttiä'] += 1
                                         altered_fields.add(cf.tag)
                                         if cf.tag in new_fields:
                                             new_fields[cf.tag].append(cf)
@@ -350,7 +408,14 @@ class YsoConverter():
                 return
             return record
         
-    def process_field(self, record_id, field, vocabulary_code, fiction=False):
+    def process_field(self, record_id, field, vocabulary_code, linking_number=None, fiction=False):
+        """
+        record_id: 001-kentästä poimittu tietue-id
+        field: käsiteltävä kenttä MARC21-muodossa
+        vocabulary_code: 
+        linking_number=None, 
+        fiction=False
+        """
         #record_id: tietueen numero virheiden lokitusta varten
         #fiction: Tarvitaan ainakin
         new_fields = []
@@ -360,7 +425,10 @@ class YsoConverter():
         non_digit_codes = []
         for subfield in subfields:
             if not subfield['code'].isdigit():
-                non_digit_codes.append(subfield['code'])    
+                non_digit_codes.append(subfield['code'])   
+        if len(non_digit_codes) < 2 and linking_number:
+            #vain (musiikin) asiasanaketjuihin liitetään 8-osakenttä ja linkkinumero: 
+            linking_number = None 
         #tallennetaan numeroilla koodatut osakentät, jotka liitetään jokaiseen uuteen kenttään, paitsi $0 ja $2:
         control_subfield_codes = ['1', '3', '4', '5', '6', '7', '8', '9']
         if tag == "567":
@@ -441,7 +509,7 @@ class YsoConverter():
                             subfield_list.append(ns['value'])
                         new_field = Field(
                             tag = '388',
-                            indicators = ['1',' '],
+                            indicators = ['1','7'],
                             subfields = subfield_list
                         )
                         new_fields.append(new_field)
@@ -513,9 +581,10 @@ class YsoConverter():
                         tag = new_field.tag,
                         indicators = new_field.indicators,
                     )
+                    if linking_number and field.tag in ['650', '651', '655']:
+                        new_field.add_subfield("8", linking_number + "\\u")   
                     for ns in new_subfields:
                         new_field.add_subfield(ns['code'], ns['value'])   
-                    
                     new_fields.append(new_field)
                     """
                     if new_field.tag in new_fields:
@@ -609,7 +678,7 @@ class YsoConverter():
                 vocabulary_order.append('numeric')
             if subfield['code'] in ['d', 'y']:
                 vocabulary_order = ['numeric'] + vocabulary_order
-        if tag == "648" and subfield['code'] == "a":
+        if tag == "648":
             vocabulary_order = ['numeric'] + vocabulary_order
         #käsitellään perustapaukset
         if subfield['code'] in valid_subfield_codes[tag]:
