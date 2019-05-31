@@ -35,6 +35,8 @@ class YsoConversionTest(unittest.TestCase):
         slm_graph.parse('test/slm-skos-test.rdf')
         musa_graph = Graph()
         musa_graph.parse('test/musa-skos-test.rdf')
+        seko_graph = Graph()
+        seko_graph.parse('test/seko-skos-test.rdf')
         cls.cc.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
         cls.cc.vocabularies.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
         cls.cc.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
@@ -43,7 +45,7 @@ class YsoConversionTest(unittest.TestCase):
         cls.cc.vocabularies.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
-        cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
+        cls.cc.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
         cls.records = {
             "music":
             [{'original': ['=650  \\7$aragat$zSomero$y1900$2musa',
@@ -58,6 +60,12 @@ class YsoConversionTest(unittest.TestCase):
                           'converted': ['=648  \\7$82\\u$81\\u$a1900$2yso/fin',
                                         '=650  \\7$82\\u$81\\u$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038',
                                         '=651  \\7$82\\u$81\\u$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361'
+                         ]
+            },
+            {'original': ['=650  \\7$akurttu$xaltto (alttosaksofoni)(2)$y1900$2musa',
+                         ],
+             'converted': ['=382  11$81\\u$akurttu$aaltto (alttosaksofoni)$n2$2seko',
+                           '=388  \\7$81\\u$a1900$2yso/fin'
                          ]
             }],
             "text":
@@ -438,14 +446,9 @@ class YsoConversionTest(unittest.TestCase):
                 for field in r['original']:
                     original_fields.append(field)
                     original_record.add_field(self.str_to_marc(field))
-                print("vanha")
-                print(original_record)
                 new_record = self.cc.process_record(original_record)
                 new_fields = []
                 result_fields = []
-                
-                print("uusi")
-                print(new_record)
                 for field in new_record.get_fields():
                     new_fields.append(str(field))
                 

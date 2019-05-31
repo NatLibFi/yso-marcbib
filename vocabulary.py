@@ -16,7 +16,13 @@ class Container():
 
 class Vocabulary():
 
-    def __init__(self, language_codes):
+    def __init__(self, vocabulary_code, language_codes):
+        if vocabulary_code.startswith('slm'):
+            self.target_vocabulary_code = "slm" 
+        elif vocabulary_code == 'seko':
+            self.target_vocabulary_code = vocabulary_code
+        else:
+            self.target_vocabulary_code = "yso"
         self.language_codes = language_codes
         #tallennetaan deprekoitujen käsitteiden ja niiden voimassaolevien korvaajien URIt 
         self.geographical_concepts = set()
@@ -287,7 +293,6 @@ class Vocabulary():
 
     def get_concept_with_uri(self, uri, language):
         #muutetaan kaksikirjaimiset kielikoodit kolmikirjaimiseksi sanastokoodia varten:
-          
         concept = None
         response = {}
         if uri in self.deprecated_concepts:
@@ -301,15 +306,15 @@ class Vocabulary():
                     raise ValueError("9")
             if valid_uris:
                 label = self.labels[valid_uris[0]][language]
-                return {"label": label, "uris": valid_uris, "code": "yso/"+self.convert_to_ISO_639_2(language)}  
+                return {"label": label, "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}  
             else:
                 #raise ValueError("ei löydy YSO-vastinetta")
-                return {"label": None, "uris": uris, "code": "yso/"+self.convert_to_ISO_639_2(language)}  
+                return {"label": None, "uris": uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}  
         elif uri in self.labels:
             
             if language in self.labels[uri]:
                 label = self.labels[uri][language]
-                return {"label": label, "uris": [uri], "code": "yso/"+self.convert_to_ISO_639_2(language)}      
+                return {"label": label, "uris": [uri], "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}      
 
     def get_concept_with_label(self, label, language):
         #TODO: optio toisen/kummankin kielen vastineen lisäämiseen
@@ -326,14 +331,13 @@ class Vocabulary():
                 if uri not in self.deprecated_concepts:
                     valid_uris.append(uri)  
             if valid_uris:
-                return {"label": label, "uris": valid_uris, "code": "slm/"+self.convert_to_ISO_639_2(language)}    
+                return {"label": label, "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}    
         elif label.lower() in self.labels_lowercase:
             uris = self.labels_lowercase[label.lower()]["uris"]
             label = self.labels_lowercase[label.lower()][language]
         elif label.lower() in self.stripped_labels:
             uris = self.stripped_labels[label.lower()]["uris"]
-            label = self.stripped_labels[label.lower()][language]
-        
+            label = self.stripped_labels[label.lower()][language]  
         elif label.lower() in self.labels_with_specifiers:
             uris = self.labels_with_specifiers[label.lower()]["uris"]
             if len(uris) > 1:
@@ -349,13 +353,8 @@ class Vocabulary():
         elif len(uris) == 1:
             if uris[0] not in self.deprecated_concepts:
         """        
-        if valid_uris:
-            #muutetaan kaksikirjaimiset kielikoodit kolmikirjaimiseksi sanastokoodia varten:
-            if language == "fi":
-                language = "fin"
-            if language == "sv":
-                language = "swe"  
-            return {"label": label[0], "uris": valid_uris, "code": "slm/"+self.convert_to_ISO_639_2(language)}      
+        if valid_uris: 
+            return {"label": label[0], "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}      
 
     def get_uris_with_concept(self, concept):
         #TODO: optio toisen/kummankin kielen vastineen lisäämiseen

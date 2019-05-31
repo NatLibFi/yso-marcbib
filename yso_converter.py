@@ -18,6 +18,7 @@ import copy
 import os.path
 import logging
 import sys
+import re
 
 class YsoConverter():
 
@@ -346,7 +347,7 @@ class YsoConverter():
                             #TODO: rekisteröi tässä onko tietuetta muutettu?
                             if vocabulary_code:
                                 #TODO: vanha, konvertoitava kenttä lokiin!
-                                converted_fields = self.process_field(record_id, field, vocabulary_code, linking_number, fiction)
+                                converted_fields = self.process_field(record_id, field, vocabulary_code, linking_number, fiction, record_type)
                                 self.statistics['käsiteltyjä kenttiä'] += 1
                                 if converted_fields:
                                     altered_fields.add(tag)
@@ -408,13 +409,14 @@ class YsoConverter():
                 return
             return record
         
-    def process_field(self, record_id, field, vocabulary_code, linking_number=None, fiction=False):
+    def process_field(self, record_id, field, vocabulary_code, linking_number=None, fiction=False, record_type=None):
         """
-        record_id: 001-kentästä poimittu tietue-id
-        field: käsiteltävä kenttä MARC21-muodossa
-        vocabulary_code: 
-        linking_number=None, 
-        fiction=False
+        record_id -- 001-kentästä poimittu tietue-id
+        field -- käsiteltävä kenttä MARC21-muodossa
+        vocabulary_code -- alkuperäisen tietueen 2-osakentästä otettu sanastokoodi
+        linking_number -- 8-osakenttään tuleva, eri kenttiä linkittävä arvo
+        fiction -- määrittelee, onko tietueen aineisto kaunokirjallisuutta
+        record_type -- aineistotyyppi joidenkin kenttien erikoiskäsittelyä varten, käyvät arvot: "text", "music", "movie"
         """
         #record_id: tietueen numero virheiden lokitusta varten
         #fiction: Tarvitaan ainakin
@@ -481,7 +483,53 @@ class YsoConverter():
             logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], field))
             return [field]
         
-        #poikkeuksellisesti käsiteltävät kentät: 385, 567 ja 648:
+        #poikkeuksellisesti käsiteltävät kentät: 
+        #385, 567 ja 648, jossa 1. indikaattori on "1", 650/655, jos musiikkiaineistoa:
+        if tag in ['650', '655'] and record_type == "music":
+            #etsitään SEKO-asiasanoja 650-kentästä:
+            temp_field = Field(
+                tag = tag,
+                indicators = field.indicators,
+            )
+            subfield_list = []
+            for subfield in subfields:
+                #etsitään ensin sulkutekstejä, jossa on numeroita eli soitinten määrä, joka viedään 382 n-osakenttään
+                response = None
+                
+                if subfield['code'] in ['a', 'x']:
+                    n = None
+                    matches = re.findall('\((.*?)\)', subfield['value'])
+                    for m in matches:
+                        if m.isdigit():
+                            n = m
+                            subfield['value'] = subfield['value'].replace("("+n+")", "")
+                            subfield['value'] = subfield['value'].replace("  ", " ")
+                            subfield['value'] = subfield['value'].strip()
+                    try:
+                        response = self.vocabularies.search(subfield['value'], ['seko'])
+                    except ValueError:
+                        pass    
+                if response:
+                    if n:
+                        subfield_list.extend(["a", subfield['value'], "n", n])     
+                    else: 
+                        subfield_list.extend(["a", subfield['value']])     
+                else:
+                    temp_field.add_subfield(subfield['code'], subfield['value'])
+            if subfield_list:
+                if linking_number:
+                    subfield_list = ["8", linking_number + "\\u"] + subfield_list
+                new_field = Field(
+                    tag = "382",
+                    indicators = ['1', '1'],
+                    subfields = subfield_list
+                )
+                new_field.add_subfield("2", "seko")  
+                new_fields.append(new_field)
+            #jätetään vielä muut kuin SEKO-termit tavalliseen käsittelyyn:
+            field = temp_field
+            subfields = self.subfields_to_dict(field.subfields)
+
         if tag == "648":
             if field.indicators[0] == "1":
                 original_field = copy.deepcopy(field)
@@ -505,8 +553,7 @@ class YsoConverter():
                         new_subfields = self.sort_subfields(new_subfields)
                         subfield_list = []
                         for ns in new_subfields:
-                            subfield_list.append(ns['code'])
-                            subfield_list.append(ns['value'])
+                            subfield_list.extend([ns['code'], ns['value']])
                         new_field = Field(
                             tag = '388',
                             indicators = ['1','7'],
@@ -595,6 +642,14 @@ class YsoConverter():
         return new_fields
         
     def process_subfield(self, record_id, original_field, subfield, vocabulary_code, fiction=False):
+        """
+        record_id -- 001-kentästä poimittu tietue-id
+        original_field -- konvertoitava kenttä MARC21-muodossa
+        subfield -- käsiteltävä osakenttä dict-muodossa {"code": "osakenttäkoodi", "value": "osakentän arvo"} 
+        vocabulary_code -- alkuperäisen tietueen 2-osakentästä otettu sanastokoodi
+        linking_number -- 8-osakenttään tuleva, eri kenttiä linkittävä arvo
+        fiction -- määrittelee, onko tietueen aineisto kaunokirjallisuutta
+        """
         if not subfield['value']:
             logging.error("%s;%s;%s;%s"%("1", record_id, subfield['value'], original_field))
             return

@@ -77,4 +77,17 @@ SEKO perustuu soitinnimien ohjeluetteloon Aidatrumpetista zimbalomiin. Ohjeluett
     <skos:narrower rdf:resource="http://urn.fi/urn:nbn:fi:au:seko:00891"/>
     <skos:prefLabel xml:lang="fi">1-rivinen harmonikka</skos:prefLabel>
   </skos:Concept>
+  <skos:Concept rdf:about="http://urn.fi/urn:nbn:fi:au:seko:00040">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2016-03-15</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-09-04T13:25:39+03:00</dct:modified>
+    <skos:altLabel xml:lang="fi">alto sax</skos:altLabel>
+    <skos:altLabel xml:lang="fi">altto (alttosaksofoni)</skos:altLabel>
+    <skos:altLabel xml:lang="fi">alttofoni</skos:altLabel>
+    <skos:altLabel xml:lang="fi">as (alttosaksofoni)</skos:altLabel>
+    <skos:broader rdf:resource="http://urn.fi/urn:nbn:fi:au:seko:00879"/>
+    <skos:exactMatch rdf:resource="http://id.loc.gov/authorities/performanceMediums/mp2013015015"/>
+    <skos:inScheme rdf:resource="http://urn.fi/urn:nbn:fi:au:seko"/>
+    <skos:note xml:lang="fi">Termiä suositellaan käytettäväksi lähinnä populaarimusiikin yhteydessä.</skos:note>
+    <skos:prefLabel xml:lang="fi">alttosaksofoni</skos:prefLabel>
+  </skos:Concept>
 </rdf:RDF>

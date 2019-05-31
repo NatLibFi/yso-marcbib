@@ -45,7 +45,7 @@ class Vocabularies:
 
     def parse_vocabulary(self, graph, vocabulary_code, language_codes, language_code = None, secondary_graph = None):
         #secondary_vocabulary: tarvitaan luomaan musa -> ysa ja cilla -> ysa -vastaavuudet
-        vocabulary = Vocabulary(language_codes)
+        vocabulary = Vocabulary(vocabulary_code, language_codes)
         if vocabulary_code.startswith("yso"):
             vocabulary.parse_yso_vocabulary(graph)
         elif vocabulary_code == "ysa" or vocabulary_code == "allars":
@@ -113,7 +113,11 @@ class Vocabularies:
                     language = "fi"
                 if vc == "slm_sv":
                     language = "sv"
-                response = self.vocabularies[vc].get_concept_with_label(keyword, language)               
+                response = self.vocabularies[vc].get_concept_with_label(keyword, language)    
+            elif vc == "seko":           
+                response = self.vocabularies[vc].get_uris_with_concept(keyword)
+                if response:
+                    response.update({'label': keyword})
             if response:
                 if "uris" in response:
                     response.update({'geographical': geographical_concept})
