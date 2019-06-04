@@ -11,6 +11,8 @@ from pymarc.exceptions import (BaseAddressInvalid,
                                FieldNotFound, 
                                RecordLengthInvalid) 
 from vocabularies import Vocabularies
+import urllib.request
+import shutil
 import argparse
 import datetime
 import pickle
@@ -54,6 +56,18 @@ class YsoConverter():
         self.statistics.update({"uusia kenttiä": 0})
         self.statistics.update({"virheitä": 0})
         self.statistics.update({"virheluokkia": {}})
+        #ladattavien sanastojen sijainti:
+        self.data_url = "http://api.finto.fi/download/"
+        #ladattavien sanastojen kansio- ja tiedostonimi:
+        self.vocabulary_files = {
+            "yso": "yso-skos.ttl",
+            "yso-paikat": "yso-paikat-skos.ttl",
+            "ysa": "ysa-skos.ttl",
+            "allars": "allars-skos.ttl",
+            "slm": "slm-skos.ttl",
+            "musa": "musa-skos.ttl",
+            "seko": "seko-skos.ttl"
+            }
 
     def initialize_vocabularies(self):
         vocabularies_dump_loaded = False
@@ -61,58 +75,68 @@ class YsoConverter():
             timestamp = os.path.getmtime('vocabularies.pkl')
             file_date = datetime.date.fromtimestamp(timestamp)
             if file_date == datetime.date.today():
-                with open('vocabularies.pkl', 'rb') as input: 
+                with open('vocabularies.pkl', 'rb') as input_file: 
                     try:     
-                        self.vocabularies = pickle.load(input)
+                        self.vocabularies = pickle.load(input_file)
                         vocabularies_dump_loaded = True
                     except EOFError:
-                        pass
-        if not vocabularies_dump_loaded:    
-            logging.info("parsitaan YSOa") 
-            yso_graph = Graph()
-            yso_graph.parse('yso-skos.rdf')
+                        vocabularies_dump_loaded = False    
+                vocabulary_names = ['ysa', 'yso', 'yso_paikat', 'allars', 'slm_fi', 'slm_sv', 'musa', 'cilla', 'seko']
+                for vn in vocabulary_names:
+                    if vn not in self.vocabularies.vocabularies:
+                        #jos kaikki sanastot eivät löydy dumpista, sanastot on käsiteltävä uudelleen:
+                        vocabularies_dump_loaded = False
+        
+        vocabularies_dump_loaded = False
 
-            logging.info("parsitaan YSO-paikkoja")
-            yso_paikat_graph = Graph()
-            yso_paikat_graph.parse('yso-paikat-skos.rdf')
-
-            logging.info("parsitaan YSAa")
-            ysa_graph = Graph()
-            ysa_graph.parse('ysa-skos.rdf')
-
-            logging.info("parsitaan Allärsia")
-            allars_graph = Graph()
-            allars_graph.parse('allars-skos.rdf')
-
-            logging.info("parsitaan SLM_ää")
-            slm_graph = Graph()
-            slm_graph.parse('slm-skos.rdf')
-
-            logging.info("parsitaan Musaa")
-            musa_graph = Graph()
-            musa_graph.parse('musa-skos.rdf')
-
-            logging.info("parsitaan SEKOa")
-            seko_graph = Graph()
-            seko_graph.parse('seko-skos.rdf')
-
-            logging.info("sanastot parsittu")
+        if not vocabularies_dump_loaded: 
+            urllib_errors = False
+            for vf in self.vocabulary_files:
+                try:
+                    with urllib.request.urlopen(self.data_url + "/" + vf + "/" + self.vocabulary_files[vf]) as turtle, \
+                        open(self.vocabulary_files[vf], 'wb') as out_file:
+                        shutil.copyfileobj(turtle, out_file)
+                except urllib.error.URLError as e:
+                    logging.warning("Ei onnistuttu lataamaan sanastoa %s")
+                    urllib_errors = True
+            if urllib_errors:
+                while True:
+                    answer = input("Kaikkia sanastoja ei onnistuttu lataamaan. Haluatko käyttää mahdollisesti vanhentuneita sanastoja paikalliselta levyltä (K/E)?")
+                    if answer.lower() == "k":
+                        break
+                    if answer.lower() == "e":
+                        sys.exit(2)
+            graphs = {}
             
-            self.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
-            self.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
-            self.vocabularies.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
-            self.vocabularies.parse_vocabulary(allars_graph, 'allars', ['sv'])
-            self.vocabularies.parse_vocabulary(slm_graph, 'slm_fi', ['fi', 'sv'], 'fi')
-            self.vocabularies.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
-            self.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
-            self.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
-            self.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
+            for vf in self.vocabulary_files:
+                g = Graph()
+                graphs.update({vf: g})
+                try:
+                    logging.info("parsitaan sanastoa %s"%vf)
+                    g.parse(self.vocabulary_files[vf], format='ttl')
+                except FileNotFoundError:
+                    logging.error("Tiedostoa %s ei löytynyt levyltä. "
+                        "Tiedoston automaattinen lataaminen ei ole onnistunut tai tiedosto on poistettu. "
+                        "Käy hakemassa kaikki tarvittavat sanastot 'ysa', 'yso', 'yso-paikat', 'allars', 'slm', 'musa', 'cilla', 'seko' "
+                        "osoitteesta finto.fi ttl-tiedostomuodossa"%self.vocabulary_files[vf])
+                    sys.exit(2)
+            logging.info("valmistellaan sanastot konversiokäyttöä varten")
+            
+            self.vocabularies.parse_vocabulary(graphs['ysa'], 'ysa', ['fi'])
+            self.vocabularies.parse_vocabulary(graphs['yso'], 'yso', ['fi', 'sv'])
+            self.vocabularies.parse_vocabulary(graphs['yso-paikat'], 'yso_paikat', ['fi', 'sv'])
+            self.vocabularies.parse_vocabulary(graphs['allars'], 'allars', ['sv'])
+            self.vocabularies.parse_vocabulary(graphs['slm'], 'slm_fi', ['fi', 'sv'], 'fi')
+            self.vocabularies.parse_vocabulary(graphs['slm'], 'slm_sv', ['fi', 'sv'], 'sv')
+            self.vocabularies.parse_vocabulary(graphs['musa'], 'musa', ['fi'], secondary_graph = graphs['ysa'])
+            self.vocabularies.parse_vocabulary(graphs['musa'], 'cilla', ['sv'], secondary_graph = graphs['ysa'])
+            self.vocabularies.parse_vocabulary(graphs['seko'], 'seko', ['fi'])
 
             with open('vocabularies.pkl', 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self.vocabularies, output, pickle.HIGHEST_PROTOCOL)
+            logging.info("sanastot tallennettu muistiin ja tiedostoon vocabularies.pkl")
             output.close()
            
-
     def read_records(self):
         with open(self.error_log, 'w', encoding = 'utf-8-sig') as error_handler, \
             open(self.removed_fields_log, 'w', encoding = 'utf-8-sig') as self.rf_handler, \
@@ -314,8 +338,9 @@ class YsoConverter():
                     if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
                         convertible_record = True
 
+            #jos $8-osakenttiä tietueessa ennestään, otetaan uusien $8-osakenttien 1. numeroksi viimeistä seuraava numero:
             if convertible_record:  
-                if record_type == "music":
+                if record_type == "music" or record_type == "movie":
                     for field in record.get_fields():
                         if hasattr(field, 'subfields'):
                             for subfield in self.subfields_to_dict(field.subfields):
@@ -429,7 +454,7 @@ class YsoConverter():
             if not subfield['code'].isdigit():
                 non_digit_codes.append(subfield['code'])   
         if len(non_digit_codes) < 2 and linking_number:
-            #vain (musiikin) asiasanaketjuihin liitetään 8-osakenttä ja linkkinumero: 
+            #musiikin  asiasanaketjuihin liitetään 8-osakenttä ja linkkinumero: 
             linking_number = None 
         #tallennetaan numeroilla koodatut osakentät, jotka liitetään jokaiseen uuteen kenttään, paitsi $0 ja $2:
         control_subfield_codes = ['1', '3', '4', '5', '6', '7', '8', '9']
@@ -462,7 +487,7 @@ class YsoConverter():
                 combined_subfields = []
                 while len(subfields) > 0:
                     if len(subfields) > 1:
-                        if subfields[0]['code'] == "a" or subfields[0]['code'] == "z":
+                        if subfields[0]['code'] in ['a', 'b', 'c', 'd', 'v', 'x', 'y']: 
                             first = subfields[0]['value']
                             if subfields[1]['code'] == "z":
                                 second = subfields[1]['value']
