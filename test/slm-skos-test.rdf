@@ -15,8 +15,10 @@
     <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2018-05-16</dct:created>
     <owl:imports rdf:resource="http://www.w3.org/2004/02/skos/core"/>
   </owl:Ontology>
-  <skos:Concept rdf:about="http://urn.fi/URN:NBN:fi:au:slm:s786">
+<skos:Concept rdf:about="http://urn.fi/URN:NBN:fi:au:slm:s786">
     <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2018-05-16</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2019-02-23</dct:modified>
+    <skos:altLabel xml:lang="fi">ragat</skos:altLabel>
     <skos:exactMatch rdf:resource="http://id.loc.gov/authorities/genreForms/gf2014027180"/>
     <skos:inScheme rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s861"/>
     <skos:prefLabel xml:lang="sv">ragor</skos:prefLabel>

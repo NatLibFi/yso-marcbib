@@ -52,14 +52,18 @@ class Vocabularies:
             vocabulary.parse_origin_vocabulary(graph)
         elif vocabulary_code == "musa" or vocabulary_code == "cilla":
             vocabulary.parse_musa_vocabulary(graph, secondary_graph)    
-        elif vocabulary_code.startswith("slm"):
-            vocabulary.parse_slm_vocabulary(graph, language_code)
+        elif vocabulary_code == "slm":
+            vocabulary.parse_label_vocabulary(graph)
         elif vocabulary_code.startswith("seko"):
-            vocabulary.parse_seko_vocabulary(graph)
+            vocabulary.parse_label_vocabulary(graph)
         self.vocabularies.update({vocabulary_code: vocabulary})
 
     def search(self, keyword, vocabulary_codes, search_geographical_concepts=False):
         """
+        kewword: hakusana
+        vocabulary_codes: dictionary, joka muodostuu sanastokoodi, kielikoodi avainarvopareista
+        search_geographical_concepts: Boolean-arvo sille, haetaanko käsitettä YSO-paikoista
+
         Virhekoodit:
         1: termille ei löytynyt vastinetta sanastoista
         2: termille useampi mahdollinen vastine (termille on useampi samanlainen normalisoitu käytettävä termi tai ohjaustermi) 
@@ -74,50 +78,37 @@ class Vocabularies:
         keyword = unicodedata.normalize('NFKC', keyword)
         keyword = keyword.strip()
         
-       
         geographical_concept = False
         for vc in vocabulary_codes:
             response = {}
-            if vc == "numeric":
+            if vc[0] == "numeric":
                 if self.is_numeric(keyword):
                     response.update({'numeric': True})
                     response.update({'label': keyword})
-                    if vocabulary_codes.index("ysa") < vocabulary_codes.index("allars"): 
+                    if vc[1] == "fi":
                         response.update({'code': 'yso/fin'})
-                    else:
+                    if vc[1] == "sv":
                         response.update({'code': 'yso/swe'})
-            if vc in ['ysa', 'allars', 'musa', 'cilla']:
-                if vc in ['ysa', 'musa']:
-                    language = "fi"
-                if vc in ['allars', 'cilla']:
-                    language = "sv"
-                response = self.vocabularies[vc].get_uris_with_concept(keyword)
+            if vc[0] in ['ysa', 'allars', 'musa', 'cilla']:
+                response = self.vocabularies[vc[0]].get_uris_with_concept(keyword)
                 if response:
                     if "uris" in response:
                         if len(response['uris']) > 1:
                             raise ValueError("2")
-                        if response["uris"][0] in self.vocabularies[vc].geographical_concepts:
+                        if response["uris"][0] in self.vocabularies[vc[0]].geographical_concepts:
                             if search_geographical_concepts:
-                                response = self.vocabularies['yso_paikat'].get_concept_with_uri(response["uris"][0], language) 
+                                response = self.vocabularies['yso_paikat'].get_concept_with_uri(response["uris"][0], vc[1]) 
                                 geographical_concept = True
                             else:
                                 response = None
                         else:
-                            response = self.vocabularies['yso'].get_concept_with_uri(response["uris"][0], language)    
+                            response = self.vocabularies['yso'].get_concept_with_uri(response["uris"][0], vc[1])    
                 #except ValueError as e:
                     #logging.warning
                     #logging.info(e)
                     #return response          
-            elif vc == "slm_fi" or vc == "slm_sv":
-                if vc == "slm_fi":
-                    language = "fi"
-                if vc == "slm_sv":
-                    language = "sv"
-                response = self.vocabularies[vc].get_concept_with_label(keyword, language)    
-            elif vc == "seko":           
-                response = self.vocabularies[vc].get_uris_with_concept(keyword)
-                if response:
-                    response.update({'label': keyword})
+            elif vc[0] == "slm" or vc[0] == "seko":
+                response = self.vocabularies[vc[0]].get_concept_with_label(keyword, vc[1])    
             if response:
                 if "uris" in response:
                     response.update({'geographical': geographical_concept})

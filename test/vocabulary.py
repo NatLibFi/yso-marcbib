@@ -32,14 +32,12 @@ class VocabularyTest(unittest.TestCase):
         cls.ysa.parse_origin_vocabulary(ysa_graph)
         cls.allars = Vocabulary("allars", ['fi'])
         cls.allars.parse_origin_vocabulary(allars_graph)
-        cls.slm_fi = Vocabulary("slm", ['fi', 'sv'])
-        cls.slm_fi.parse_slm_vocabulary(slm_graph, 'fi')
-        cls.slm_sv = Vocabulary("slm", ['fi', 'sv'])
-        cls.slm_sv.parse_slm_vocabulary(slm_graph, 'sv')
+        cls.slm = Vocabulary("slm", ['fi', 'sv'])
+        cls.slm.parse_label_vocabulary(slm_graph)
         cls.musa = Vocabulary("musa", ['fi'])
         cls.musa.parse_musa_vocabulary(musa_graph, ysa_graph)
         cls.seko = Vocabulary("seko", ['fi'])
-        cls.seko.parse_seko_vocabulary(seko_graph)
+        cls.seko.parse_label_vocabulary(seko_graph)
         return super(VocabularyTest, cls).setUpClass()
 
     def test_get_concept_with_uri(self):
@@ -55,25 +53,25 @@ class VocabularyTest(unittest.TestCase):
         self.assertEqual(result, None)
 
     def test_get_concept_with_label(self):
-        result = self.slm_fi.get_concept_with_label('ragat', 'fi')
+        result = self.slm.get_concept_with_label('ragat', 'fi')
         self.assertEqual(result['label'], 'rāgat')
         self.assertEqual(result['code'], 'slm/fin')
         self.assertTrue('http://urn.fi/URN:NBN:fi:au:slm:s786' in result['uris'])
-        result = self.slm_sv.get_concept_with_label('ragor', 'fi')
-        self.assertEqual(result['label'], 'ragor')
-        self.assertEqual(result['code'], 'slm/fin')
-        self.assertTrue('http://urn.fi/URN:NBN:fi:au:slm:s786' in result['uris'])
-        result = self.slm_fi.get_concept_with_label('ragat', 'sv')
-        self.assertEqual(result['label'], 'ragor')
-        self.assertEqual(result['code'], 'slm/swe')
-        self.assertTrue('http://urn.fi/URN:NBN:fi:au:slm:s786' in result['uris'])
-        result = self.slm_sv.get_concept_with_label('ragor', 'sv')
+        result = self.slm.get_concept_with_label('ragor', 'fi')
+        self.assertEqual(result, None)
+        result = self.slm.get_concept_with_label('ragat', 'sv')
+        self.assertEqual(result, None)
+        result = self.slm.get_concept_with_label('ragor', 'sv')
         self.assertEqual(result['label'], 'ragor')
         self.assertEqual(result['code'], 'slm/swe')
         self.assertTrue('http://urn.fi/URN:NBN:fi:au:slm:s786' in result['uris'])
+        result = self.seko.get_concept_with_label('kurttu', 'fi')  
+        self.assertEqual(result['label'], '1-rivinen harmonikka')
+        self.assertEqual(result['code'], 'seko/fin')
+        self.assertTrue('http://urn.fi/urn:nbn:fi:au:seko:00001' in result['uris'])
         
     def test_get_concept_with_wrong_label(self):    
-        result = self.slm_fi.get_concept_with_label('ragor', 'fi')
+        result = self.slm.get_concept_with_label('ragor', 'fi')
         self.assertEqual(result, None)
 
     def test_get_uris_with_concept(self):
@@ -81,8 +79,6 @@ class VocabularyTest(unittest.TestCase):
         self.assertTrue('http://www.yso.fi/onto/yso/p29959' in result['uris'])
         result = self.ysa.get_uris_with_concept('tsekkoslovakia')
         self.assertTrue('http://www.yso.fi/onto/yso/p105847' in result['uris'])
-        result = self.seko.get_uris_with_concept('kurttu')  
-        self.assertTrue('http://urn.fi/urn:nbn:fi:au:seko:00001' in result['uris'])
 
     def test_search_label_with_multiple_replacers(self):
         with self.assertRaises(ValueError) as e:
@@ -94,7 +90,7 @@ class VocabularyTest(unittest.TestCase):
         self.assertEqual(result, None)    
 
     def test_get_uris_with_wrong_concept(self):    
-        result = self.slm_fi.get_concept_with_label('olematon käsite', 'fi')
+        result = self.slm.get_concept_with_label('olematon käsite', 'fi')
         self.assertEqual(result, None)
     
     def test_get_concept_with_wrong_uri(self):    

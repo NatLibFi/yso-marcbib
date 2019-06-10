@@ -41,15 +41,14 @@ class YsoConversionTest(unittest.TestCase):
         cls.cc.vocabularies.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
         cls.cc.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
         cls.cc.vocabularies.parse_vocabulary(allars_graph, 'allars', ['sv'])
-        cls.cc.vocabularies.parse_vocabulary(slm_graph, 'slm_fi', ['fi', 'sv'], 'fi')
-        cls.cc.vocabularies.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
+        cls.cc.vocabularies.parse_vocabulary(slm_graph, 'slm', ['fi', 'sv'])
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
+
         cls.records = {
             "music":
-            [{'original': ['=650  \\7$aragat$zSomero$y1900$2musa',
-                         ],
+            [{'original': ['=650  \\7$aragat$zSomero$y1900$2musa',],
              'converted': ['=648  \\7$81\\u$a1900$2yso/fin',
                            '=650  \\7$81\\u$arāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038',
                            '=651  \\7$81\\u$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361'
@@ -334,7 +333,6 @@ class YsoConversionTest(unittest.TestCase):
         return super(YsoConversionTest, cls).setUpClass()
 
     def test_subfields_to_dict(self):
-        
         subfields = ['a', 'nimi', 'b', 'alaotsikko']
         expected_result = [{'code': 'a', 'value': 'nimi'}, {'code': 'b', 'value': 'alaotsikko'}]
         self.assertEqual(self.cc.subfields_to_dict(subfields), expected_result)
@@ -368,7 +366,7 @@ class YsoConversionTest(unittest.TestCase):
         
         result_fields = self.cc.process_field("00000001", field, "ysa")
         self.assertEqual(str(result_fields[0]), test_result)
-     
+    
     def test_convert_field(self):
         #testataan useampia asiasanaosakenttiä sisältävien kenttien konvertoimista:
         for test_field in self.convertible_subfields:
@@ -402,7 +400,8 @@ class YsoConversionTest(unittest.TestCase):
             vocabulary_code = test_field['subfields'][-1]
             result_fields = self.cc.process_field("00000001", field, vocabulary_code)
             self.assertEqual(result_fields, [])
-          
+        
+    
     def test_convert_numeric_fields(self):
         valid_time_fields = {
             '648': ['a', 'z', 'y', 'v'],
@@ -429,9 +428,10 @@ class YsoConversionTest(unittest.TestCase):
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
-    
+        
     def test_process_record(self):
         for record_type in self.records:
+            print("record_type %s"%record_type)
             for r in self.records[record_type]:
                 original_record = Record()
                 #nimiön 6. paikasta katsotaan tietuetyyppi:

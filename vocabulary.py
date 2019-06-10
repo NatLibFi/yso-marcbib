@@ -180,85 +180,78 @@ class Vocabulary():
                         self.geographical_chained_labels.add(pref_label)
                        
         self.create_additional_dicts()
-    
-    def parse_seko_vocabulary(self, g):
+ 
+    def parse_label_vocabulary(self, g):
+        """
+        muodostaa sanastolle, joka sisältää vain käsitteiden labelit ja niiden prefLabelit
+        """
+        temp_labels = {}
+        for lc in self.language_codes:
+            self.labels.update({lc: {}})
+            self.labels_lowercase.update({lc: {}})
+            self.stripped_labels.update({lc: {}})
+            self.labels_with_and_without_specifiers.update({lc: {}})
+            self.labels_with_specifiers.update({lc: {}})
+            temp_labels.update({lc: {}})
+        #TODO: deprekoidut käsitteet?
         for conc in g.subjects(RDF.type, SKOS.Concept):
             uri = str(conc)
             for lc in self.language_codes:
+                pref_label = g.preferredLabel(conc, lang=lc)
+                if pref_label:
+                    pref_label = str(pref_label[0][1])
+                    self.labels[lc].update({pref_label: {"pref_label": {pref_label}, "uris":{uri}}})
                 alt_labels = g.preferredLabel(conc, lang=lc, labelProperties=[SKOS.altLabel])
                 for al in alt_labels:
                     alt_label = str(al[1])
                     if alt_label in self.labels:
-                        self.labels[alt_label].update({uri})
+                        self.labels[lc][alt_label]["pref_label"].add(pref_label)
+                        self.labels[lc][alt_label]["uris"].add(uri)
                     else:
-                        self.labels.update({alt_label: {uri}})
-                pref_label = g.preferredLabel(conc, lang=lc)
-                if pref_label:
-                    pref_label = str(pref_label[0][1])
-                    self.labels.update({pref_label: {uri}})
-                       
-        self.create_additional_dicts()
+                        self.labels[lc].update({alt_label: {"pref_label": {pref_label}, "uris":{uri}}})
+        for lc in self.language_codes:
+            for label in self.labels[lc]:
+                label_info = self.labels[lc][label]
+                ll = label.lower()
+                pref_labels = label_info['pref_label'].copy()
+                uris = label_info['uris'].copy()
+                if ll in self.labels_lowercase[lc]:
+                    self.labels_lowercase[lc][ll]["pref_label"].update(pref_labels)
+                    self.labels_lowercase[lc][ll]["uris"].update(uris)
+                else:
+                    self.labels_lowercase[lc].update({ll: {"pref_label": pref_labels, "uris":uris}}) 
+                
+            for label in self.labels[lc]:
+                label_info = self.labels[lc][label]
+                ll = self.remove_diacritical_chars(label).lower()
+                pref_labels = label_info['pref_label'].copy()
+                uris = label_info['uris'].copy()
+                if ll in self.stripped_labels[lc]:
+                    self.stripped_labels[lc][ll]["pref_label"].update(pref_labels)  
+                    self.stripped_labels[lc][ll]["uris"].update(uris)
+                else:
+                    self.stripped_labels[lc].update({ll: {"pref_label": pref_labels, "uris":uris}}) 
+                
+                #tehdään sanasto termeille, joilla on sulkutarkenteellinen ja sulkutarkenteeton muoto:
+                stripped_label = re.sub("[\(].*?[\)]", "", ll)
+                stripped_label = stripped_label.strip()
+                pref_labels = label_info['pref_label'].copy()
+                uris = label_info['uris'].copy()
 
-    def parse_slm_vocabulary(self, g, language):
-        """
-        JOS KÄÄNNÖKSIÄ EI TARVITA:
-        for conc in g.subjects(RDF.type, SKOS.Concept):
-            uri = str(conc)
-            pref_label = g.preferredLabel(conc, lang=language)
-            if pref_label:
-                pref_label = str(pref_label[0][1])
-                self.labels.update({pref_label: {language:pref_label, "uri": uri}})
-        """
-        for conc in g.subjects(RDF.type, SKOS.Concept):
-            uri = str(conc)
-            pref_label = g.preferredLabel(conc, lang=language)
-            if pref_label:
-                pref_label = str(pref_label[0][1])
-                other_pref_labels = {}
-                for lc in self.language_codes:
-                    if lc != language:
-                        other_label = g.preferredLabel(conc, lang=lc)
-                        if other_label:
-                            other_label = str(other_label[0][1])
-                            other_pref_labels.update({lc: other_label})
-                self.labels.update({pref_label: {language:pref_label}})
-                self.labels[pref_label].update(other_pref_labels)
-                self.labels[pref_label].update({"uris": uri})
-        for label in self.labels:
-            label_info = self.labels[label]
-            ll = label.lower()
-            if ll in self.labels_lowercase:
-                ll_info = self.labels_lowercase[ll]
-                for key in ll_info:
-                    if key in label_info:
-                        for value in label_info[key]:
-                            self.labels_lowercase[ll][key].append(value)
-                    else:
-                        self.labels_lowercase[ll].update({key: [ll_info[key]]})
-            else:
-                self.labels_lowercase.update({ll: {}})
-                for li in label_info:
-                    dataset = []
-                    dataset.append(label_info[li])
-                    self.labels_lowercase[ll].update({li: dataset}) 
-        for label in self.labels:
-            label_info = self.labels[label]
-            ll = self.remove_diacritical_chars(label).lower()
-            if ll in self.stripped_labels:
-                ll_info = self.stripped_labels[ll]
-                for key in ll_info:
-                    if key in label_info:
-                        for value in label_info[key]:
-                            self.stripped_labels[ll][key].append(value)
-                    else:
-                        self.stripped_labels[ll].update({key: [ll_info[key]]})
-            else:   
-                self.stripped_labels.update({ll: {}})
-                for li in label_info:
-                    dataset = []
-                    dataset.append(label_info[li])
-                    self.stripped_labels[ll].update({li: dataset}) 
-    
+                if stripped_label in temp_labels[lc]:
+                    temp_labels[lc][stripped_label]["pref_label"].update(pref_labels)
+                    temp_labels[lc][stripped_label]["uris"].update(uris)
+                else:
+                    temp_labels[lc].update({stripped_label: {"pref_label": pref_labels, "uris":uris}}) 
+                
+        for lc in self.language_codes:    
+            for tl in temp_labels[lc]:
+                if tl in self.stripped_labels[lc]:
+                    if len(temp_labels[lc][tl]) > len(self.stripped_labels[lc][tl]):
+                        self.labels_with_and_without_specifiers[lc].update({tl: temp_labels[lc][tl]})
+                else:
+                    self.labels_with_specifiers[lc].update({tl: temp_labels[lc][tl]}) 
+
     def create_additional_dicts(self):
         #luo sanahakuja varten 2 dictionaryä, joissa avaimet pienillä kirjaimilla ja ilman diakriittejä
         temp_labels = {}
@@ -280,6 +273,7 @@ class Vocabulary():
             stripped_label = re.sub("[\(].*?[\)]", "", stripped_label)
             stripped_label = stripped_label.strip()
             uris = copy.copy(uris)
+            
             if stripped_label in temp_labels:
                 temp_labels[stripped_label].update(uris)
             else:
@@ -289,8 +283,8 @@ class Vocabulary():
                 if len(temp_labels[tl]) > len(self.stripped_labels[tl]):
                     self.labels_with_and_without_specifiers.update({tl: temp_labels[tl]})
             else:
-                self.labels_with_specifiers.update({tl: temp_labels[tl]})
-
+                self.labels_with_specifiers.update({tl: temp_labels[tl]}) 
+        
     def get_concept_with_uri(self, uri, language):
         #muutetaan kaksikirjaimiset kielikoodit kolmikirjaimiseksi sanastokoodia varten:
         concept = None
@@ -311,7 +305,6 @@ class Vocabulary():
                 #raise ValueError("ei löydy YSO-vastinetta")
                 return {"label": None, "uris": uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}  
         elif uri in self.labels:
-            
             if language in self.labels[uri]:
                 label = self.labels[uri][language]
                 return {"label": label, "uris": [uri], "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}      
@@ -321,48 +314,55 @@ class Vocabulary():
         concept = None
         uris = []
         valid_uris = []
+        labels = {}
+        pref_labels = []
+        """
+        Poistettu virhe 5: jos löytyy täsmälleen yksi sulkutarkenteeton muoto pref- tai altLabelina, niin konvertoidaan tähän labeliin
         if label.lower() in self.labels_with_and_without_specifiers:
             uris = self.labels_with_and_without_specifiers[label.lower()]["uris"]
             if len(uris) > 1:
                 raise ValueError("5")
-        if label in self.labels:
-            uris = [self.labels[label]["uris"]]
-            for uri in uris:
-                if uri not in self.deprecated_concepts:
-                    valid_uris.append(uri)  
-            if valid_uris:
-                return {"label": label, "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}    
-        elif label.lower() in self.labels_lowercase:
-            uris = self.labels_lowercase[label.lower()]["uris"]
-            label = self.labels_lowercase[label.lower()][language]
-        elif label.lower() in self.stripped_labels:
-            uris = self.stripped_labels[label.lower()]["uris"]
-            label = self.stripped_labels[label.lower()][language]  
-        elif label.lower() in self.labels_with_specifiers:
-            uris = self.labels_with_specifiers[label.lower()]["uris"]
+        """
+        if label in self.labels[language]:
+            uris = self.labels[language][label]["uris"]
+            labels = self.labels[language][label]["pref_label"]
+        elif label.lower() in self.labels_lowercase[language]:
+            uris = self.labels_lowercase[language][label.lower()]["uris"]
+            labels = self.labels_lowercase[language][label.lower()]["pref_label"]
+        elif label.lower() in self.stripped_labels[language]:
+            uris = self.stripped_labels[language][label.lower()]["uris"]
+            labels = self.stripped_labels[language][label.lower()]["pref_label"]  
+        elif label.lower() in self.labels_with_specifiers[language]:
+            uris = self.labels_with_specifiers[language][label.lower()]["uris"]
             if len(uris) > 1:
                 raise ValueError("4")
-            else:
+            elif len(uris) == 1:
                 raise ValueError("3")
         for uri in uris:
             if uri not in self.deprecated_concepts:
                 valid_uris.append(uri)     
+        for l in labels:
+            pref_labels.append(l)
         """
         if len(uris) > 1:
             raise ValueError("sanaa ei voi tulkita yksiselitteisesti SLM:ssä")
         elif len(uris) == 1:
             if uris[0] not in self.deprecated_concepts:
         """        
+        #TODO: otetaanko SLM:ssä ja SEKOssa huomioon myös deprekoidut käsitteet?
         if valid_uris: 
-            return {"label": label[0], "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}      
+            return {"label": pref_labels[0], "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}      
 
     def get_uris_with_concept(self, concept):
         #TODO: optio toisen/kummankin kielen vastineen lisäämiseen
         uris = []
+        """
+        Poistettu virhe 5: jos löytyy täsmälleen yksi sulkutarkenteeton muoto pref- tai altLabelina, niin konvertoidaan tähän labeliin
         if concept.lower() in self.labels_with_and_without_specifiers:
             uris = self.labels_with_and_without_specifiers[concept.lower()]
             if len(uris) > 1:
                 raise ValueError("5")
+        """
         if concept in self.labels:
             uris = self.labels[concept]
         elif concept.lower() in self.labels_lowercase:
@@ -373,7 +373,7 @@ class Vocabulary():
             uris = self.labels_with_specifiers[concept.lower()]
             if len(uris) > 1:
                 raise ValueError("4")
-            else:
+            elif len(uris) == 1:
                 raise ValueError("3")
         valid_uris = []
         for uri in uris:
