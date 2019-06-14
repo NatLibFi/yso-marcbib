@@ -21,7 +21,7 @@ Ohjelma käyttää Python-kirjastoja pymarc, rdflib, unidecode, jotka on asennet
     
 **Ohjelman käynnistysparametrit**
 
-Annetaan komentorivillä `python yso_converter.py -i="input-tiedostopolku" -o="output-tiedostopolku" -f="formaatti ("marc21" tai "marcxml")` 
+Annetaan komentorivillä `python yso_converter.py -i="input-tiedostopolku" -o="output-tiedostopolku" -f="formaatti" ("marc21" tai "marcxml") -al="yes" ("yes", jos halutaan asiasanat suomeksi ja ruotsiksi tai "no", jos halutaan vain alkuperäisellä kielellä) ` 
 
 Ohjelma tuottaa automaattisesti lokitiedostot logs-kansion työhakemistoon aikaleimoilla.
           
@@ -95,7 +95,7 @@ The program uses the following Python-libraries: pymarc, rdflib, unidecode, whic
 
 **Starting parametres**
 
-Command line options `python yso_converter.py -i="input-path" -o="output-path" -f="format (given as "marc21" or "marcxml")`
+Command line options `python yso_converter.py -i="input-path" -o="output-path" -f="format" (given as "marc21" or "marcxml") -al="yes/no" (choose "yes" if concept labels are wanted in Finnish and Swedish, "no" if only original language of concept is wanted) `
 
 The converter produces automatically logfiles with timestamps to the logs subfolder working directory
 
