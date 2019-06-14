@@ -49,6 +49,7 @@ Tarkistuskoodit:
 - 6 = ketjun osakentän termi poistettu tarpeettomana (fiktio, aiheet, musiikki ja ketjun $e-osakenttä sekä tyhjä osakenttä)
 - 7 = kentän 650/651 osakentän $g "muut tiedot" on viety kenttään 653
 - 8 = Kenttä sisältää MARC-formaattiin kuulumattomia osakenttäkoodeja tai ei sisällä asiasanaosakenttiä
+- 9 = Kentässä on osakenttä 6 (tällaisia kenttiä ei voi konvertoida, sillä viitatussa 880-kentässä on vastaavat osakentät)
  
 ***Tilastot***
     
@@ -122,6 +123,7 @@ Error-codes:
 - 6 = The label was removed as unnecessary (fiktio, aiheet, musiikki and $e-subfield as well as sufields with no values)
 - 7 = The content fo subfield $g in fields 650 or 651 was moved to field 653##$a.
 - 8 = Field contains subfield codes not registered in the MARC-format or has no concept labels.
+- 9 = Field contains subfield $6 (not converted, as the corresponding 880-fields have the same subfields)
 
 ***Statistics***
 
