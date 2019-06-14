@@ -41,8 +41,8 @@ class Vocabulary():
         self.labels_with_and_without_specifiers = {}
         #asiasanat, joilla vain tarkenteellisia muotoja:
         self.labels_with_specifiers = {}
-        #self.alt_labels = {}
-        #self.chained_terms = {}
+        #vastinsanat toisella kielellä (SLM-sanastoon):
+        self.translations = {}
         self.dct = Namespace("http://purl.org/dc/terms/")
         self.namespace = 'http://www.yso.fi/onto/yso/'
         self.nodes = [] #for temporary use
@@ -76,14 +76,16 @@ class Vocabulary():
                 alt_labels = g.preferredLabel(conc, lang=lc, labelProperties=[SKOS.altLabel])
                 for al in alt_labels:
                     alt_label = str(al[1])
+                    uris = copy.copy(replacers)
                     if alt_label in self.labels:
-                        self.labels[alt_label].update(replacers)
+                        self.labels[alt_label].update(uris)
                     else:
-                        self.labels.update({alt_label: replacers})
+                        self.labels.update({alt_label: uris})
                 pref_label = g.preferredLabel(conc, lang=lc)
                 if pref_label:
                     pref_label = str(pref_label[0][1])
-                    self.labels.update({pref_label: replacers})     
+                    uris = copy.copy(replacers)
+                    self.labels.update({pref_label: uris})     
         self.create_additional_dicts()
 
     def parse_yso_vocabulary(self, g):
@@ -165,6 +167,7 @@ class Vocabulary():
                             self.geographical_concepts.add(str(m[1]))
                 for al in alt_labels:
                     alt_label = str(al[1])
+                    uris = copy.copy(uris)
                     if "--" in alt_label and is_geographical:
                         self.geographical_chained_labels.add(alt_label)     
                     if alt_label in self.labels:
@@ -200,6 +203,11 @@ class Vocabulary():
                 pref_label = g.preferredLabel(conc, lang=lc)
                 if pref_label:
                     pref_label = str(pref_label[0][1])
+                    if len(self.language_codes) > 1:
+                        if uri in self.translations:
+                            self.translations[uri].update({lc: pref_label})
+                        else:
+                            self.translations.update({uri: {lc: pref_label}})
                     self.labels[lc].update({pref_label: {"pref_label": {pref_label}, "uris":{uri}}})
                 alt_labels = g.preferredLabel(conc, lang=lc, labelProperties=[SKOS.altLabel])
                 for al in alt_labels:
@@ -309,8 +317,12 @@ class Vocabulary():
                 label = self.labels[uri][language]
                 return {"label": label, "uris": [uri], "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}      
 
-    def get_concept_with_label(self, label, language):
-        #TODO: optio toisen/kummankin kielen vastineen lisäämiseen
+    def get_concept_with_label(self, label, language, all_languages=False):
+        """
+        label: haettavan käsiten pref- tai altLabel
+        language: kieliversio, jota haetaan
+        all_languages: jos True, niin tuotetaan kummatkin kieliversiot
+        """
         concept = None
         uris = []
         valid_uris = []
@@ -342,17 +354,23 @@ class Vocabulary():
             if uri not in self.deprecated_concepts:
                 valid_uris.append(uri)     
         for l in labels:
-            pref_labels.append(l)
-        """
-        if len(uris) > 1:
-            raise ValueError("sanaa ei voi tulkita yksiselitteisesti SLM:ssä")
-        elif len(uris) == 1:
-            if uris[0] not in self.deprecated_concepts:
-        """        
+            pref_labels.append(l)      
         #TODO: otetaanko SLM:ssä ja SEKOssa huomioon myös deprekoidut käsitteet?
-        if valid_uris: 
-            return {"label": pref_labels[0], "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}      
-
+        if valid_uris:
+            return {"label": pref_labels[0], "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}
+            """
+            if all_languages:
+                if language == "fi":
+                    other_language = "sv"
+                if language == "sv":
+                     other_language = "fi"
+                vocabulary_code = self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(other_language)
+                other_label = self.translations(valid_uris[0][other_language])
+                response.append({"label": other_label, "uris": valid_uris, "code": vocabulary_code}) 
+                return response
+            else:
+            """
+                
     def get_uris_with_concept(self, concept):
         #TODO: optio toisen/kummankin kielen vastineen lisäämiseen
         uris = []
@@ -381,6 +399,17 @@ class Vocabulary():
                 valid_uris.append(uri)    
         if valid_uris:
             return {"uris": valid_uris}
+
+    def translate_label(self, uri, language):
+        if language == "fi":
+            other_language = "sv"
+        if language == "sv":
+                other_language = "fi"
+        if self.target_vocabulary_code == "slm":
+            other_label = self.translations[uri][other_language]
+        if self.target_vocabulary_code == "yso":
+            other_label = self.labels[uri][other_language]
+        return {"label": other_label, "uris": [uri], "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(other_language)}
 
     def remove_diacritical_chars(self, word):
         #poistaa tarkkeet kaikista muista merkeistä paitsi å, ä, ö

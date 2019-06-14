@@ -38,6 +38,7 @@ class VocabularyTest(unittest.TestCase):
         cls.musa.parse_musa_vocabulary(musa_graph, ysa_graph)
         cls.seko = Vocabulary("seko", ['fi'])
         cls.seko.parse_label_vocabulary(seko_graph)
+        print(cls.slm.translations)
         return super(VocabularyTest, cls).setUpClass()
 
     def test_get_concept_with_uri(self):
@@ -96,6 +97,11 @@ class VocabularyTest(unittest.TestCase):
     def test_get_concept_with_wrong_uri(self):    
         result = self.yso.get_concept_with_uri('http://www.yso.fi/onto/yso/p13y5y3007', 'sv')
         self.assertEqual(result, None) 
+    
+    def test_translate_label(self):
+        result = self.slm.translate_label("http://urn.fi/URN:NBN:fi:au:slm:s786", "fi")
+        self.assertEqual(result['label'], 'ragor')
+        self.assertEqual(result['code'], 'slm/swe')
 
 if __name__ == "__main__":
     unittest.main()

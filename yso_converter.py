@@ -24,7 +24,7 @@ import re
 
 class YsoConverter():
 
-    def __init__(self, input_file, output_file, file_format):      
+    def __init__(self, input_file, output_file, file_format, all_languages):      
         
         self.input_file = input_file
         self.output_file = output_file
@@ -32,9 +32,9 @@ class YsoConverter():
         #TODO: tarkista ylikirjoitus!
         self.vocabularies = Vocabularies()
         self.file_format = file_format.lower()
-        if not self.file_format == "marc21" and not self.file_format == "marcxml":
-            logging.info("Anna tiedostoformaatti muodossa marc21 tai marcxml")
-            sys.exit(2)
+        self.all_languages = False 
+        if all_languages == "yes":
+            self.all_languages = True
         self.conversion_time = datetime.datetime.now().replace(microsecond=0).isoformat()
         self.marcdate = str(datetime.date.today()).replace("-","")
         self.conversion_name = "yso-konversio"
@@ -48,6 +48,7 @@ class YsoConverter():
         error_handler = logging.FileHandler(self.error_log, 'w', 'utf-8')
         error_handler.setLevel(logging.ERROR)
         self.error_logger.addHandler(error_handler)
+        self.linking_number = None #käytetään musiikkiaineiston hajotettujen ketjujen yhdistämiseen 8-osakentällä
         self.statistics = {}
         self.statistics.update({"konvertoituja tietueita": 0})
         self.statistics.update({"käsiteltyjä tietueita": 0})
@@ -132,8 +133,8 @@ class YsoConverter():
             with open('vocabularies.pkl', 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self.vocabularies, output, pickle.HIGHEST_PROTOCOL)
             logging.info("sanastot tallennettu muistiin ja tiedostoon vocabularies.pkl")
-            output.close()
-           
+            output.close()    
+
     def read_records(self):
         with open(self.error_log, 'w', encoding = 'utf-8-sig') as error_handler, \
             open(self.removed_fields_log, 'w', encoding = 'utf-8-sig') as self.rf_handler, \
@@ -352,7 +353,7 @@ class YsoConverter():
                     if linking_numbers:
                         self.linking_number = linking_numbers[len(linking_numbers) - 1]
                     else:
-                        self.linking_number = 1
+                        self.linking_number = 0
                 subfields = []
                 #TODO: vaihtoehto: säilytetään alkup. YSA-rivi, jos valittu optio?
                 for tag in tags_of_fields_to_process:                    
@@ -454,7 +455,7 @@ class YsoConverter():
         for subfield in subfields:
             if not subfield['code'].isdigit():
                 non_digit_codes.append(subfield['code'])   
-        if len(non_digit_codes) > 1 and self.linking_number:
+        if len(non_digit_codes) > 1 and self.linking_number is not None:
             #musiikin  asiasanaketjuihin liitetään 8-osakenttä ja linkkinumero: 
             self.linking_number += 1
         #tallennetaan numeroilla koodatut osakentät, jotka liitetään jokaiseen uuteen kenttään, paitsi $0 ja $2:
@@ -535,7 +536,7 @@ class YsoConverter():
                             has_topics = True
                         logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
                     else:
-                        response = None        
+                        responses = []  
                         n = None
                         matches = re.findall('\((.*?)\)', subfield['value'])
                         for m in matches:
@@ -545,33 +546,33 @@ class YsoConverter():
                                 subfield['value'] = subfield['value'].replace("  ", " ")
                                 subfield['value'] = subfield['value'].strip()
                         try:
-                            response = self.vocabularies.search(subfield['value'], [('seko', 'fi')])
+                            responses = self.vocabularies.search(subfield['value'], [('seko', 'fi')])
                         except ValueError:
                             pass    
-                        if response:
+                        if responses:
                             if not instrument_list: 
                                 instrument_lists.append(instrument_list)
                             if n:
-                                instrument_list.extend(["a", subfield['value'], "n", n])     
+                                instrument_list.extend(["a", responses[0]['label'], "n", n])     
                             else: 
-                                instrument_list.extend(["a", subfield['value']])
-                        else:
-                            new_field = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
-                            if new_field['2']:
-                                if new_field['2'].startswith('slm'):
-                                    if not has_topics:
-                                        has_genre_terms = True
-                                if new_field['2'].startswith('yso'):
-                                    if not has_genre_terms:
-                                        has_topics = True
-                            #if self.linking_number:
-                                #new_field.add_subfield("8", self.linking_number + "\\u")   
-                            new_field = self.add_control_subfields(new_field, control_subfields)
-                            new_fields.append(new_field)
+                                instrument_list.extend(["a", responses[0]['label']])
+                        else:    
+                            converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
+                            for cf in converted_fields:
+                                if cf['2']:
+                                    if cf['2'].startswith('slm'):
+                                        if not has_topics:
+                                            has_genre_terms = True
+                                    if cf['2'].startswith('yso'):
+                                        if not has_genre_terms:
+                                            has_topics = True
+                                cf = self.add_control_subfields(cf, control_subfields)
+                                new_fields.append(cf) 
                 elif not subfield['code'].isdigit():
-                    new_field = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)
-                    new_field = self.add_control_subfields(new_field, control_subfields)
-                    new_fields.append(new_field) 
+                    converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)
+                    for cf in converted_fields:
+                        cf = self.add_control_subfields(cf, control_subfields)
+                        new_fields.append(cf) 
             if instrument_lists:
                 for instrument_list in instrument_lists:
                   
@@ -670,27 +671,14 @@ class YsoConverter():
                     if subfield['code'] != "b":
                         continue         
                 #358- ja 567-kentistä käsitellään vain a- ja b-osakentät:
-                new_field = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction)
+                converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction)
                 #TODO: listaus koko 358- ja 567-kentästä virhelokiin
                 #if tag not in ['385', '567']:
-                if new_field:
-                    new_field = self.add_control_subfields(new_field, control_subfields)
-                    """
-                    new_subfields = self.subfields_to_dict(new_field.subfields)
-                    for code in control_subfields:
-                        for cs in control_subfields[code]:
-                            new_subfields.append({"code": code, "value": cs})
-                            new_subfields = self.sort_subfields(new_subfields)
-                    new_field = Field(
-                        tag = new_field.tag,
-                        indicators = new_field.indicators,
-                    )
-                    if self.linking_number and field.tag in ['650', '651', '655']:
-                        new_field.add_subfield("8", self.linking_number + "\\u")   
-                    for ns in new_subfields:
-                        new_field.add_subfield(ns['code'], ns['value'])   
-                    """
-                    new_fields.append(new_field)
+                if converted_fields:
+                    for cf in converted_fields:
+                        cf = self.add_control_subfields(cf, control_subfields)
+                        new_fields.append(cf)
+                    
         return new_fields
         
     def process_subfield(self, record_id, original_field, subfield, vocabulary_code, non_fiction=True, record_type=None, has_topics=False):    
@@ -702,7 +690,7 @@ class YsoConverter():
         non_fiction -- määrittelee, onko tietueen aineisto tietokirjallisuutta
         """
         tag = original_field.tag
-        field = None
+        converted_fields = []
 
         if not subfield['value']:
             logging.error("%s;%s;%s;%s"%("1", record_id, subfield['value'], original_field))
@@ -717,20 +705,18 @@ class YsoConverter():
             vocabulary_order = [('allars', 'sv'), ('ysa', 'fi')]
             language = "sv"    
         if vocabulary_code == "musa":
-            if record_type == "music" and tag in ['650', '655']:
-                vocabulary_order = [('slm', 'fi'), ('musa', 'fi'), ('ysa', 'fi'), ('slm', 'sv'), ('cilla', 'sv'),  ('allars', 'sv')]
-            else:
-                vocabulary_order = [('musa', 'fi'), ('cilla', 'sv'), ('ysa', 'fi'), ('allars', 'sv')]
+            vocabulary_order = [('musa', 'fi'), ('cilla', 'sv'), ('ysa', 'fi'), ('allars', 'sv')]
             language = "fi"    
         if vocabulary_code == "cilla":
-            if record_type == "music" and tag in ['650', '655']:
-                vocabulary_order = [('slm', 'sv'), ('cilla', 'sv'),  ('allars', 'sv'), ('slm', 'fi'), ('musa', 'fi'), ('ysa', 'fi')]
-            else:
-                vocabulary_order = [('cilla', 'sv'), ('musa', 'fi'), ('allars', 'sv'), ('ysa', 'fi')]
+            vocabulary_order = [('cilla', 'sv'), ('musa', 'fi'), ('allars', 'sv'), ('ysa', 'fi')]
             language = "sv"     
         slm_vocabulary_order = {}
         slm_vocabulary_order['fi'] = [('slm', 'fi'), ('ysa', 'fi'), ('slm', 'sv'), ('allars', 'sv')]  
-        slm_vocabulary_order['sv'] = [('slm', 'sv'), ('allars', 'sv'), ('slm', 'fi'), ('ysa', 'fi'), ] 
+        slm_vocabulary_order['sv'] = [('slm', 'sv'), ('allars', 'sv'), ('slm', 'fi'), ('ysa', 'fi')]
+        music_slm_vocabulary_order = {}
+        music_slm_vocabulary_order['fi'] = [('slm', 'fi'), ('musa', 'fi'), ('ysa', 'fi'), ('slm', 'sv'), ('cilla', 'sv'),  ('allars', 'sv')]
+        music_slm_vocabulary_order['sv'] = [('slm', 'sv'), ('cilla', 'sv'),  ('allars', 'sv'), ('slm', 'fi'), ('musa', 'fi'), ('ysa', 'fi')]
+
         search_geographical_concepts = True    
         
         """
@@ -768,7 +754,7 @@ class YsoConverter():
                     field.add_subfield('2', 'yso/fin')
                 if vocabulary_code in ['allars', 'cilla']:
                     field.add_subfield('2', 'yso/swe')
-                return field
+                return [field]
         if tag in ['648', '650', '651']:
             if subfield['code'] == "v":
                 vocabulary_order = slm_vocabulary_order[language]
@@ -777,7 +763,7 @@ class YsoConverter():
                         logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
                         return
             if tag == "650" and subfield['code'] == "a":
-                if not non_fiction or record_type == "music":
+                if not non_fiction:
                     vocabulary_order = slm_vocabulary_order[language]
         if tag == "650" or tag == "651": 
             if subfield['code'] == "e":
@@ -786,17 +772,32 @@ class YsoConverter():
             elif subfield['code'] == "g":
                 field = self.field_without_voc_code("653", [' ', ' '], subfield)   
                 logging.error("%s;%s;%s;%s;%s"%("7", record_id, subfield['value'], original_field, field))
-                return field
+                return [field]
             if subfield['code'] in ['a', 'b', 'c', 'x', 'z']:
                 vocabulary_order.append(('numeric', language))
             if subfield['code'] in ['d', 'y']:
                 vocabulary_order = [('numeric', language)] + vocabulary_order
+        if record_type == "music":
+            if tag in ['650', '655']:
+                if subfield['code'] == "a":
+                    if vocabulary_code in ['musa', 'cilla']:
+                            vocabulary_order = music_slm_vocabulary_order[language]
+                    else:
+                        vocabulary_order = slm_vocabulary_order[language]
+                if subfield['code'] in ['x', 'y', 'z']:
+                    if not has_topics:
+                        if vocabulary_code in ['musa', 'cilla']:
+                            vocabulary_order = music_slm_vocabulary_order[language]
+                        else:
+                            vocabulary_order = slm_vocabulary_order[language]
+                    if subfield['code'] == "y":
+                        vocabulary_order = [('numeric', language)] + vocabulary_order
 
         #käsitellään perustapaukset
         if subfield['code'] in valid_subfield_codes[tag]:
         #TODO: määriteltävä tähän kentät ja osakentät, joista haetaan numeerisia arvoja 
             try:
-                response = self.vocabularies.search(subfield['value'], vocabulary_order, search_geographical_concepts)
+                responses = self.vocabularies.search(subfield['value'], vocabulary_order, search_geographical_concepts, self.all_languages)
                 if tag == "650" and not non_fiction and subfield['code'] == "a":
                     tag == "655"
                 if tag == "655" and subfield['code'] in ['z', 'c']:
@@ -809,7 +810,9 @@ class YsoConverter():
                         tag = "370"
                     if subfield['code'] in ['y', 'd']:
                         tag = "388"
-                field = self.field_with_voc_code(tag, response)
+                for r in responses:
+                    field = self.field_with_voc_code(tag, r)
+                    converted_fields.append(field)
             except ValueError as e:
                 #TODO: määriteltävä tähän kentät ja osakentät, joista haetaan numeerisia arvoja
                 field = None
@@ -851,14 +854,14 @@ class YsoConverter():
             original_field.indicators[1] = "4"
             original_field.delete_subfield('2')
             
-            return original_field
+            return [original_field]
             #alkuperäinen ketju jätetään, 2. ind 4 ja poistetaan $2ysa osakenttä
 
         #else: alkuperäinen ketju jäteään, 2. ind 4 ja poistetaan $2ysa osakenttä????????????
 
         #MUISTA LIITTÄÄ NUMEROLLISET OSAKENTÄT UUTEEN KENTTÄÄN!!!
         #self.vocabularies.search("ragat", "fi", ['slm', 'allars', 'ysa']))
-        return field
+        return converted_fields
         
 
     def field_with_voc_code(self, tag, response):
@@ -927,7 +930,7 @@ class YsoConverter():
         )
         if self.linking_number:
         #and field.tag in ['650', '651', '655']:
-            new_field.add_subfield("8", "%s\\u"%(self.linking_number - 1))   
+            new_field.add_subfield("8", "%s\\u"%(self.linking_number))   
         for ns in new_subfields:
             new_field.add_subfield(ns['code'], ns['value'])   
         return new_field
@@ -1073,10 +1076,11 @@ def main():
         help="Output file path", required=True)
     parser.add_argument("-f", "--format",
         help="File format", choices=['marc21', 'marcxml'], required=True)
-
+    parser.add_argument("-al", "--all_languages",
+        help="All languages", choices=['yes', 'no'], required=True)
     args = parser.parse_args()
     
-    yc = YsoConverter(args.input, args.output, args.format)
+    yc = YsoConverter(args.input, args.output, args.format, args.all_languages)
     yc.initialize_vocabularies()
     yc.read_records()
     

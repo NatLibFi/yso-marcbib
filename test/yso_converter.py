@@ -12,16 +12,7 @@ class YsoConversionTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         #cls.vocabulary = Vocabularies()
-        cls.cc = YsoConverter("test.mrc", "output.mrc", "marc21")
-        """
-        cls.cc.vocabularies.parse_vocabulary('yso-skos-test.rdf', 'yso', ['fi', 'sv'])
-        cls.cc.vocabularies.parse_vocabulary('yso-paikat-skos-test.rdf', 'yso_paikat', ['fi', 'sv'])
-        cls.cc.vocabularies.parse_vocabulary('ysa-skos-test.rdf', 'ysa', ['fi'])
-        cls.cc.vocabularies.parse_vocabulary('allars-skos-test.rdf', 'allars', ['sv'])
-        cls.cc.vocabularies.parse_vocabulary('slm-skos-test.rdf', 'slm_fi', ['fi', 'sv'], 'fi')
-        cls.cc.vocabularies.parse_vocabulary('slm-skos-test.rdf', 'slm_sv', ['fi', 'sv'], 'sv')
-        cls.cc.vocabularies.parse_vocabulary('musa-skos.rdf', 'musa', ['fi'], 'fi', 'ysa-skos.rdf')
-        """
+        cls.cc = YsoConverter("test.mrc", "output.mrc", "marc21", "no")
         cls.vocabularies = Vocabularies()
         yso_graph = Graph()
         yso_graph.parse('test/yso-skos-test.rdf')
@@ -330,8 +321,8 @@ class YsoConversionTest(unittest.TestCase):
         subfield = {'code': 'a', 'value': 'RAGAT'}
         field = self.new_field(tag, [' ', '7'], [subfield['code'], subfield['value']])
         vocabulary_code = 'ysa'
-        result_field = str(self.cc.process_subfield("00000001", field, subfield, vocabulary_code, non_fiction=False))
-        self.assertEqual(result_field,
+        result_field = self.cc.process_subfield("00000001", field, subfield, vocabulary_code, non_fiction=False)
+        self.assertEqual(str(result_field[0]),
             '=655  \\7$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786')
     
     def test_process_geographical_concepts(self):
@@ -339,8 +330,9 @@ class YsoConversionTest(unittest.TestCase):
         test_result = "=651  \\7$aTöölö (Helsinki)$2yso/fin$0http://www.yso.fi/onto/yso/p109631"
         
         result_fields = self.cc.process_field("00000001", field, "ysa")
+        print("tulos "+str(result_fields[0]))
         self.assertEqual(str(result_fields[0]), test_result)
-    
+    """
     def test_convert_field(self):
         #testataan useampia asiasanaosakenttiä sisältävien kenttien konvertoimista:
         for test_field in self.convertible_subfields:
@@ -350,7 +342,7 @@ class YsoConversionTest(unittest.TestCase):
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
-        
+
         for test_field in self.exceptional_fields:
             field = self.str_to_marc(test_field['original'])
             vocabulary_code = field['2']
@@ -365,7 +357,8 @@ class YsoConversionTest(unittest.TestCase):
             vocabulary_code = test_field['subfields'][-1]
             result_fields = self.cc.process_field("00000001", field, vocabulary_code)
             self.assertEqual(result_fields, [])
-
+        
+    """    
     def test_subfield_6(self):
         field = self.new_field("650", [' ', '7'], ['6', '', 'a', 'arvo', '2', 'ysa'])
         result_fields = self.cc.process_field("00000001", field, "ysa", "1")
@@ -399,7 +392,7 @@ class YsoConversionTest(unittest.TestCase):
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
-        
+       
     def test_process_record(self):
         for record_type in self.records:
             for r in self.records[record_type]:
@@ -423,17 +416,22 @@ class YsoConversionTest(unittest.TestCase):
                 print(new_record)
                 new_fields = []
                 result_fields = []
-                for field in new_record.get_fields():
-                    new_fields.append(str(field))
+
                 
+                print("nf")
+                for field in new_record.get_fields():
+                    if not field.tag == "001":
+                        new_fields.append(str(field))
+                        print(str(field))
                 result_fields.append(str(Field(tag='001', data='00000001')))
-            
+                print("rf")
                 for field in r['converted']:
+                    print(str(field))
                     result_fields.append(field)  
                 
                 
                 self.assertEqual(result_fields, new_fields)
-            
+          
     def new_field(self, tag, indicators, subfields): 
         return Field(
             tag = tag,

@@ -58,7 +58,7 @@ class Vocabularies:
             vocabulary.parse_label_vocabulary(graph)
         self.vocabularies.update({vocabulary_code: vocabulary})
 
-    def search(self, keyword, vocabulary_codes, search_geographical_concepts=False):
+    def search(self, keyword, vocabulary_codes, search_geographical_concepts=False, all_languages=False):
         """
         kewword: hakusana
         vocabulary_codes: dictionary, joka muodostuu sanastokoodi, kielikoodi avainarvopareista
@@ -77,7 +77,6 @@ class Vocabularies:
         """
         keyword = unicodedata.normalize('NFKC', keyword)
         keyword = keyword.strip()
-        
         geographical_concept = False
         for vc in vocabulary_codes:
             response = {}
@@ -111,16 +110,29 @@ class Vocabularies:
                 response = self.vocabularies[vc[0]].get_concept_with_label(keyword, vc[1])    
             if response:
                 if "uris" in response:
-                    response.update({'geographical': geographical_concept})
+                    responses = []
+                    responses.append(response)
+                    if all_languages:
+                        vocabulary_code = None
+                        if response['code'].startswith("slm"):
+                            vocabulary_code = "slm"
+                        if response['code'].startswith("yso"):
+                            vocabulary_code = "yso"
+                            if geographical_concept:
+                                vocabulary_code = "yso_paikat"
+                        
+                        responses.append(self.vocabularies[vocabulary_code].translate_label(response['uris'][0], vc[1]))
+                    for r in responses:
+                        r.update({'geographical': geographical_concept})
+                        r['label'] = self.normalize_characters(r['label'])
                     #HUOM! Vocabularyn on palautettava vastauksessa sanastokoodi, esim. YSO-paikat
                     if len(response['uris']) > 1:
                         raise ValueError("2")
                     if len(response['uris']) == 1:
-                        response['label'] = self.normalize_characters(response['label'])
-                        return response
+                        return responses
                 if "numeric" in response:
                     response.update({'geographical': geographical_concept})
-                    return response
+                    return [response]
         raise ValueError("1")
 
     def is_numeric(self, keyword):
