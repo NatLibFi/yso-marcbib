@@ -38,7 +38,6 @@ class VocabularyTest(unittest.TestCase):
         cls.musa.parse_musa_vocabulary(musa_graph, ysa_graph)
         cls.seko = Vocabulary("seko", ['fi'])
         cls.seko.parse_label_vocabulary(seko_graph)
-        print(cls.slm.translations)
         return super(VocabularyTest, cls).setUpClass()
 
     def test_get_concept_with_uri(self):

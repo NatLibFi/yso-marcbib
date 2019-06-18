@@ -335,9 +335,9 @@ class YsoConverter():
                     if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
                         convertible_record = True
 
-            #jos $8-osakenttiä tietueessa ennestään, otetaan uusien $8-osakenttien 1. numeroksi viimeistä seuraava numero:
+            #jos $8-osakenttiä elokuva- tai musiikkitietueessa ennestään, otetaan uusien $8-osakenttien 1. numeroksi viimeistä seuraava numero:
             if convertible_record:
-                if record_type == "music":
+                if record_type in ['music', 'movie']:
                     for field in record.get_fields():
                         if hasattr(field, 'subfields'):
                             for subfield in self.subfields_to_dict(field.subfields):
@@ -446,12 +446,12 @@ class YsoConverter():
         subfields = self.subfields_to_dict(field.subfields)
         #jos ei-numeerisia arvoja on enemmän kuin yksi, kyseessä on asiasanaketju:
         non_digit_codes = []
-        #$6-osakentälliset kentät jätetään käsittelemättä:
+        #$6-osakentälliset kentät jätetään käsittelemättä, mutta poistetaan $2- ja $0-osakentät:
         for subfield in field.get_subfields('6'):
-            field = self.strip_vocabulary_codes(field)
-            field.indicators[1] = "4"
-            logging.error("%s;%s;%s;%s"%("9", record_id, field['6'], field))
-            return [field]
+            new_field = self.strip_vocabulary_codes(field)
+            new_field.indicators[1] = "4"
+            logging.error("%s;%s;%s;%s;%s"%("9", record_id, subfield, field, new_field))
+            return [new_field]
         for subfield in subfields:
             if not subfield['code'].isdigit():
                 non_digit_codes.append(subfield['code'])   
@@ -511,16 +511,50 @@ class YsoConverter():
             logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], field))
             return [field]
         
+
+        if tag in ['650'] and record_type == "movie":
+            has_topics = True #alkuoletuksena on, että elokuvatietueen kentät tulkitaan aiheiksi
+            has_genre_terms = False #kentän loput termeistä tulkitaan tämän perusteella luomiseen liittyviksi
+            for subfield in subfields:
+                if subfield['code'] in ['a', 'x']:
+                    if subfield['code'] == "a" and "elokuvat" in subfield['value']:
+                        has_genre_terms = True
+                        has_topics = False
+                    if subfield['value'] == "aiheet":
+                        has_topics = True
+                        logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
+                    else:
+                        responses = []  
+                        converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
+                        for cf in converted_fields:
+                            """
+                            if cf['2']:
+                                if cf['2'].startswith('slm'):
+                                    if not has_topics:
+                                        has_genre_terms = True
+                                if cf['2'].startswith('yso'):
+                                    if not has_genre_terms:
+                                        has_topics = True
+                            """
+                            cf = self.add_control_subfields(cf, control_subfields)
+                            new_fields.append(cf) 
+                elif not subfield['code'].isdigit():
+                    converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)
+                    for cf in converted_fields:
+                        cf = self.add_control_subfields(cf, control_subfields)
+                        new_fields.append(cf) 
+            return new_fields
+                
         #poikkeuksellisesti käsiteltävät kentät: 
         #385, 567 ja 648, jossa 1. indikaattori on "1", 650/655, jos musiikkiaineistoa:
         #musiikki- ja elokuva-eineisto, jos $a- tai $x-osakentässä on asiasanana aiheet
         #musiikkiaineisto, jossa SEKO-asiasanoja
-        if tag in ['650', '655'] and record_type == "music":
+        if tag in ['650'] and record_type == "music":
             #kerätään SEKO-termejä sisältävät osakentät 382-kenttään siirrettäväksi:
             instrument_lists = []
             instrument_list = []
             
-            has_topics = False #jkentän loput termeistä tulkitaan tämän perusteella aiheiksi
+            has_topics = False #kentän loput termeistä tulkitaan tämän perusteella aiheiksi
             has_genre_terms = False #kentän loput termeistä tulkitaan tämän perusteella luomiseen liittyviksi
             for subfield in subfields:
                 if subfield['code'] in ['a', 'x']:
@@ -528,8 +562,6 @@ class YsoConverter():
                         subfield['value'] = "kokoomateokset"
                     if subfield['value'] == "sovitukset":
                         if instrument_list:
-                            #instrument_list = copy.deepcopy(instrument_list)
-                            #instrument_lists.append(instrument_list)
                             instrument_list = []
                     if subfield['value'] in ['aiheet', 'musiikki']:
                         if subfield['value'] == 'aiheet':
@@ -635,10 +667,10 @@ class YsoConverter():
 
         if tag == "385":
             if not any(subfield['code'] == "a" for subfield in subfields):
-                field = self.strip_vocabulary_codes(field)
-                field.indicators = [' ', ' ']
-                return [field]
-                #TODO: tulosta rivi virhelokiin
+                new_field = self.strip_vocabulary_codes(field)
+                new_field.indicators = [' ', ' ']
+                logging.error("%s;%s;%s;%s"%("8", record_id, "", field, new_field))
+                return [new_field]
         if tag == "567":
             if not any(subfield['code'] == "b" for subfield in subfields):
                 """
@@ -670,6 +702,11 @@ class YsoConverter():
                 if tag == "567":
                     if subfield['code'] != "b":
                         continue         
+                if tag == "655" and record_type == "music":
+                    if subfield['code'] in ['a', 'x', 'v']:
+                        if subfield['value'] == "kokoelmat":
+                            subfield['value'] = "kokoomateokset"
+
                 #358- ja 567-kentistä käsitellään vain a- ja b-osakentät:
                 converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction)
                 #TODO: listaus koko 358- ja 567-kentästä virhelokiin
@@ -801,13 +838,16 @@ class YsoConverter():
                 if tag == "650" and not non_fiction and subfield['code'] == "a":
                     tag == "655"
                 if tag == "655" and subfield['code'] in ['z', 'c']:
-                    if record_type == "movies":
+                    if record_type == "movie":
                         tag = "257"
                     else:
                         tag = "370"
-                if tag in ['650', '655'] and record_type == "music" and not has_topics: 
+                if tag == "650" and record_type in ['music', 'movie'] and not has_topics: 
                     if subfield['code'] in ['z', 'c']:
-                        tag = "370"
+                        if record_type == "movie":
+                            tag = "257"
+                        else:
+                            tag = "370"
                     if subfield['code'] in ['y', 'd']:
                         tag = "388"
                 for r in responses:
@@ -819,6 +859,7 @@ class YsoConverter():
                 if str(e) in ['2', '3', '4', '5']:
                     #TODO: korjattava tagi! Sulkutarkenteettomat monitulkintaiset myös tähän!
                     field = self.field_without_voc_code(tag, [' ', '4'], subfield)
+                    converted_fields.append(field)
                 elif str(e) in ['1']:
                     if tag == "385" or tag == "567":
                         field = self.field_without_voc_code(tag, [' ', ' '], subfield)      
@@ -831,12 +872,7 @@ class YsoConverter():
                             else:
                                 field = self.field_without_voc_code("653", [' ', '4'], subfield)
                         elif subfield['code'] in ['c', 'z']:
-                            if tag == "655" or (tag == "650" and record_type == "music" and not has_topics):
-                                field = self.field_without_voc_code("370", [' ', ' '], subfield)    
-                            elif tag == "650" and record_type == "movie" and not has_topics:
-                                field = self.field_without_voc_code("257", [' ', ' '], subfield)    
-                            else:
-                                field = self.field_without_voc_code("653", [' ', '5'], subfield)    
+                            field = self.field_without_voc_code("653", [' ', '5'], subfield)    
                         elif subfield['code'] in ['v']:
                             field = self.field_without_voc_code("653", [' ', '6'], subfield)
                     elif tag == '655':
@@ -846,6 +882,7 @@ class YsoConverter():
                             field = self.field_without_voc_code("653", [' ', '0'], subfield)   
                         elif subfield['code'] in ['z', 'c']:
                             field = self.field_without_voc_code("370", [' ', ' '], subfield)      
+                    converted_fields.append(field)
                 else:
                     logging.info("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
                 logging.error("%s;%s;%s;%s;%s"%(e, record_id, subfield['value'], original_field, field))
@@ -874,9 +911,11 @@ class YsoConverter():
         new_indicators = None
         subfields = []
         if "numeric" in response:
-            if not tag == "388":
+            if tag in ['257', '388']:
+                new_indicators = [' ', ' ']
+            else:
                 tag = "648"
-            new_indicators = [' ', '7']
+                new_indicators = [' ', '7']
             new_subfields = ["a", response['label'], '2', response['code']]
         else: 
             subfield_code = "a"
@@ -995,7 +1034,6 @@ class YsoConverter():
         """
         fields = []
         idx = 0
-
         for of in original_fields:
             field = {}
             field.update({"field": of})

@@ -35,30 +35,30 @@ class VocabulariesTest(unittest.TestCase):
         cls.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
         cls.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
         return super(VocabulariesTest, cls).setUpClass()
-    
+
     def test_search(self):
         result =  self.vocabularies.search('1900-luku', [('numeric', 'fi'), ('ysa', 'fi'), ('allars', 'sv')], True)
-        self.assertEqual(result['label'], "1900-luku")
+        self.assertEqual(result[0]['label'], "1900-luku")
         result =  self.vocabularies.search('1900', [('numeric', 'fi'), ('ysa', 'fi'), ('allars', 'sv')], True)
-        self.assertEqual(result['label'], "1900")
+        self.assertEqual(result[0]['label'], "1900")
         result =  self.vocabularies.search('400 fKr.', [('numeric', 'sv'), ('allars', 'sv'), ('ysa', 'fi'), ('numeric', 'fi')], True)
 
-        self.assertEqual(result['label'], "400 fKr.")
-        self.assertEqual(result['code'], "yso/swe")
-        self.assertEqual(result['numeric'], True)
+        self.assertEqual(result[0]['label'], "400 fKr.")
+        self.assertEqual(result[0]['code'], "yso/swe")
+        self.assertEqual(result[0]['numeric'], True)
         result =  self.vocabularies.search('ragat', [('ysa', 'fi')], True)
         #Lopputuloksessa koostemerkki pitää olla kaksiosainen:
-        self.assertEqual(result['label'], "rāgat")
+        self.assertEqual(result[0]['label'], "rāgat")
         result =  self.vocabularies.search('ragat', [('slm', 'fi'), ('ysa', 'fi'), ('allars', 'sv')], True)
-        self.assertEqual(result['code'], "slm/fin")
+        self.assertEqual(result[0]['code'], "slm/fin")
         result =  self.vocabularies.search('ragor', [('slm', 'fi'), ('ysa', 'fi'), ('slm', 'sv'), ('allars', 'sv')], True)
-        self.assertEqual(result['code'], "slm/swe")
+        self.assertEqual(result[0]['code'], "slm/swe")
         result =  self.vocabularies.search('ragat', [('slm', 'fi'), ('ysa', 'fi'), ('slm', 'sv'), ('allars', 'sv')], True)
-        self.assertTrue('http://urn.fi/URN:NBN:fi:au:slm:s786' in result['uris'])
+        self.assertTrue('http://urn.fi/URN:NBN:fi:au:slm:s786' in result[0]['uris'])
         result =  self.vocabularies.search('steel pan', [('musa', 'fi')], True)
-        self.assertTrue('http://www.yso.fi/onto/yso/p29959' in result['uris'])
+        self.assertTrue('http://www.yso.fi/onto/yso/p29959' in result[0]['uris'])
         result =  self.vocabularies.search('Helsinki -- Töölö',  [('musa', 'fi'), ('ysa', 'fi')], True)
-        self.assertTrue('http://www.yso.fi/onto/yso/p109631' in result['uris'])
+        self.assertTrue('http://www.yso.fi/onto/yso/p109631' in result[0]['uris'])
      
     def test_search_label_not_found(self):        
         with self.assertRaises(ValueError) as e:
@@ -78,7 +78,7 @@ class VocabulariesTest(unittest.TestCase):
     
     def test_search_label_without_specifier(self):   
         result =  self.vocabularies.search('tunnusmerkit', [('ysa', 'fi')], True)
-        self.assertTrue('http://www.yso.fi/onto/yso/p2014' in result['uris'])
+        self.assertTrue('http://www.yso.fi/onto/yso/p2014' in result[0]['uris'])
         with self.assertRaises(ValueError) as e:
             result =  self.vocabularies.search('kuvaus', [('ysa', 'fi')], True)
         self.assertTrue("3" in str(e.exception))

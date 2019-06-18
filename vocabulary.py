@@ -60,6 +60,11 @@ class Vocabulary():
                 #lisää YSO-linkit:
                 if self.namespace in str(m[1]):
                     uris.add(str(m[1])) 
+            if not uris:
+                matches = secondary_graph.preferredLabel(conc, labelProperties=[SKOS.closeMatch]) 
+                for m in matches:
+                    if self.namespace in str(m[1]):
+                        uris.add(str(m[1])) 
             exact_matches.update({str(conc): uris})        
 
         for conc in g.subjects(RDF.type, SKOS.Concept):
@@ -144,9 +149,7 @@ class Vocabulary():
     def parse_origin_vocabulary(self, g):
         geographical_namespaces = [URIRef("http://www.yso.fi/onto/ysa-meta/GeographicalConcept"),
         URIRef("http://www.yso.fi/onto/allars-meta/GeographicalConcept")]
-        #TODO: Konversio-ohjelma katsoo sulkutarkenteelliset termit myös ilman sulkutarkenteita
         for conc in g.subjects(RDF.type, SKOS.Concept):
-            #TURHA? maantieteelliset käsitteet päätellään YSO-paikoista?
             is_geographical = False
             rdf_types = g.preferredLabel(conc, labelProperties=[RDF.type]) 
             for rdf_type in rdf_types:
@@ -165,6 +168,13 @@ class Vocabulary():
                         uris.add(str(m[1]))
                         if is_geographical:
                             self.geographical_concepts.add(str(m[1]))
+                if not uris:
+                    matches = g.preferredLabel(conc, labelProperties=[SKOS.closeMatch]) 
+                    for m in matches:
+                        if self.namespace in str(m[1]):
+                            uris.add(str(m[1]))   
+                            if is_geographical:
+                                self.geographical_concepts.add(str(m[1]))          
                 for al in alt_labels:
                     alt_label = str(al[1])
                     uris = copy.copy(uris)
@@ -196,7 +206,7 @@ class Vocabulary():
             self.labels_with_and_without_specifiers.update({lc: {}})
             self.labels_with_specifiers.update({lc: {}})
             temp_labels.update({lc: {}})
-        #TODO: deprekoidut käsitteet?
+        #SLM:n deprekoidut käsitteet laitetaan altLabeleihin 
         for conc in g.subjects(RDF.type, SKOS.Concept):
             uri = str(conc)
             for lc in self.language_codes:
@@ -317,7 +327,7 @@ class Vocabulary():
                 label = self.labels[uri][language]
                 return {"label": label, "uris": [uri], "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}      
 
-    def get_concept_with_label(self, label, language, all_languages=False):
+    def get_concept_with_label(self, label, language):
         """
         label: haettavan käsiten pref- tai altLabel
         language: kieliversio, jota haetaan
@@ -355,24 +365,10 @@ class Vocabulary():
                 valid_uris.append(uri)     
         for l in labels:
             pref_labels.append(l)      
-        #TODO: otetaanko SLM:ssä ja SEKOssa huomioon myös deprekoidut käsitteet?
         if valid_uris:
             return {"label": pref_labels[0], "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}
-            """
-            if all_languages:
-                if language == "fi":
-                    other_language = "sv"
-                if language == "sv":
-                     other_language = "fi"
-                vocabulary_code = self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(other_language)
-                other_label = self.translations(valid_uris[0][other_language])
-                response.append({"label": other_label, "uris": valid_uris, "code": vocabulary_code}) 
-                return response
-            else:
-            """
                 
     def get_uris_with_concept(self, concept):
-        #TODO: optio toisen/kummankin kielen vastineen lisäämiseen
         uris = []
         """
         Poistettu virhe 5: jos löytyy täsmälleen yksi sulkutarkenteeton muoto pref- tai altLabelina, niin konvertoidaan tähän labeliin

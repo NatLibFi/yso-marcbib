@@ -38,24 +38,45 @@ class YsoConversionTest(unittest.TestCase):
         cls.cc.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
 
         cls.records = {
+            "movie":
+            [{'original': ['=650  \\7$aelokuvat$zSomero$y1900$2ysa'],
+             'converted': ['=257  \\\\$81\\u$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
+                           '=388  \\\\$81\\u$a1900$2yso/fin',
+                           '=653  \\0$81\\u$aelokuvat'
+                         ]
+             },
+             {'original': ['=655  \\7$akaupungit$ztsekkoslovakia$zSomero$y1970-luku$2ysa'],
+              'converted': ['=370  \\\\$81\\u$gTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847',
+                            '=370  \\\\$81\\u$gSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
+                            '=388  \\\\$81\\u$a1970-luku$2yso/fin',
+                            '=653  \\6$81\\u$akaupungit'
+                         ]
+             },
+             {'original': ['=650  \\7$aelokuvat$ztsekkoslovakia$zSomero$y1970-luku$2ysa'],
+              'converted': ['=257  \\\\$81\\u$aTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847',
+                            '=257  \\\\$81\\u$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
+                            '=388  \\\\$81\\u$a1970-luku$2yso/fin',
+                            '=653  \\0$81\\u$aelokuvat'
+                         ]
+            }],
             "music":
             [{'original': ['=650  \\7$aragat$zSomero$y1900$2musa',],
              'converted': ['=370  \\\\$81\\u$gSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
-                           '=388  \\7$81\\u$a1900$2yso/fin',
+                           '=388  \\\\$81\\u$a1900$2yso/fin',
                            '=655  \\7$81\\u$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'
                          ]
             },
             {'original': ['=650  \\7$aragat$zSomero$y1900$2musa$81\\u',
                          ],
               'converted': ['=370  \\\\$82\\u$81\\u$gSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
-                            '=388  \\7$82\\u$81\\u$a1900$2yso/fin',
+                            '=388  \\\\$82\\u$81\\u$a1900$2yso/fin',
                             '=655  \\7$82\\u$81\\u$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'
                             ]
             },
             {'original': ['=650  \\7$akurttu$xaltto (alttosaksofoni)(2)$y1900$2musa',
                          ],
-             'converted': ['=382  11$81\\u$akurttu$aaltto (alttosaksofoni)$n2$2seko',
-                           '=388  \\7$81\\u$a1900$2yso/fin'
+             'converted': ['=382  11$81\\u$a1-rivinen harmonikka$aalttosaksofoni$n2$2seko',
+                           '=388  \\\\$81\\u$a1900$2yso/fin'
                          ]
             }],
             "text":
@@ -330,7 +351,6 @@ class YsoConversionTest(unittest.TestCase):
         test_result = "=651  \\7$aTöölö (Helsinki)$2yso/fin$0http://www.yso.fi/onto/yso/p109631"
         
         result_fields = self.cc.process_field("00000001", field, "ysa")
-        print("tulos "+str(result_fields[0]))
         self.assertEqual(str(result_fields[0]), test_result)
     """
     def test_convert_field(self):
@@ -402,34 +422,25 @@ class YsoConversionTest(unittest.TestCase):
                     original_record.leader = "XXXXXXcX"
                 elif record_type == "text":
                     original_record.leader = "XXXXXXaX"
+                elif record_type == "movie":
+                    original_record.leader = "XXXXXXgX"
                 else:
                     raise ValueError("Testattava aineistotyyppi on tuntematon")
                 original_record.add_field( Field(tag='001', data='00000001'))
+                if record_type == "movie":
+                    original_record.add_field( Field(tag='007', data='v'))
                 original_fields = []
                 for field in r['original']:
                     original_fields.append(field)
                     original_record.add_field(self.str_to_marc(field))
-                print("original_record")
-                print(original_record)
                 new_record = self.cc.process_record(original_record)
-                print("new record")
-                print(new_record)
                 new_fields = []
-                result_fields = []
-
-                
-                print("nf")
+                result_fields = []  
                 for field in new_record.get_fields():
-                    if not field.tag == "001":
+                    if not field.tag in ['001', '007']:
                         new_fields.append(str(field))
-                        print(str(field))
-                result_fields.append(str(Field(tag='001', data='00000001')))
-                print("rf")
                 for field in r['converted']:
-                    print(str(field))
                     result_fields.append(field)  
-                
-                
                 self.assertEqual(result_fields, new_fields)
           
     def new_field(self, tag, indicators, subfields): 
