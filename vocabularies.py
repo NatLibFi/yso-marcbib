@@ -120,8 +120,9 @@ class Vocabularies:
                             vocabulary_code = "yso"
                             if geographical_concept:
                                 vocabulary_code = "yso_paikat"
-                        
-                        responses.append(self.vocabularies[vocabulary_code].translate_label(response['uris'][0], vc[1]))
+                        translated_response = self.vocabularies[vocabulary_code].translate_label(response['uris'][0], vc[1])
+                        if translated_response:
+                            responses.append(self.vocabularies[vocabulary_code].translate_label(response['uris'][0], vc[1]))
                     for r in responses:
                         r.update({'geographical': geographical_concept})
                         r['label'] = self.normalize_characters(r['label'])

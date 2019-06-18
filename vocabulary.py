@@ -397,15 +397,19 @@ class Vocabulary():
             return {"uris": valid_uris}
 
     def translate_label(self, uri, language):
+        translated_label = None
         if language == "fi":
             other_language = "sv"
         if language == "sv":
-                other_language = "fi"
+            other_language = "fi"
         if self.target_vocabulary_code == "slm":
-            other_label = self.translations[uri][other_language]
+            if other_language in self.translations[uri]:
+                translated_label = self.translations[uri][other_language]
         if self.target_vocabulary_code == "yso":
-            other_label = self.labels[uri][other_language]
-        return {"label": other_label, "uris": [uri], "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(other_language)}
+            if other_language in self.labels[uri]:
+                translated_label = self.labels[uri][other_language]
+        if translated_label:
+            return {"label": translated_label, "uris": [uri], "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(other_language)}
 
     def remove_diacritical_chars(self, word):
         #poistaa tarkkeet kaikista muista merkeistä paitsi å, ä, ö

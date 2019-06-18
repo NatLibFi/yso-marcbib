@@ -323,6 +323,7 @@ class YsoConverter():
                     if len(record['007'].data) > 0:
                         if record['007'].data[0] == "v":
                             record_type = "movie"
+                            non_fiction = False
                             for field in record.get_fields('084'):
                                 for subfield in field.get_subfields('a'):
                                     if subfield.startswith("78"):
@@ -428,6 +429,7 @@ class YsoConverter():
                         #TODO: älä tilastoi tässä kohtaa poistettavia rivejä: poista uusien rivien tilastosta nyt poistettava rivi?
                         #else:     
             else:
+                print(str(record))
                 return
             return record
         
@@ -509,8 +511,7 @@ class YsoConverter():
             field = self.strip_vocabulary_codes(field)
             field.indicators[1] = "4"
             logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], field))
-            return [field]
-        
+            return [field]      
 
         if tag in ['650'] and record_type == "movie":
             has_topics = True #alkuoletuksena on, että elokuvatietueen kentät tulkitaan aiheiksi
@@ -526,23 +527,16 @@ class YsoConverter():
                     else:
                         responses = []  
                         converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
-                        for cf in converted_fields:
-                            """
-                            if cf['2']:
-                                if cf['2'].startswith('slm'):
-                                    if not has_topics:
-                                        has_genre_terms = True
-                                if cf['2'].startswith('yso'):
-                                    if not has_genre_terms:
-                                        has_topics = True
-                            """
-                            cf = self.add_control_subfields(cf, control_subfields)
-                            new_fields.append(cf) 
+                        if converted_fields:
+                            for cf in converted_fields:
+                                cf = self.add_control_subfields(cf, control_subfields)
+                                new_fields.append(cf) 
                 elif not subfield['code'].isdigit():
                     converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)
-                    for cf in converted_fields:
-                        cf = self.add_control_subfields(cf, control_subfields)
-                        new_fields.append(cf) 
+                    if converted_fields:
+                        for cf in converted_fields:
+                            cf = self.add_control_subfields(cf, control_subfields)
+                            new_fields.append(cf) 
             return new_fields
                 
         #poikkeuksellisesti käsiteltävät kentät: 
@@ -590,21 +584,23 @@ class YsoConverter():
                                 instrument_list.extend(["a", responses[0]['label']])
                         else:    
                             converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
-                            for cf in converted_fields:
-                                if cf['2']:
-                                    if cf['2'].startswith('slm'):
-                                        if not has_topics:
-                                            has_genre_terms = True
-                                    if cf['2'].startswith('yso'):
-                                        if not has_genre_terms:
-                                            has_topics = True
-                                cf = self.add_control_subfields(cf, control_subfields)
-                                new_fields.append(cf) 
+                            if converted_fields:
+                                for cf in converted_fields:
+                                    if cf['2']:
+                                        if cf['2'].startswith('slm'):
+                                            if not has_topics:
+                                                has_genre_terms = True
+                                        if cf['2'].startswith('yso'):
+                                            if not has_genre_terms:
+                                                has_topics = True
+                                    cf = self.add_control_subfields(cf, control_subfields)
+                                    new_fields.append(cf) 
                 elif not subfield['code'].isdigit():
                     converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)
-                    for cf in converted_fields:
-                        cf = self.add_control_subfields(cf, control_subfields)
-                        new_fields.append(cf) 
+                    if converted_fields:
+                        for cf in converted_fields:
+                            cf = self.add_control_subfields(cf, control_subfields)
+                            new_fields.append(cf) 
             if instrument_lists:
                 for instrument_list in instrument_lists:
                   
@@ -688,12 +684,11 @@ class YsoConverter():
                 while (a_subfields):
                     a_subfields = field.delete_subfield('a')
             if not any(subfield['code'] == "b" for subfield in subfields):
-                field = self.strip_vocabulary_codes(field)
-                field.indicators = [' ', ' ']
+                new_field = self.strip_vocabulary_codes(field)
+                new_field.indicators = [' ', ' ']
+                logging.error("%s;%s;%s;%s"%("8", record_id, "", field, new_field))
                 return [field]
-                #TODO: tulosta rivi virhelokiin
         for subfield in subfields:
-            #new_field = None
             if not subfield['code'].isdigit():
                 #or tag == "385" or tag == "567":
                 if tag == "385":
@@ -781,10 +776,8 @@ class YsoConverter():
                 search_geographical_concepts = False
                 if language == "fi":
                     vocabulary_order = [('slm', 'fi'), ('slm', 'sv')]
-                    #vocabulary_order = {'slm': 'fi', 'slm': 'sv'}
                 if language == "sv":
                     vocabulary_order = [('slm', 'sv'), ('slm', 'fi')]
-                    #vocabulary_order = {'slm': 'sv', 'slm': 'fi'}
             if subfield['code'] == "y":                          
                 field = self.field_without_voc_code("388", [' ', ' '], subfield)
                 if vocabulary_code in ['ysa', 'musa']:
@@ -794,14 +787,20 @@ class YsoConverter():
                 return [field]
         if tag in ['648', '650', '651']:
             if subfield['code'] == "v":
-                vocabulary_order = slm_vocabulary_order[language]
+                if vocabulary_code in ['musa', 'cilla']:
+                    vocabulary_order = music_slm_vocabulary_order[language]
+                else:
+                    vocabulary_order = slm_vocabulary_order[language]
                 if tag == '650' or tag == '651':
                     if subfield['value'].lower() == "fiktio":
                         logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
                         return
             if tag == "650" and subfield['code'] == "a":
                 if not non_fiction:
-                    vocabulary_order = slm_vocabulary_order[language]
+                    if vocabulary_code in ['musa', 'cilla']:
+                        vocabulary_order = music_slm_vocabulary_order[language]
+                    else:
+                        vocabulary_order = slm_vocabulary_order[language]
         if tag == "650" or tag == "651": 
             if subfield['code'] == "e":
                 logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
@@ -818,7 +817,7 @@ class YsoConverter():
             if tag in ['650', '655']:
                 if subfield['code'] == "a":
                     if vocabulary_code in ['musa', 'cilla']:
-                            vocabulary_order = music_slm_vocabulary_order[language]
+                        vocabulary_order = music_slm_vocabulary_order[language]
                     else:
                         vocabulary_order = slm_vocabulary_order[language]
                 if subfield['code'] in ['x', 'y', 'z']:
