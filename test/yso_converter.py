@@ -36,7 +36,6 @@ class YsoConversionTest(unittest.TestCase):
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
         cls.cc.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
-
         cls.records = {
             "movie":
             [{'original': ['=650  \\7$aelokuvat$zSomero$y1900$2ysa'],
@@ -66,12 +65,18 @@ class YsoConversionTest(unittest.TestCase):
                            '=655  \\7$81\\u$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'
                          ]
             },
-            {'original': ['=650  \\7$aragat$zSomero$y1900$2musa$81\\u',
+            {'original': ['=650  \\7$akaupunkihistoria$zSomero$y1900$2musa',
                          ],
-              'converted': ['=370  \\\\$82\\u$81\\u$gSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
-                            '=388  \\\\$82\\u$81\\u$a1900$2yso/fin',
-                            '=655  \\7$82\\u$81\\u$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'
+              'converted': ['=648  \\7$81\\u$a1900$2yso/fin',
+                            '=650  \\7$81\\u$akaupunkihistoria$2yso/fin$0http://www.yso.fi/onto/yso/p8107',
+                            '=651  \\7$81\\u$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361'
                             ]
+            },
+            {'original': ['=655  \\7$akaupunkihistoria$zSomero$y1970-luku$2ysa'],
+            'converted': ['=370  \\\\$81\\u$gSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
+                          '=388  \\\\$81\\u$a1970-luku$2yso/fin',
+                          '=653  \\6$81\\u$akaupunkihistoria'
+                         ]
             },
             {'original': ['=650  \\7$akurttu$xaltto (alttosaksofoni)(2)$y1900$2musa',
                          ],

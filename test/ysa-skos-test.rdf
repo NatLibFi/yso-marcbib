@@ -123,6 +123,15 @@ Voit ehdottaa uusia käsitteitä ja muutoksia YSAan ja YSOon oheisen &lt;a href=
     <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
     <skos:prefLabel xml:lang="fi">Helsinki -- Töölö</skos:prefLabel>
   </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y96024">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1986-11-01</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2016-05-23T16:10:34+03:00</dct:modified>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/ysa/Y95390"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y26773"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p8107"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <skos:prefLabel xml:lang="fi">kaupunkihistoria</skos:prefLabel>
+  </skos:Concept>
   <skos:Concept rdf:about="http://www.yso.fi/onto/ysa/Y216501">
     <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1996-02-08</dct:created>
     <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2017-11-13T15:48:05+02:00</dct:modified>

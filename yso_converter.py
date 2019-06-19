@@ -175,10 +175,9 @@ class YsoConverter():
                                 UnicodeDecodeError,
                                 RecordLengthInvalid) as e:
                             if e.__class__.__name__ in self.statistics["error classes"]:
-                                self.statistics[e.__class__.__name__] += 1
-                            else:
-                                #self.statistics.update({e.__class__.__name__: 1})
                                 self.statistics["error classes"][e.__class__.__name__] += 1
+                            else:
+                                self.statistics["error classes"].update({e.__class__.__name__: 1})
                             self.statistics['virheitä'] += 1
                 output.close()
                 fh.close()
@@ -401,35 +400,42 @@ class YsoConverter():
                     #poistetaan identtiset rivit:
                     removable_fields = set()
                     for m in range(len(sorted_fields)):
-                        for n in range(m + 1, len(sorted_fields)):
-                            if m not in removable_fields and n not in removable_fields:
-                                if self.is_equal_field(sorted_fields[m].subfields, sorted_fields[n].subfields):
-                                    if sorted_fields[m].indicators == sorted_fields[n].indicators:
-                                        removable_fields.add(n)
-                                    if sorted_fields[m].indicators[1] == " " and not sorted_fields[n].indicators[1] == " ":
-                                        removable_fields.add(m)
-                                    if sorted_fields[n].indicators[1] == " " and not sorted_fields[m].indicators[1] == " ":
-                                        removable_fields.add(n)
-                                elif self.sort_subfields(self.remove_subfields(['0'], sorted_fields[m].subfields)) == \
-                                    self.sort_subfields(self.remove_subfields(['0'], sorted_fields[n].subfields)):
-                                    if sorted_fields[m]['2'] and sorted_fields[m]['0']:
-                                        removable_fields.add(n)
-                                    elif sorted_fields[n]['2'] and sorted_fields[n]['0']:
-                                        removable_fields.add(m)
-                                elif self.sort_subfields(self.remove_subfields(['9'], sorted_fields[m].subfields)) == \
-                                    self.sort_subfields(self.remove_subfields(['9'], sorted_fields[n].subfields)):
-                                    if sorted_fields[m]['9'] and not sorted_fields[n]['9']:
-                                        removable_fields.add(n)
-                                    if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
-                                        removable_fields.add(m)
+                        if sorted_fields[m]['2']:
+                            if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe']:
+                                for n in range(m + 1, len(sorted_fields)):
+                                    if m not in removable_fields and n not in removable_fields:
+                                        if self.is_equal_field(sorted_fields[m].subfields, sorted_fields[n].subfields):
+                                            if sorted_fields[m].indicators == sorted_fields[n].indicators:
+                                                removable_fields.add(n)
+                                            if sorted_fields[m].indicators[1] == " " and not sorted_fields[n].indicators[1] == " ":
+                                                removable_fields.add(m)
+                                            if sorted_fields[n].indicators[1] == " " and not sorted_fields[m].indicators[1] == " ":
+                                                removable_fields.add(n)
+                                        elif self.sort_subfields(self.remove_subfields(['0'], sorted_fields[m].subfields)) == \
+                                            self.sort_subfields(self.remove_subfields(['0'], sorted_fields[n].subfields)):
+                                            if sorted_fields[m]['2'] and sorted_fields[m]['0']:
+                                                removable_fields.add(n)
+                                            elif sorted_fields[n]['2'] and sorted_fields[n]['0']:
+                                                removable_fields.add(m)
+                                        elif self.sort_subfields(self.remove_subfields(['9'], sorted_fields[m].subfields)) == \
+                                            self.sort_subfields(self.remove_subfields(['9'], sorted_fields[n].subfields)):
+                                            if sorted_fields[m]['9'] and not sorted_fields[n]['9']:
+                                                removable_fields.add(n)
+                                            if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
+                                                removable_fields.add(m)
+                    """
+                    TODO: poistetaan identtiset $8-osakentät ja yhdistellään $8-osakentät samaan kenttään:
+                    for m in range(len(sorted_fields)):
+                        if m['2']:
+                            if m['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe']:
+                                for n in range(m + 1, len(sorted_fields)):
+                    """
                     for idx in range(len(sorted_fields)):
                         if idx not in removable_fields:
                             record.add_ordered_field(sorted_fields[idx])   
-                        #TODO: älä poista muiden sanastokoodien duplikaattirivejä
                         #TODO: älä tilastoi tässä kohtaa poistettavia rivejä: poista uusien rivien tilastosta nyt poistettava rivi?
                         #else:     
             else:
-                print(str(record))
                 return
             return record
         
@@ -491,7 +497,7 @@ class YsoConverter():
                 combined_subfields = []
                 while len(subfields) > 0:
                     if len(subfields) > 1:
-                        if subfields[0]['code'] in ['a', 'b', 'c', 'd', 'v', 'x', 'y']: 
+                        if subfields[0]['code'] in ['a', 'b', 'c', 'd', 'v', 'x', 'y', 'z']: 
                             first = subfields[0]['value']
                             if subfields[1]['code'] == "z":
                                 second = subfields[1]['value']
@@ -543,7 +549,7 @@ class YsoConverter():
         #385, 567 ja 648, jossa 1. indikaattori on "1", 650/655, jos musiikkiaineistoa:
         #musiikki- ja elokuva-eineisto, jos $a- tai $x-osakentässä on asiasanana aiheet
         #musiikkiaineisto, jossa SEKO-asiasanoja
-        if tag in ['650'] and record_type == "music":
+        if tag in ['650', '655'] and record_type == "music":
             #kerätään SEKO-termejä sisältävät osakentät 382-kenttään siirrettäväksi:
             instrument_lists = []
             instrument_list = []
@@ -557,9 +563,10 @@ class YsoConverter():
                     if subfield['value'] == "sovitukset":
                         if instrument_list:
                             instrument_list = []
-                    if subfield['value'] in ['aiheet', 'musiikki']:
-                        if subfield['value'] == 'aiheet':
-                            has_topics = True
+                    if subfield['value'] == "aiheet" and tag == "650":
+                        has_topics = True
+                        logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
+                    elif subfield['value'] == "musiikki'":
                         logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
                     else:
                         responses = []  
@@ -586,7 +593,7 @@ class YsoConverter():
                             converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
                             if converted_fields:
                                 for cf in converted_fields:
-                                    if cf['2']:
+                                    if cf['2'] and tag == "650":
                                         if cf['2'].startswith('slm'):
                                             if not has_topics:
                                                 has_genre_terms = True
@@ -686,7 +693,7 @@ class YsoConverter():
             if not any(subfield['code'] == "b" for subfield in subfields):
                 new_field = self.strip_vocabulary_codes(field)
                 new_field.indicators = [' ', ' ']
-                logging.error("%s;%s;%s;%s"%("8", record_id, "", field, new_field))
+                logging.error("%s;%s;%s;%s;%s"%("8", record_id, "", field, new_field))
                 return [field]
         for subfield in subfields:
             if not subfield['code'].isdigit():
@@ -730,24 +737,24 @@ class YsoConverter():
         #alustetaan ensin hakuparametrien oletusarvot
         vocabulary_order = [] #hakujärjestys, jos sanaa haetaan useammasta sanastosta 
         language = None
+        
+        #sanastohakujärjestykseen liittyvät muuttujat:
+        has_music = False
+        yso = True
+        slm = False
+        
         if vocabulary_code == "ysa":
-            vocabulary_order = [('ysa', 'fi'), ('allars', 'sv')]
             language = "fi"
         if vocabulary_code == "allars":
-            vocabulary_order = [('allars', 'sv'), ('ysa', 'fi')]
             language = "sv"    
         if vocabulary_code == "musa":
-            vocabulary_order = [('musa', 'fi'), ('cilla', 'sv'), ('ysa', 'fi'), ('allars', 'sv')]
             language = "fi"    
+            has_music = True
         if vocabulary_code == "cilla":
-            vocabulary_order = [('cilla', 'sv'), ('musa', 'fi'), ('allars', 'sv'), ('ysa', 'fi')]
-            language = "sv"     
-        slm_vocabulary_order = {}
-        slm_vocabulary_order['fi'] = [('slm', 'fi'), ('ysa', 'fi'), ('slm', 'sv'), ('allars', 'sv')]  
-        slm_vocabulary_order['sv'] = [('slm', 'sv'), ('allars', 'sv'), ('slm', 'fi'), ('ysa', 'fi')]
-        music_slm_vocabulary_order = {}
-        music_slm_vocabulary_order['fi'] = [('slm', 'fi'), ('musa', 'fi'), ('ysa', 'fi'), ('slm', 'sv'), ('cilla', 'sv'),  ('allars', 'sv')]
-        music_slm_vocabulary_order['sv'] = [('slm', 'sv'), ('cilla', 'sv'),  ('allars', 'sv'), ('slm', 'fi'), ('musa', 'fi'), ('ysa', 'fi')]
+            language = "sv"   
+            has_music = True  
+        
+        #vocabulary_order = self.set_vocabulary_order(language, yso=True, music=has_music)
 
         search_geographical_concepts = True    
         
@@ -763,21 +770,19 @@ class YsoConverter():
             '648': ['a', 'v', 'x', 'y', 'z'],
             '650': ['a', 'b', 'c', 'd', 'v', 'x', 'y', 'z'],
             '651': ['a', 'd', 'v', 'x', 'y', 'z'],
-            '655': ['a', 'b', 'v', 'x', 'z']
+            '655': ['a', 'v', 'x', 'z']
         }
 
         #käsitellään ensin poikkeustapaukset ja/tai annetaan sanastohaulle erityisjärjestys:
         if tag == "385" or tag == "567":
             search_geographical_concepts = False
-        if tag == "648":
-            vocabulary_order = [('numeric', language)] + vocabulary_order
         if tag == "655":
+            if not subfield['code'] == "z":
+                yso = False #vain 655 kentän z-osakentässä katsotaan myös Ysa- ja Allärs-termejä
+                has_music = False #ei katsotaan myöskään Musasta eikä Cillasta
             if subfield['code'] in ['a', 'v', 'x']:
                 search_geographical_concepts = False
-                if language == "fi":
-                    vocabulary_order = [('slm', 'fi'), ('slm', 'sv')]
-                if language == "sv":
-                    vocabulary_order = [('slm', 'sv'), ('slm', 'fi')]
+                slm = True
             if subfield['code'] == "y":                          
                 field = self.field_without_voc_code("388", [' ', ' '], subfield)
                 if vocabulary_code in ['ysa', 'musa']:
@@ -787,47 +792,51 @@ class YsoConverter():
                 return [field]
         if tag in ['648', '650', '651']:
             if subfield['code'] == "v":
+                slm = True
                 if vocabulary_code in ['musa', 'cilla']:
-                    vocabulary_order = music_slm_vocabulary_order[language]
-                else:
-                    vocabulary_order = slm_vocabulary_order[language]
+                    has_music = True
                 if tag == '650' or tag == '651':
                     if subfield['value'].lower() == "fiktio":
                         logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
                         return
             if tag == "650" and subfield['code'] == "a":
                 if not non_fiction:
+                    slm = True
                     if vocabulary_code in ['musa', 'cilla']:
-                        vocabulary_order = music_slm_vocabulary_order[language]
-                    else:
-                        vocabulary_order = slm_vocabulary_order[language]
-        if tag == "650" or tag == "651": 
+                        has_music = True
+        if tag in ['650', '651']:
             if subfield['code'] == "e":
                 logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
                 return 
             elif subfield['code'] == "g":
                 field = self.field_without_voc_code("653", [' ', ' '], subfield)   
                 logging.error("%s;%s;%s;%s;%s"%("7", record_id, subfield['value'], original_field, field))
-                return [field]
-            if subfield['code'] in ['a', 'b', 'c', 'x', 'z']:
-                vocabulary_order.append(('numeric', language))
-            if subfield['code'] in ['d', 'y']:
-                vocabulary_order = [('numeric', language)] + vocabulary_order
+                return [field]    
         if record_type == "music":
             if tag in ['650', '655']:
-                if subfield['code'] == "a":
-                    if vocabulary_code in ['musa', 'cilla']:
-                        vocabulary_order = music_slm_vocabulary_order[language]
-                    else:
-                        vocabulary_order = slm_vocabulary_order[language]
+                if subfield['code'] == "a" and tag == "650":
+                    slm = True
                 if subfield['code'] in ['x', 'y', 'z']:
                     if not has_topics:
-                        if vocabulary_code in ['musa', 'cilla']:
-                            vocabulary_order = music_slm_vocabulary_order[language]
-                        else:
-                            vocabulary_order = slm_vocabulary_order[language]
-                    if subfield['code'] == "y":
-                        vocabulary_order = [('numeric', language)] + vocabulary_order
+                        slm = True
+
+        vocabulary_order = self.set_vocabulary_order(language, yso, slm, has_music)
+        
+        #hakujärjestykseen lisäys niille osakentille, josta haetaan aikatermejä:
+        #Huom! 655 y käsitelty jo edellä
+        if subfield['code'] == "y" and tag in ['648', '650', '651']:
+            vocabulary_order = [('numeric', language)] + vocabulary_order
+        if tag == "648":
+            if subfield['code'] in ['a', 'x', 'z']:
+                vocabulary_order = [('numeric', language)] + vocabulary_order
+        if tag == "650":
+            if subfield['code'] in ['a', 'b', 'c', 'x', 'z']:
+                vocabulary_order = vocabulary_order + [('numeric', language)]
+            if subfield['code'] == "d":
+                vocabulary_order = [('numeric', language)] + vocabulary_order
+        if tag == "651":
+            if subfield['code'] in ['a', 'x', 'z']:
+                vocabulary_order = vocabulary_order + [('numeric', language)]
 
         #käsitellään perustapaukset
         if subfield['code'] in valid_subfield_codes[tag]:
@@ -877,8 +886,6 @@ class YsoConverter():
                     elif tag == '655':
                         if subfield['code'] in ['a', 'v', 'x']:
                             field = self.field_without_voc_code("653", [' ', '6'], subfield)
-                        elif subfield['code'] in ['b']:
-                            field = self.field_without_voc_code("653", [' ', '0'], subfield)   
                         elif subfield['code'] in ['z', 'c']:
                             field = self.field_without_voc_code("370", [' ', ' '], subfield)      
                     converted_fields.append(field)
@@ -1104,6 +1111,32 @@ class YsoConverter():
         for f in fields:
             sorted_fields.append(f['field'])
         return sorted_fields
+
+    def set_vocabulary_order(self, language_code, yso=False, slm=False, music=False):
+        """
+        palauttaa listan sanastoista ja kielikoodeista sanastohakua varten
+        esim. [('musa', 'fi'), ('slm', 'fi'), ('ysa', 'fi'), ('cilla', 'sv'), ('slm', 'sv'), ('allars', 'sv')],
+        jos kielikoodi on "fi" ja kaikki muiden parametrien arvo True
+        language_code: ensisijainen hakukieli kielikoodina
+        slm: haetaan SLM-sanastosta
+        music: haetaam Musa- ja Cilla-sanastoista 
+        """
+        vocabulary_order = []
+        if yso:
+            vocabulary_order += [('ysa', 'fi'), ('allars', 'sv')]
+        if slm:
+            vocabulary_order += [('slm', 'fi'), ('slm', 'sv')]    
+        if music:
+            vocabulary_order += [('musa', 'fi'), ('cilla', 'sv')] 
+        vocabulary_order = sorted(vocabulary_order, key=lambda tup: (  
+            tup[1] != language_code,
+            tup[0] == "ysa",
+            tup[0] == "allars",
+            tup[0] == "slm",
+            tup[0] == "musa",
+            tup[0] == "cilla"
+        ))
+        return vocabulary_order
 
 def main():
     parser = argparse.ArgumentParser(description="YSO-konversio-ohjelma.")
