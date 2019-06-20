@@ -59,7 +59,13 @@ class YsoConversionTest(unittest.TestCase):
                          ]
             }],
             "music":
-            [{'original': ['=650  \\7$aragat$zSomero$y1900$2musa',],
+            [{'original': ['=650  \\7$akaupunkihistoria$xSomero$2ysa',
+                           '=650  \\7$akaupunkihistoria$xSomero$2ysa'
+                         ],
+             'converted': ['=650  \\7$81\\u$82\\u$akaupunkihistoria$2yso/fin$0http://www.yso.fi/onto/yso/p8107',
+                           '=651  \\7$81\\u$82\\u$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361']
+            },
+            {'original': ['=650  \\7$aragat$zSomero$y1900$2musa',],
              'converted': ['=370  \\\\$81\\u$gSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
                            '=388  \\\\$81\\u$a1900$2yso/fin',
                            '=655  \\7$81\\u$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786'

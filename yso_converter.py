@@ -166,7 +166,6 @@ class YsoConverter():
                             record = next(reader, None)
                             if record:
                                 self.read_and_write_record(record)
-                                    #TODO: kirjoitetaanko konvertoimattomatkin tietueet?
                         except (BaseAddressInvalid, 
                                 RecordLeaderInvalid, 
                                 BaseAddressNotFound, 
@@ -174,11 +173,12 @@ class YsoConverter():
                                 NoFieldsFound, 
                                 UnicodeDecodeError,
                                 RecordLengthInvalid) as e:
-                            if e.__class__.__name__ in self.statistics["error classes"]:
-                                self.statistics["error classes"][e.__class__.__name__] += 1
+                            if e.__class__.__name__ in self.statistics["virheluokkia"]:
+                                self.statistics["virheluokkia"][e.__class__.__name__] += 1
                             else:
-                                self.statistics["error classes"].update({e.__class__.__name__: 1})
+                                self.statistics["virheluokkia"].update({e.__class__.__name__: 1})
                             self.statistics['virheitä'] += 1
+                        
                 output.close()
                 fh.close()
 
@@ -238,6 +238,25 @@ class YsoConverter():
         #apufunktio identtisten rivien poistamiseen, kun konvertoidut kentät ovat valmiina
         return self.sort_subfields(self.subfields_to_dict(first_subfields)) == \
                self.sort_subfields(self.subfields_to_dict(second_subfields))
+
+    def similar_fields(self, ignored_codes, *fields):
+        """
+        apufunktio, joka vertailee parametreinä annettuja MARC21-kenttiä ja testaa, ovatko ne kaikki identtisiä
+        ignored_codes: osakenttäkoodit, joita ei huomioida vertailussa
+        fields: vertailtavat MARC21-kentät
+        """
+        field_subfields = []
+        for field in fields:
+            trimmed_subfields = []
+            for subfield in self.subfields_to_dict(field.subfields):
+                if subfield['code'] not in ignored_codes:
+                    trimmed_subfields.append({"code": subfield['code'], "value": subfield['value']})
+            field_subfields.append(trimmed_subfields)      
+        for m in range(len(field_subfields) - 1):
+            for n in range(m + 1, len(field_subfields)):
+                if field_subfields[m] != field_subfields[n]:
+                    return False
+        return True
 
     def process_record(self, record):
         if record['001']:
@@ -355,6 +374,7 @@ class YsoConverter():
                     else:
                         self.linking_number = 0
                 subfields = []
+                
                 #TODO: vaihtoehto: säilytetään alkup. YSA-rivi, jos valittu optio?
                 for tag in tags_of_fields_to_process:                    
                     for field in record.get_fields(tag):
@@ -423,13 +443,44 @@ class YsoConverter():
                                                 removable_fields.add(n)
                                             if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
                                                 removable_fields.add(m)
-                    """
-                    TODO: poistetaan identtiset $8-osakentät ja yhdistellään $8-osakentät samaan kenttään:
+                    
+                    #poistetaan identtiset $8-osakentät ja yhdistellään $8-osakentät samaan kenttään:
+                    
                     for m in range(len(sorted_fields)):
-                        if m['2']:
-                            if m['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe']:
+                        linking_numbers_list = [] #tallentaan erilaiset $8-osakentät, jos on useampia muuten identtisiä kenttiä
+                        if sorted_fields[m]['2']:
+                            if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe'] and m not in removable_fields:
                                 for n in range(m + 1, len(sorted_fields)):
-                    """
+                                    if m not in removable_fields and n not in removable_fields:
+                                        m_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
+                                        n_subfields = self.subfields_to_dict(sorted_fields[n].subfields)
+                                        if self.similar_fields(['8'], sorted_fields[m], sorted_fields[n]):
+                                            for subfield in m_subfields:
+                                                if subfield['code'] == "8":
+                                                    if subfield['value'] not in linking_numbers_list:
+                                                        linking_numbers_list.append(subfield['value'])
+                                            for subfield in n_subfields:
+                                                if subfield['code'] == "8":
+                                                    if subfield['value'] not in linking_numbers_list:
+                                                        linking_numbers_list.append(subfield['value'])        
+                                            removable_fields.add(n)
+                        if linking_numbers_list:
+                            while (sorted_fields[m]['8']):
+                                sorted_fields[m].delete_subfield('8')
+                        for ln in linking_numbers_list:
+                            sorted_fields[m].add_subfield('8', ln)
+                              
+                        new_subfields = self.sort_subfields(self.subfields_to_dict(sorted_fields[m].subfields))
+                        subfield_list = []
+                        for ns in new_subfields:
+                            subfield_list.extend([ns['code'], ns['value']])
+                        new_field = Field(
+                            tag = tag,
+                            indicators = sorted_fields[m].indicators,
+                            subfields = subfield_list
+                        )
+                        sorted_fields[m] = new_field
+
                     for idx in range(len(sorted_fields)):
                         if idx not in removable_fields:
                             record.add_ordered_field(sorted_fields[idx])   
@@ -866,6 +917,8 @@ class YsoConverter():
                 field = None
                 if str(e) in ['2', '3', '4', '5']:
                     #TODO: korjattava tagi! Sulkutarkenteettomat monitulkintaiset myös tähän!
+                    if tag in ['650', '651'] and subfield['code'] == "v":
+                        tag = 655
                     field = self.field_without_voc_code(tag, [' ', '4'], subfield)
                     converted_fields.append(field)
                 elif str(e) in ['1']:
@@ -1006,7 +1059,6 @@ class YsoConverter():
         return new_field
 
     def sort_subfields(self, subfields):
-        #TODO: onko järjestys oikea?
         return sorted(subfields, key=lambda subfield: (  
             subfield['code'] == "9", 
             subfield['code'] == "5", 

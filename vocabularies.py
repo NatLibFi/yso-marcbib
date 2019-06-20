@@ -139,6 +139,7 @@ class Vocabularies:
     def is_numeric(self, keyword):
         numeric = False
         if keyword:
+            keyword = keyword.replace(" ", "")
             if keyword.isdigit() and 1 < len(keyword) < 5:
                 numeric = True
             suffixes = ['-luku', '-luvut', '-talet', '-tal', 'ekr.', 'jkr.', 'fkr.', 'eaa.', 'jaa.', 'ekr', 'jkr', 'fkr', 'eaa', 'jaa']
