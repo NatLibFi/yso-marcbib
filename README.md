@@ -21,7 +21,17 @@ Ohjelma käyttää Python-kirjastoja pymarc, rdflib, unidecode, jotka on asennet
     
 **Ohjelman käynnistysparametrit**
 
-Annetaan komentorivillä `python yso_converter.py -i="input-tiedostopolku" -o="output-tiedostopolku" -f="formaatti" ("marc21" tai "marcxml") -al="yes" ("yes", jos halutaan asiasanat suomeksi ja ruotsiksi tai "no", jos halutaan vain alkuperäisellä kielellä) ` 
+Annetaan komentorivillä `python yso_converter.py`
+
+Komentoriviparametrit:
+- -i="input-tiedostonimi" tai -id="input-hakemistopolku"
+- -o="output-tiedostonimi" tai -od="output-hakemistopolku"
+- -f="formaatti" ("marc21" tai "marcxml") 
+- -al="yes" ("yes", jos halutaan asiasanat suomeksi ja ruotsiksi tai "no", jos halutaan vain alkuperäisellä kielellä) 
+
+Jos valitaan input-hakemistopolku, ohjelma kopioi kaikki hakemiston tiedostot (varmista, että kaikki tiedostot ovat samassa formaatissa, joka valittu f-parametrillä)
+Jos on valittu output-tiedostonimi, ohjelma kopioi kaikki uudet tietueet samaan tiedostoon valitulla output-tiedostonimellä
+Jos on valittu output-hakemistopolku, ohjelma kopioi uudet tietueet alkuperäisillä tiedostonimillä output-hakemistopolulla määriteltyyn kansioon
 
 Ohjelma tuottaa automaattisesti lokitiedostot logs-kansion työhakemistoon aikaleimoilla.
           
