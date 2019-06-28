@@ -23,10 +23,14 @@ import os
 import logging
 import sys
 import re
+import csv
 
 class YsoConverter():
 
     def __init__(self, input_file, input_directory, output_file, output_directory, file_format, all_languages):      
+        self.log_directory = "logs"
+        if not os.path.isdir(self.log_directory):
+            os.mkdir(self.log_directory)
         if input_file:
             if not os.path.isfile(input_file):
                 logging.warning("Lähdetiedostoa ei ole olemassa.")
@@ -66,27 +70,41 @@ class YsoConverter():
         self.vocabularies = Vocabularies()
         self.file_format = file_format.lower()
         self.all_languages = False
-        self.delimiter = "¤"
+        self.delimiter = "|"
         if all_languages == "yes":
             self.all_languages = True
         self.conversion_time = datetime.datetime.now().replace(microsecond=0).isoformat()
         self.marcdate = str(datetime.date.today()).replace("-","")
         self.conversion_name = "yso-konversio"
-        self.error_logger = logging.getLogger()
+        
+        #self.error_logger = logging.getLogger()
         #korvataan kaksoispisteet Windows-tiedostonimeä varten:
         time = self.conversion_time.replace(":", "")
+        
+
         self.error_log = self.conversion_name + "_error-log_" + time + ".log"
+
+        
+
         self.removed_fields_log = self.conversion_name + "_removed-fields-log_" + time + ".log"
         self.new_fields_log = self.conversion_name + "_new-fields-log_" + time + ".log"
         self.results_log = self.conversion_name + "_results-log_" + time + ".log"
+        self.error_log = os.path.join(self.log_directory, self.error_log)
+        self.removed_fields_log = os.path.join(self.log_directory, self.removed_fields_log)
+        self.new_fields_log = os.path.join(self.log_directory, self.new_fields_log)
+        self.results_log = os.path.join(self.log_directory, self.results_log)
+
+        """
         error_handler = logging.FileHandler(self.error_log, 'w', 'utf-8')
         error_handler.setLevel(logging.ERROR)
         self.error_logger.addHandler(error_handler)
+        """
         self.linking_number = None #käytetään musiikkiaineiston hajotettujen ketjujen yhdistämiseen 8-osakentällä
         self.statistics = {}
         self.statistics.update({"konvertoituja tietueita": 0})
         self.statistics.update({"käsiteltyjä tietueita": 0})
         self.statistics.update({"käsiteltyjä kenttiä": 0})
+        self.statistics.update({"kaikki tarkistetut kentät": 0})
         self.statistics.update({"poistettuja kenttiä": 0})
         self.statistics.update({"uusia kenttiä": 0})
         self.statistics.update({"virheitä": 0})
@@ -172,8 +190,11 @@ class YsoConverter():
     def read_records(self):
         with open(self.error_log, 'w', encoding = 'utf-8-sig') as error_handler, \
             open(self.removed_fields_log, 'w', encoding = 'utf-8-sig') as self.rf_handler, \
-            open(self.new_fields_log, 'w', encoding = 'utf-8-sig') as self.nf_handler:
+            open(self.new_fields_log, 'w', encoding = 'utf-8-sig') as self.nf_handler, \
+            open(self.error_log, 'w', newline='', encoding='utf-8-sig') as csvfile:
             
+            self.csvriter = csv.writer(csvfile , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
             error_logger = logging.getLogger("error logger")
             error_handler = logging.FileHandler(self.error_log)
             error_logger.setLevel(logging.ERROR)
@@ -248,6 +269,7 @@ class YsoConverter():
                                     RecordDirectoryInvalid,
                                     NoFieldsFound, 
                                     UnicodeDecodeError,
+                                    ValueError,
                                     RecordLengthInvalid) as e:
                                 if e.__class__.__name__ in self.statistics["virheluokkia"]:
                                     self.statistics["virheluokkia"][e.__class__.__name__] += 1
@@ -265,7 +287,8 @@ class YsoConverter():
               
         self.rf_handler.close()
         self.nf_handler.close()
-        error_handler.close()
+        #error_handler.close()
+        csvfile.close()
         with open(self.results_log, 'w', encoding = 'utf-8-sig') as result_handler:
             self.statistics["käsiteltyjä kenttiä"] = \
             self.statistics["poistettuja kenttiä"] + \
@@ -433,6 +456,7 @@ class YsoConverter():
 
             for tag in tags_of_fields_to_convert:
                 for field in record.get_fields(tag):
+                    self.statistics["kaikki tarkistetut kentät"] += 1
                     if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
                         convertible_record = True
 
@@ -473,11 +497,11 @@ class YsoConverter():
                                 #TODO: vanha, konvertoitava kenttä lokiin!
                                 converted_fields = self.process_field(record_id, field, vocabulary_code, non_fiction, record_type)
                                 self.rf_handler.write(record_id + self.delimiter + str(field) + "\n")
-                                self.statistics['käsiteltyjä kenttiä'] += 1
+                                self.statistics['poistettuja kenttiä'] += 1
                                 if converted_fields:
                                     altered_fields.add(tag)
                                     for cf in converted_fields:
-                                        self.statistics['uusia kenttiä'] += 1
+                                        #self.statistics['uusia kenttiä'] += 1
                                         altered_fields.add(cf.tag)
                                         if cf.tag in new_fields:
                                             new_fields[cf.tag].append(cf)
@@ -566,10 +590,12 @@ class YsoConverter():
 
                     for idx in range(len(sorted_fields)):
                         if idx not in removable_fields:
-                            record.add_ordered_field(sorted_fields[idx])   
-                            self.nf_handler.write(record_id + self.delimiter + str(sorted_fields[idx]) + "\n")
-                        #TODO: älä tilastoi tässä kohtaa poistettavia rivejä: poista uusien rivien tilastosta nyt poistettava rivi?
-                        #else:     
+                            if not any(str(sorted_fields[idx]) == str(field) for field in record.get_fields(tag)):
+                                self.nf_handler.write(record_id + self.delimiter + str(sorted_fields[idx]) + "\n")
+                                self.statistics['uusia kenttiä'] += 1
+                            record.add_ordered_field(sorted_fields[idx])  
+                            
+                        #TODO: älä tilastoi tässä kohtaa poistettavia rivejä: poista uusien rivien tilastosta nyt poistettava rivi? 
             else:
                 return
             return record
@@ -593,7 +619,8 @@ class YsoConverter():
         for subfield in field.get_subfields('6'):
             new_field = self.strip_vocabulary_codes(field)
             new_field.indicators[1] = "4"
-            logging.error("%s;%s;%s;%s;%s"%("9", record_id, subfield, field, new_field))
+            #logging.error("%s;%s;%s;%s;%s"%("9", record_id, subfield, field, new_field))
+            self.csvriter.writerow(["9", record_id, subfield, field, new_field])
             return [new_field]
         for subfield in subfields:
             if not subfield['code'].isdigit():
@@ -651,7 +678,8 @@ class YsoConverter():
         if all(subfield['code'].isdigit() for subfield in subfields):
             field = self.strip_vocabulary_codes(field)
             field.indicators[1] = "4"
-            logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], field))
+            #logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], field))
+            self.csvriter.writerow(["8", record_id, subfield['value'], field])
             return [field]      
 
         if tag in ['650'] and record_type == "movie":
@@ -664,7 +692,8 @@ class YsoConverter():
                         has_topics = False
                     if subfield['value'] == "aiheet":
                         has_topics = True
-                        logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
+                        #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
+                        self.csvriter.writerow(["6", record_id, subfield['value'], field])
                     else:
                         responses = []  
                         converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
@@ -700,9 +729,11 @@ class YsoConverter():
                             instrument_list = []
                     if subfield['value'] == "aiheet" and tag == "650":
                         has_topics = True
-                        logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
-                    elif subfield['value'] == "musiikki'":
-                        logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
+                        #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
+                        self.csvriter.writerow(["6", record_id, subfield['value'], field])
+                    elif subfield['value'] == "musiikki":
+                        #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
+                        self.csvriter.writerow(["6", record_id, subfield['value'], field])
                     else:
                         responses = []  
                         n = None
@@ -807,7 +838,8 @@ class YsoConverter():
             if not any(subfield['code'] == "a" for subfield in subfields):
                 new_field = self.strip_vocabulary_codes(field)
                 new_field.indicators = [' ', ' ']
-                logging.error("%s;%s;%s;%s"%("8", record_id, "", field, new_field))
+                #logging.error("%s;%s;%s;%s"%("8", record_id, "", field, new_field))
+                self.csvriter.writerow(["8", record_id, "", field, new_field])
                 return [new_field]
         if tag == "567":
             if not any(subfield['code'] == "b" for subfield in subfields):
@@ -828,7 +860,8 @@ class YsoConverter():
             if not any(subfield['code'] == "b" for subfield in subfields):
                 new_field = self.strip_vocabulary_codes(field)
                 new_field.indicators = [' ', ' ']
-                logging.error("%s;%s;%s;%s;%s"%("8", record_id, "", field, new_field))
+                #logging.error("%s;%s;%s;%s;%s"%("8", record_id, "", field, new_field))
+                self.csvriter.writerow(["8", record_id, "", field, new_field])
                 return [field]
         for subfield in subfields:
             if not subfield['code'].isdigit():
@@ -867,7 +900,8 @@ class YsoConverter():
         converted_fields = []
 
         if not subfield['value']:
-            logging.error("%s;%s;%s;%s"%("1", record_id, subfield['value'], original_field))
+            #logging.error("%s;%s;%s;%s"%("1", record_id, subfield['value'], original_field))
+            self.csvriter.writerow(["1", record_id, subfield['value'], original_field])
             return
         #alustetaan ensin hakuparametrien oletusarvot
         vocabulary_order = [] #hakujärjestys, jos sanaa haetaan useammasta sanastosta 
@@ -932,7 +966,8 @@ class YsoConverter():
                     has_music = True
                 if tag == '650' or tag == '651':
                     if subfield['value'].lower() == "fiktio":
-                        logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
+                        #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
+                        self.csvriter.writerow(["6", record_id, subfield['value'], original_field])
                         return
             if tag == "650" and subfield['code'] == "a":
                 if not non_fiction:
@@ -941,11 +976,13 @@ class YsoConverter():
                         has_music = True
         if tag in ['650', '651']:
             if subfield['code'] == "e":
-                logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
+                #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
+                self.csvriter.writerow(["6", record_id, subfield['value'], original_field])
                 return 
             elif subfield['code'] == "g":
                 field = self.field_without_voc_code("653", [' ', ' '], subfield)   
-                logging.error("%s;%s;%s;%s;%s"%("7", record_id, subfield['value'], original_field, field))
+                #logging.error("%s;%s;%s;%s;%s"%("7", record_id, subfield['value'], original_field, field))
+                self.csvriter.writerow(["7", record_id, subfield['value'], original_field, field])
                 return [field]    
         if record_type == "music":
             if tag in ['650', '655']:
@@ -1028,9 +1065,11 @@ class YsoConverter():
                     converted_fields.append(field)
                 else:
                     logging.info("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
-                logging.error("%s;%s;%s;%s;%s"%(e, record_id, subfield['value'], original_field, field))
+                #logging.error("%s;%s;%s;%s;%s"%(e, record_id, subfield['value'], original_field, field))
+                self.csvriter.writerow([e, record_id, subfield['value'], original_field, field])
         else:
-            logging.error("%s;%s;%s;%s;%s"%("8", record_id, subfield['value'], original_field, field))
+            #logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], original_field))
+            self.csvriter.writerow(["8", record_id, subfield['value'], original_field])
             original_field.indicators[1] = "4"
             original_field.delete_subfield('2')
             
