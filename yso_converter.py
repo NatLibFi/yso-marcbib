@@ -107,7 +107,7 @@ class YsoConverter():
         self.statistics.update({"kaikki tarkistetut kentät": 0})
         self.statistics.update({"poistettuja kenttiä": 0})
         self.statistics.update({"uusia kenttiä": 0})
-        self.statistics.update({"virheitä": 0})
+        self.statistics.update({"MARC21-virheitä": 0})
         self.statistics.update({"virheluokkia": {}})
         #ladattavien sanastojen sijainti:
         self.data_url = "http://api.finto.fi/download/"
@@ -275,7 +275,7 @@ class YsoConverter():
                                     self.statistics["virheluokkia"][e.__class__.__name__] += 1
                                 else:
                                     self.statistics["virheluokkia"].update({e.__class__.__name__: 1})
-                                self.statistics['virheitä'] += 1
+                                self.statistics['MARC21-virheitä'] += 1
                     except TypeError:
                         logging.error("Tiedosto %s ei ole MARC21-muodossa"%input_path)
                         sys.exit(2)
@@ -454,6 +454,15 @@ class YsoConverter():
             if not record_type:
                 record_type = "text"
 
+            if non_fiction:
+                record_code = "t"
+            elif record_type == "movie":
+                record_code = "e"
+            elif record_type == "music":
+                record_code = "m"
+            elif not non_fiction:
+                record_code = "f"
+
             for tag in tags_of_fields_to_convert:
                 for field in record.get_fields(tag):
                     self.statistics["kaikki tarkistetut kentät"] += 1
@@ -590,8 +599,19 @@ class YsoConverter():
 
                     for idx in range(len(sorted_fields)):
                         if idx not in removable_fields:
-                            if not any(str(sorted_fields[idx]) == str(field) for field in record.get_fields(tag)):
-                                self.nf_handler.write(record_id + self.delimiter + str(sorted_fields[idx]) + "\n")
+                            is_new_field = False
+                            if tag in original_fields:
+                                if not any(str(sorted_fields[idx]) == str(field) for field in original_fields[tag]):
+                                    is_new_field = True
+                            else:
+                                is_new_field = True
+                            if is_new_field:
+                                self.nf_handler.write(record_id + \
+                                                    self.delimiter + \
+                                                    record_code + \
+                                                    self.delimiter + \
+                                                    str(sorted_fields[idx]) + "\n")
+
                                 self.statistics['uusia kenttiä'] += 1
                             record.add_ordered_field(sorted_fields[idx])  
                             

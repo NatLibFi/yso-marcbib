@@ -4,6 +4,8 @@ from vocabularies import Vocabularies
 from rdflib import Graph, URIRef, Namespace, RDF
 from pymarc import Record, Field
 from yso_converter import YsoConverter
+import csv
+from unittest.mock import Mock, patch
 
 class YsoConversionTest(unittest.TestCase):
 
@@ -12,8 +14,11 @@ class YsoConversionTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         #cls.vocabulary = Vocabularies()
-        cls.cc = YsoConverter("test.mrc", "output.mrc", "marc21", "no")
+        cls.cc = YsoConverter("test.mrc", "", "output.mrc", "", "marc21", "no")
         cls.vocabularies = Vocabularies()
+        cls.cc.csvriter = Mock(writerow=Mock())
+        cls.cc.rf_handler = Mock(write=Mock())
+        cls.cc.nf_handler = Mock(write=Mock())
         yso_graph = Graph()
         yso_graph.parse('test/yso-skos-test.rdf')
         yso_paikat_graph = Graph()
