@@ -81,11 +81,7 @@ class YsoConverter():
         #korvataan kaksoispisteet Windows-tiedostonimeä varten:
         time = self.conversion_time.replace(":", "")
         
-
         self.error_log = self.conversion_name + "_error-log_" + time + ".log"
-
-        
-
         self.removed_fields_log = self.conversion_name + "_removed-fields-log_" + time + ".log"
         self.new_fields_log = self.conversion_name + "_new-fields-log_" + time + ".log"
         self.results_log = self.conversion_name + "_results-log_" + time + ".log"
@@ -248,8 +244,6 @@ class YsoConverter():
                         input_path = os.path.join(self.input_directory, i_file)
                     else:
                         input_path = i_file
-                    #with open(input_path, 'rb') as fh, \
-                    #open(self.output_file,'wb') as output:
                     if not self.output_directory and self.input_directory:
                         pass
                     else:
@@ -287,7 +281,6 @@ class YsoConverter():
               
         self.rf_handler.close()
         self.nf_handler.close()
-        #error_handler.close()
         csvfile.close()
         with open(self.results_log, 'w', encoding = 'utf-8-sig') as result_handler:
             self.statistics["käsiteltyjä kenttiä"] = \
@@ -362,6 +355,17 @@ class YsoConverter():
                 if field_subfields[m] != field_subfields[n]:
                     return False
         return True
+
+    def get_record_code(self, non_fiction, record_type):
+        if non_fiction:
+            record_code = "t"
+        elif record_type == "movie":
+            record_code = "e"
+        elif record_type == "music":
+            record_code = "m"
+        elif not non_fiction:
+            record_code = "f"
+        return record_code
 
     def process_record(self, record):
         if record['001']:
@@ -453,15 +457,6 @@ class YsoConverter():
                                         record_type = "music"
             if not record_type:
                 record_type = "text"
-
-            if non_fiction:
-                record_code = "t"
-            elif record_type == "movie":
-                record_code = "e"
-            elif record_type == "music":
-                record_code = "m"
-            elif not non_fiction:
-                record_code = "f"
 
             for tag in tags_of_fields_to_convert:
                 for field in record.get_fields(tag):
@@ -559,9 +554,8 @@ class YsoConverter():
                                                 removable_fields.add(n)
                                             if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
                                                 removable_fields.add(m)
-                    
+
                     #poistetaan identtiset $8-osakentät ja yhdistellään $8-osakentät samaan kenttään:
-                    
                     for m in range(len(sorted_fields)):
                         linking_numbers_list = [] #tallentaan erilaiset $8-osakentät, jos on useampia muuten identtisiä kenttiä
                         if sorted_fields[m]['2']:
@@ -585,8 +579,11 @@ class YsoConverter():
                                 sorted_fields[m].delete_subfield('8')
                         for ln in linking_numbers_list:
                             sorted_fields[m].add_subfield('8', ln)
-                              
-                        new_subfields = self.sort_subfields(self.subfields_to_dict(sorted_fields[m].subfields))
+                        
+                        if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe']:
+                            new_subfields = self.sort_subfields(self.subfields_to_dict(sorted_fields[m].subfields))
+                        else:
+                            new_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
                         subfield_list = []
                         for ns in new_subfields:
                             subfield_list.extend([ns['code'], ns['value']])
@@ -608,7 +605,7 @@ class YsoConverter():
                             if is_new_field:
                                 self.nf_handler.write(record_id + \
                                                     self.delimiter + \
-                                                    record_code + \
+                                                    self.get_record_code(non_fiction, record_type) + \
                                                     self.delimiter + \
                                                     str(sorted_fields[idx]) + "\n")
 
@@ -639,8 +636,7 @@ class YsoConverter():
         for subfield in field.get_subfields('6'):
             new_field = self.strip_vocabulary_codes(field)
             new_field.indicators[1] = "4"
-            #logging.error("%s;%s;%s;%s;%s"%("9", record_id, subfield, field, new_field))
-            self.csvriter.writerow(["9", record_id, subfield, field, new_field])
+            self.csvriter.writerow(["9", record_id, self.get_record_code(non_fiction, record_type), subfield, field, new_field])
             return [new_field]
         for subfield in subfields:
             if not subfield['code'].isdigit():
@@ -698,8 +694,7 @@ class YsoConverter():
         if all(subfield['code'].isdigit() for subfield in subfields):
             field = self.strip_vocabulary_codes(field)
             field.indicators[1] = "4"
-            #logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], field))
-            self.csvriter.writerow(["8", record_id, subfield['value'], field])
+            self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
             return [field]      
 
         if tag in ['650'] and record_type == "movie":
@@ -712,8 +707,7 @@ class YsoConverter():
                         has_topics = False
                     if subfield['value'] == "aiheet":
                         has_topics = True
-                        #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
-                        self.csvriter.writerow(["6", record_id, subfield['value'], field])
+                        self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     else:
                         responses = []  
                         converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
@@ -749,11 +743,10 @@ class YsoConverter():
                             instrument_list = []
                     if subfield['value'] == "aiheet" and tag == "650":
                         has_topics = True
-                        #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
-                        self.csvriter.writerow(["6", record_id, subfield['value'], field])
+                        self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     elif subfield['value'] == "musiikki":
-                        #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], field))
-                        self.csvriter.writerow(["6", record_id, subfield['value'], field])
+
+                        self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     else:
                         responses = []  
                         n = None
@@ -836,19 +829,7 @@ class YsoConverter():
                             indicators = ['1',' '],
                             subfields = subfield_list
                         )
-                        new_fields.append(new_field)
-                        """
-                        if new_field.tag in new_fields:
-                            new_fields[new_field.tag].append(new_field)
-                        else:
-                            new_fields.update({new_field.tag: [new_field]})
-                        """    
-                #testataan, onko muutoksia tullut eli onko a-osakentissä ollut numeerisia arvoja:
-                """
-                if original_field != field:
-                    
-                    field = new_field
-                """
+                        new_fields.append(new_field)  
                 subfields = self.subfields_to_dict(field.subfields)
                 if not any (not subfield['code'].isdigit() for subfield in subfields):
                     return new_fields
@@ -858,8 +839,7 @@ class YsoConverter():
             if not any(subfield['code'] == "a" for subfield in subfields):
                 new_field = self.strip_vocabulary_codes(field)
                 new_field.indicators = [' ', ' ']
-                #logging.error("%s;%s;%s;%s"%("8", record_id, "", field, new_field))
-                self.csvriter.writerow(["8", record_id, "", field, new_field])
+                self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field, new_field])
                 return [new_field]
         if tag == "567":
             if not any(subfield['code'] == "b" for subfield in subfields):
@@ -880,12 +860,10 @@ class YsoConverter():
             if not any(subfield['code'] == "b" for subfield in subfields):
                 new_field = self.strip_vocabulary_codes(field)
                 new_field.indicators = [' ', ' ']
-                #logging.error("%s;%s;%s;%s;%s"%("8", record_id, "", field, new_field))
-                self.csvriter.writerow(["8", record_id, "", field, new_field])
+                self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field, new_field])
                 return [field]
         for subfield in subfields:
             if not subfield['code'].isdigit():
-                #or tag == "385" or tag == "567":
                 if tag == "385":
                     if subfield['code'] != "a":
                         continue
@@ -920,8 +898,7 @@ class YsoConverter():
         converted_fields = []
 
         if not subfield['value']:
-            #logging.error("%s;%s;%s;%s"%("1", record_id, subfield['value'], original_field))
-            self.csvriter.writerow(["1", record_id, subfield['value'], original_field])
+            self.csvriter.writerow(["1", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
             return
         #alustetaan ensin hakuparametrien oletusarvot
         vocabulary_order = [] #hakujärjestys, jos sanaa haetaan useammasta sanastosta 
@@ -986,8 +963,7 @@ class YsoConverter():
                     has_music = True
                 if tag == '650' or tag == '651':
                     if subfield['value'].lower() == "fiktio":
-                        #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
-                        self.csvriter.writerow(["6", record_id, subfield['value'], original_field])
+                        self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
                         return
             if tag == "650" and subfield['code'] == "a":
                 if not non_fiction:
@@ -996,13 +972,11 @@ class YsoConverter():
                         has_music = True
         if tag in ['650', '651']:
             if subfield['code'] == "e":
-                #logging.error("%s;%s;%s;%s"%("6", record_id, subfield['value'], original_field))
-                self.csvriter.writerow(["6", record_id, subfield['value'], original_field])
+                self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
                 return 
             elif subfield['code'] == "g":
                 field = self.field_without_voc_code("653", [' ', ' '], subfield)   
-                #logging.error("%s;%s;%s;%s;%s"%("7", record_id, subfield['value'], original_field, field))
-                self.csvriter.writerow(["7", record_id, subfield['value'], original_field, field])
+                self.csvriter.writerow(["7", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
                 return [field]    
         if record_type == "music":
             if tag in ['650', '655']:
@@ -1085,23 +1059,15 @@ class YsoConverter():
                     converted_fields.append(field)
                 else:
                     logging.info("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
-                #logging.error("%s;%s;%s;%s;%s"%(e, record_id, subfield['value'], original_field, field))
-                self.csvriter.writerow([e, record_id, subfield['value'], original_field, field])
+                self.csvriter.writerow([e, record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
         else:
-            #logging.error("%s;%s;%s;%s"%("8", record_id, subfield['value'], original_field))
-            self.csvriter.writerow(["8", record_id, subfield['value'], original_field])
+            field = original_field
             original_field.indicators[1] = "4"
-            original_field.delete_subfield('2')
-            
+            for number in range(10):
+                original_field.delete_subfield(str(number))
+            self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field, original_field])
             return [original_field]
-            #alkuperäinen ketju jätetään, 2. ind 4 ja poistetaan $2ysa osakenttä
-
-        #else: alkuperäinen ketju jäteään, 2. ind 4 ja poistetaan $2ysa osakenttä????????????
-
-        #MUISTA LIITTÄÄ NUMEROLLISET OSAKENTÄT UUTEEN KENTTÄÄN!!!
-        #self.vocabularies.search("ragat", "fi", ['slm', 'allars', 'ysa']))
         return converted_fields
-        
 
     def field_with_voc_code(self, tag, response):
         """
@@ -1285,6 +1251,7 @@ class YsoConverter():
                 subfield['code']
             ))
             fields = fields_with_indicator_7 + fields_without_indicator_7
+
         if tag == "655":
             fields_with_indicator_7 = sorted(fields_with_indicator_7, key=lambda subfield: (  
                 subfield['code'] != "slm",
@@ -1300,7 +1267,7 @@ class YsoConverter():
             ))
             fields = fields_with_indicator_7 + fields_without_indicator_7
 
-        fields = sorted(fields, key=lambda subfield: subfield['original'], reverse=True)
+        #fields = sorted(fields, key=lambda subfield: subfield['original'], reverse=True)
         fields = sorted(fields, key=lambda subfield: subfield['indicator'])
         sorted_fields = []
         for f in fields:
@@ -1310,7 +1277,7 @@ class YsoConverter():
     def set_vocabulary_order(self, language_code, yso=False, slm=False, music=False):
         """
         palauttaa listan sanastoista ja kielikoodeista sanastohakua varten
-        esim. [('musa', 'fi'), ('slm', 'fi'), ('ysa', 'fi'), ('cilla', 'sv'), ('slm', 'sv'), ('allars', 'sv')],
+        esim. [('slm', 'fi'), ('musa', 'fi'), ('ysa', 'fi'), ('slm', 'sv'), ('cilla', 'sv'), ('allars', 'sv')],
         jos kielikoodi on "fi" ja kaikki muiden parametrien arvo True
         language_code: ensisijainen hakukieli kielikoodina
         slm: haetaan SLM-sanastosta
@@ -1327,9 +1294,9 @@ class YsoConverter():
             tup[1] != language_code,
             tup[0] == "ysa",
             tup[0] == "allars",
-            tup[0] == "slm",
             tup[0] == "musa",
-            tup[0] == "cilla"
+            tup[0] == "cilla",
+            tup[0] == "slm",
         ))
         return vocabulary_order
 
