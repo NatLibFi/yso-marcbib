@@ -77,7 +77,6 @@ class YsoConverter():
         self.marcdate = str(datetime.date.today()).replace("-","")
         self.conversion_name = "yso-konversio"
         
-        #self.error_logger = logging.getLogger()
         #korvataan kaksoispisteet Windows-tiedostonimeä varten:
         time = self.conversion_time.replace(":", "")
         
@@ -90,11 +89,8 @@ class YsoConverter():
         self.new_fields_log = os.path.join(self.log_directory, self.new_fields_log)
         self.results_log = os.path.join(self.log_directory, self.results_log)
 
-        """
-        error_handler = logging.FileHandler(self.error_log, 'w', 'utf-8')
-        error_handler.setLevel(logging.ERROR)
-        self.error_logger.addHandler(error_handler)
-        """
+        logging.basicConfig(level=logging.INFO)
+
         self.linking_number = None #käytetään musiikkiaineiston hajotettujen ketjujen yhdistämiseen 8-osakentällä
         self.statistics = {}
         self.statistics.update({"konvertoituja tietueita": 0})
@@ -119,6 +115,10 @@ class YsoConverter():
             }
 
     def initialize_vocabularies(self):
+        """
+        ladataan sanastot vocabularies.pkl-väliaikaistiedostosta
+        jos tiedostoa ei löydy, sanastot ladataan Finto-rajapinnasta 
+        """
         vocabularies_dump_loaded = False
         if os.path.isfile('vocabularies.pkl'):
             timestamp = os.path.getmtime('vocabularies.pkl')
@@ -305,7 +305,6 @@ class YsoConverter():
                 new_record = Record(data=raw)
             except ValueError as e:
                 self.statistics['virheitä'] += 1
-        #TODO: XML-tietueiden lukeminen yksittäisinä tiedostoina
         new_record = self.process_record(record)
         self.statistics['käsiteltyjä tietueita'] += 1
         if new_record:
@@ -458,6 +457,8 @@ class YsoConverter():
             if not record_type:
                 record_type = "text"
 
+            if record['567']:
+                convertible_record = True
             for tag in tags_of_fields_to_convert:
                 for field in record.get_fields(tag):
                     self.statistics["kaikki tarkistetut kentät"] += 1
@@ -496,16 +497,14 @@ class YsoConverter():
                                 if not vocabulary_code:
                                     if sf == "ysa" or sf == "allars" or sf == "musa" or sf == "cilla":
                                         vocabulary_code = sf    
-                            #TODO: rekisteröi tässä onko tietuetta muutettu?
-                            if vocabulary_code:
-                                #TODO: vanha, konvertoitava kenttä lokiin!
+                            #567-kentistä käsitellään myös sanastokoodittomat:
+                            if vocabulary_code or tag == "567":
                                 converted_fields = self.process_field(record_id, field, vocabulary_code, non_fiction, record_type)
                                 self.rf_handler.write(record_id + self.delimiter + str(field) + "\n")
                                 self.statistics['poistettuja kenttiä'] += 1
                                 if converted_fields:
                                     altered_fields.add(tag)
                                     for cf in converted_fields:
-                                        #self.statistics['uusia kenttiä'] += 1
                                         altered_fields.add(cf.tag)
                                         if cf.tag in new_fields:
                                             new_fields[cf.tag].append(cf)
@@ -531,29 +530,27 @@ class YsoConverter():
                     #poistetaan identtiset rivit:
                     removable_fields = set()
                     for m in range(len(sorted_fields)):
-                        if sorted_fields[m]['2']:
-                            if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe']:
-                                for n in range(m + 1, len(sorted_fields)):
-                                    if m not in removable_fields and n not in removable_fields:
-                                        if self.is_equal_field(sorted_fields[m].subfields, sorted_fields[n].subfields):
-                                            if sorted_fields[m].indicators == sorted_fields[n].indicators:
-                                                removable_fields.add(n)
-                                            if sorted_fields[m].indicators[1] == " " and not sorted_fields[n].indicators[1] == " ":
-                                                removable_fields.add(m)
-                                            if sorted_fields[n].indicators[1] == " " and not sorted_fields[m].indicators[1] == " ":
-                                                removable_fields.add(n)
-                                        elif self.sort_subfields(self.remove_subfields(['0'], sorted_fields[m].subfields)) == \
-                                            self.sort_subfields(self.remove_subfields(['0'], sorted_fields[n].subfields)):
-                                            if sorted_fields[m]['2'] and sorted_fields[m]['0']:
-                                                removable_fields.add(n)
-                                            elif sorted_fields[n]['2'] and sorted_fields[n]['0']:
-                                                removable_fields.add(m)
-                                        elif self.sort_subfields(self.remove_subfields(['9'], sorted_fields[m].subfields)) == \
-                                            self.sort_subfields(self.remove_subfields(['9'], sorted_fields[n].subfields)):
-                                            if sorted_fields[m]['9'] and not sorted_fields[n]['9']:
-                                                removable_fields.add(n)
-                                            if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
-                                                removable_fields.add(m)
+                        for n in range(m + 1, len(sorted_fields)):
+                            if m not in removable_fields and n not in removable_fields:
+                                if self.is_equal_field(sorted_fields[m].subfields, sorted_fields[n].subfields):
+                                    if sorted_fields[m].indicators == sorted_fields[n].indicators:
+                                        removable_fields.add(n)
+                                    if sorted_fields[m].indicators[1] == " " and not sorted_fields[n].indicators[1] == " ":
+                                        removable_fields.add(m)
+                                    if sorted_fields[n].indicators[1] == " " and not sorted_fields[m].indicators[1] == " ":
+                                        removable_fields.add(n)
+                                elif self.sort_subfields(self.remove_subfields(['0'], sorted_fields[m].subfields)) == \
+                                    self.sort_subfields(self.remove_subfields(['0'], sorted_fields[n].subfields)):
+                                    if sorted_fields[m]['2'] and sorted_fields[m]['0']:
+                                        removable_fields.add(n)
+                                    elif sorted_fields[n]['2'] and sorted_fields[n]['0']:
+                                        removable_fields.add(m)
+                                elif self.sort_subfields(self.remove_subfields(['9'], sorted_fields[m].subfields)) == \
+                                    self.sort_subfields(self.remove_subfields(['9'], sorted_fields[n].subfields)):
+                                    if sorted_fields[m]['9'] and not sorted_fields[n]['9']:
+                                        removable_fields.add(n)
+                                    if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
+                                        removable_fields.add(m)
 
                     #poistetaan identtiset $8-osakentät ja yhdistellään $8-osakentät samaan kenttään:
                     for m in range(len(sorted_fields)):
@@ -612,7 +609,6 @@ class YsoConverter():
                                 self.statistics['uusia kenttiä'] += 1
                             record.add_ordered_field(sorted_fields[idx])  
                             
-                        #TODO: älä tilastoi tässä kohtaa poistettavia rivejä: poista uusien rivien tilastosta nyt poistettava rivi? 
             else:
                 return
             return record
@@ -626,7 +622,6 @@ class YsoConverter():
         record_type -- aineistotyyppi joidenkin kenttien erikoiskäsittelyä varten, käyvät arvot: "text", "music", "movie"
         """
         #record_id: tietueen numero virheiden lokitusta varten
-        #fiction: Tarvitaan ainakin
         new_fields = []
         tag = field.tag
         subfields = self.subfields_to_dict(field.subfields)
@@ -646,9 +641,19 @@ class YsoConverter():
             self.linking_number += 1
         #tallennetaan numeroilla koodatut osakentät, jotka liitetään jokaiseen uuteen kenttään, paitsi $0 ja $2:
         control_subfield_codes = ['1', '3', '4', '5', '6', '7', '8', '9']
+        
         if tag == "567":
-            if any(subfield['code'] == "b" for subfield in subfields):
+            for sf in field.get_subfields('2'):
+                if sf not in ['ysa', 'allars']:
+                    return
+            if field['b']:
                 control_subfield_codes.append('a')
+            elif field['a']:
+                if not any(subfield['code'] == "b" for subfield in subfields):
+                    for subfield in subfields:
+                        if subfield['code'] == "a":
+                            subfield['code'] = "b"
+                
         control_subfields = {}
         for csc in control_subfield_codes:
             """
@@ -667,7 +672,7 @@ class YsoConverter():
                         except TypeError:
                             logging.info("type error "+str(sf))
                     else:
-                        control_subfields.update({csc: [sf]})      
+                        control_subfields.update({csc: [sf]})  
         #etsitään paikkaketjut ja muodostetaan niistä yksiosainen käsite:
         #TODO: katsotaan mahdollisesti myös muita kuin maantieteellisiä termejä
         if len(non_digit_codes) > 1:
@@ -722,7 +727,7 @@ class YsoConverter():
                             cf = self.add_control_subfields(cf, control_subfields)
                             new_fields.append(cf) 
             return new_fields
-                
+    
         #poikkeuksellisesti käsiteltävät kentät: 
         #385, 567 ja 648, jossa 1. indikaattori on "1", 650/655, jos musiikkiaineistoa:
         #musiikki- ja elokuva-eineisto, jos $a- tai $x-osakentässä on asiasanana aiheet
@@ -842,48 +847,43 @@ class YsoConverter():
                 self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field, new_field])
                 return [new_field]
         if tag == "567":
-            if not any(subfield['code'] == "b" for subfield in subfields):
-                """
-                567-kenttä: Mikäli $b osakenttä puuttuu ja $a osakentässä on ysa/allars termi, 
-                se siirretään $b osakenttään ja lisätään $2 ja $0 osakentät
-                """
-                for subfield in subfields:
-                    if subfield['code'] == "a":
-                        try:
-                            response = self.vocabularies.search(subfield['value'], [('ysa', 'fi'), ('allars', 'sv')]) 
-                            subfield['code'] = 'b'
-                        except ValueError:
-                            continue
-                a_subfields = True
-                while (a_subfields):
-                    a_subfields = field.delete_subfield('a')
-            if not any(subfield['code'] == "b" for subfield in subfields):
+            if not any(subfield['code'] in ['a', 'b'] for subfield in subfields):
                 new_field = self.strip_vocabulary_codes(field)
                 new_field.indicators = [' ', ' ']
                 self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field, new_field])
-                return [field]
+                return [new_field]
+                
+            if not vocabulary_code:
+                for subfield in subfields:
+                    try:   
+                        if subfield['code'] == "b":
+                            value = subfield['value']
+                            if value.endswith("."):
+                                value = value[:-1]
+                            value = value.lower()
+                            response = self.vocabularies.search(value, [('ysa', 'fi'), ('allars', 'sv')]) 
+                            subfield['value'] = value
+                    except ValueError:
+                        return
+
         for subfield in subfields:
             if not subfield['code'].isdigit():
                 if tag == "385":
                     if subfield['code'] != "a":
                         continue
                 if tag == "567":
-                    if subfield['code'] != "b":
-                        continue         
+                    if subfield['code'] != "b":    
+                        continue       
                 if tag == "655" and record_type == "music":
                     if subfield['code'] in ['a', 'x', 'v']:
                         if subfield['value'] == "kokoelmat":
                             subfield['value'] = "kokoomateokset"
-
                 #358- ja 567-kentistä käsitellään vain a- ja b-osakentät:
                 converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction)
-                #TODO: listaus koko 358- ja 567-kentästä virhelokiin
-                #if tag not in ['385', '567']:
                 if converted_fields:
                     for cf in converted_fields:
                         cf = self.add_control_subfields(cf, control_subfields)
                         new_fields.append(cf)
-                    
         return new_fields
         
     def process_subfield(self, record_id, original_field, subfield, vocabulary_code, non_fiction=True, record_type=None, has_topics=False):    
@@ -1006,7 +1006,6 @@ class YsoConverter():
 
         #käsitellään perustapaukset
         if subfield['code'] in valid_subfield_codes[tag]:
-        #TODO: määriteltävä tähän kentät ja osakentät, joista haetaan numeerisia arvoja 
             try:
                 responses = self.vocabularies.search(subfield['value'], vocabulary_order, search_geographical_concepts, self.all_languages)
                 if tag == "650" and not non_fiction and subfield['code'] == "a":
@@ -1061,12 +1060,13 @@ class YsoConverter():
                     logging.info("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
                 self.csvriter.writerow([e, record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
         else:
-            field = original_field
-            original_field.indicators[1] = "4"
+            field = copy.deepcopy(original_field)
+            field.indicators[1] = "4"
             for number in range(10):
-                original_field.delete_subfield(str(number))
-            self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field, original_field])
-            return [original_field]
+                field.delete_subfield(str(number))
+            self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
+            return [field]
+
         return converted_fields
 
     def field_with_voc_code(self, tag, response):
@@ -1079,7 +1079,7 @@ class YsoConverter():
         new_indicators = None
         subfields = []
         if "numeric" in response:
-            if tag in ['257', '388']:
+            if tag == "388":
                 new_indicators = [' ', ' ']
             else:
                 tag = "648"
@@ -1087,8 +1087,14 @@ class YsoConverter():
             new_subfields = ["a", response['label'], '2', response['code']]
         else: 
             subfield_code = "a"
+            if tag == "257":
+                if not response['geographical']:
+                    tag = "650"
             if tag == "370":
-                subfield_code = "g"
+                if response['geographical']:
+                    subfield_code = "g"
+                else:
+                    tag = "650"
             if tag == "567":
                 subfield_code = "b"
             if tag in ['648', '650', '651', '655']:
@@ -1102,7 +1108,6 @@ class YsoConverter():
             if response['code'].startswith('slm'):
                 tag = "655"
             new_subfields = [subfield_code, response['label'], '2', response['code'], '0', response['uris'][0]]
-        
         field = Field(
             tag = tag,
             indicators = new_indicators,

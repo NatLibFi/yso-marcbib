@@ -132,8 +132,6 @@ class Vocabulary():
             c = Container()
             replaced_by = self.get_replacers(c, deprecated_temp, dc)
             replacers = []
-            #HUON! Halutaanko virheilmoitus, että käsitteellä ei ole deprekoimattomia korvaajia?
-            #HUOM! poistetaanko korvaajien listasta deprekoidut käsitteet? Vai todetaanko sanahaussa, että korvaaja deprekoitu?
             self.deprecated_concepts.update({dc: c.nodes})
 
     def get_replacers(self, container, replacers, key):

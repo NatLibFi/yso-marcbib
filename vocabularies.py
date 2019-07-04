@@ -8,40 +8,6 @@ class Vocabularies:
     def __init__(self):
         
         self.vocabularies = {}
-        """
-        yso_graph = Graph()
-        yso_graph.parse('yso-skos.rdf')
-
-        logging.info("parsitaan YSO-paikkoja")
-        yso_paikat_graph = Graph()
-        yso_paikat_graph.parse('yso-paikat-skos.rdf')
-
-        logging.info("parsitaan YSaa")
-        ysa_graph = Graph()
-        ysa_graph.parse('ysa-skos.rdf')
-
-        logging.info("parsitaan Allärsia")
-        allars_graph = Graph()
-        allars_graph.parse('allars-skos.rdf')
-
-        logging.info("parsitaan SLM_ää")
-        slm_graph = Graph()
-        slm_graph.parse('slm-skos.rdf')
-
-        logging.info("parsitaan Musaa")
-        musa_graph = Graph()
-        musa_graph.parse('musa-skos.rdf')
-
-        logging.info("sanastot parsittu")
-        self.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
-        self.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
-        self.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
-        self.parse_vocabulary(allars_graph, 'allars', ['sv'])
-        self.parse_vocabulary(slm_graph, 'slm_fi', ['fi', 'sv'], 'fi')
-        self.parse_vocabulary(slm_graph, 'slm_sv', ['fi', 'sv'], 'sv')
-        self.parse_vocabulary(musa_graph, 'musa', ['fi'], ysa_graph)
-        self.parse_vocabulary(musa_graph, 'cilla', ['sv'], ysa_graph)
-        """
 
     def parse_vocabulary(self, graph, vocabulary_code, language_codes, language_code = None, secondary_graph = None):
         #secondary_vocabulary: tarvitaan luomaan musa -> ysa ja cilla -> ysa -vastaavuudet
@@ -101,11 +67,7 @@ class Vocabularies:
                             else:
                                 response = None
                         else:
-                            response = self.vocabularies['yso'].get_concept_with_uri(response["uris"][0], vc[1])    
-                #except ValueError as e:
-                    #logging.warning
-                    #logging.info(e)
-                    #return response          
+                            response = self.vocabularies['yso'].get_concept_with_uri(response["uris"][0], vc[1])           
             elif vc[0] == "slm" or vc[0] == "seko":
                 response = self.vocabularies[vc[0]].get_concept_with_label(keyword, vc[1])    
             if response:

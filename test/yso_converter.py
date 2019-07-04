@@ -234,17 +234,11 @@ class YsoConversionTest(unittest.TestCase):
             {'original': '=648  17$a1980-luku$vragat$0linkitys$2ysa$8järjestysnumero$9FENNI<KEEP>',
              'results': ['=388  1\$8järjestysnumero$a1980-luku$2yso/fin$9FENNI<KEEP>',
              '=655  \\7$8järjestysnumero$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786$9FENNI<KEEP>']
+            },        
+            {'original':  '=567  \\7$aragat',
+             "results": ['=567  \\\\$brāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038']
             },
-            {'original': '=567  \\7$bragat$bTšekkoslovakia$ahuomautus metodologiasta' \
-             '$1Reaalimaailman kohteen tunniste$2ysa$8järjestysnumero$9FENNI<KEEP>',
-             "results": [
-            ("=567  \\\\$8järjestysnumero$ahuomautus metodologiasta$brāgat" \
-             "$1Reaalimaailman kohteen tunniste$2yso/fin$0http://www.yso.fi/onto/yso/p30038" \
-             "$9FENNI<KEEP>"),
-            ("=567  \\\\$8järjestysnumero$ahuomautus metodologiasta$bTšekkoslovakia" \
-             "$1Reaalimaailman kohteen tunniste$9FENNI<KEEP>")
-            ]},
-            {'original':  '=567  \\7$bragat$2ysa',
+            {'original':  '=567  \\7$bragat',
              "results": ['=567  \\\\$brāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038']
             },
             {'original':  '=567  \\7$bjotain$2ysa$9FENNI<KEEP>',
@@ -307,14 +301,15 @@ class YsoConversionTest(unittest.TestCase):
         ]
 
         cls.inconvertible_subfields = [
-            {"tag": "655", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['c', 'silleen jättäminen', '2', 'ysa'],
-             "results": '=655  \\4$csilleen jättäminen'},
-            {"tag": "655", 
-             "indicators": [ ' ', '7' ], 
-             "subfields": ['a', 'membraanit', '2', 'ysa'],
-             "results": '=653  \\6$amembraanit'}          
+            {'original': '=655  \\7$vsilleen jättäminen$2ysa',
+                'results': ['=653  \\6$asilleen jättäminen']
+            },
+            {'original': '=655  \\7$amembraanit$2ysa',
+                'results': ['=653  \\6$amembraanit']
+            },
+            {'original':  '=567  \\7$cragat',
+             "results": ['=567  \\\\$cragat']
+            }
         ]     
         
         cls.deletable_fields = [
@@ -368,7 +363,7 @@ class YsoConversionTest(unittest.TestCase):
         
         result_fields = self.cc.process_field("00000001", field, "ysa")
         self.assertEqual(str(result_fields[0]), test_result)
-    """
+    
     def test_convert_field(self):
         #testataan useampia asiasanaosakenttiä sisältävien kenttien konvertoimista:
         for test_field in self.convertible_subfields:
@@ -378,7 +373,7 @@ class YsoConversionTest(unittest.TestCase):
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
-
+        
         for test_field in self.exceptional_fields:
             field = self.str_to_marc(test_field['original'])
             vocabulary_code = field['2']
@@ -386,15 +381,22 @@ class YsoConversionTest(unittest.TestCase):
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
-            
+        
+        for test_field in self.inconvertible_subfields:
+            field = self.str_to_marc(test_field['original'])
+            vocabulary_code = field['2']
+            result_fields = self.cc.process_field("00000001", field, vocabulary_code)
+            self.assertTrue(len(test_field['results']) == len(result_fields))
+            for r in test_field['results']:
+                self.assertTrue(any(r == str(rf) for rf in result_fields))
+        
         #testaa rivit, joita ei konvertoida    
         for test_field in self.deletable_fields: 
             field = self.new_field(test_field['tag'], test_field['indicators'], test_field['subfields'])  
             vocabulary_code = test_field['subfields'][-1]
             result_fields = self.cc.process_field("00000001", field, vocabulary_code)
             self.assertEqual(result_fields, [])
-        
-    """    
+           
     def test_subfield_6(self):
         field = self.new_field("650", [' ', '7'], ['6', '', 'a', 'arvo', '2', 'ysa'])
         result_fields = self.cc.process_field("00000001", field, "ysa", "1")
@@ -404,22 +406,25 @@ class YsoConversionTest(unittest.TestCase):
     
     def test_convert_numeric_fields(self):
         valid_time_fields = {
-            '648': ['a', 'z', 'y', 'v'],
+            '648': ['a', 'x', 'z', 'y'],
             '650': ['a', 'b', 'x', 'y', 'd', 'z', 'c'],
             '651': ['a', 'x', 'y', 'z']
         }
-        tags = ['648', '650', '651', '655']
+        tags = ['648', '650', '651']
         for tag in tags:
             #a-z-osakenttäkoodien läpikäynti:
             for letter in range(97,123):
-                code = str(letter)
-                field = self.new_field(tag, [' ', '7'], [code, '1900-luku', '2', 'ysa']) 
-                result_fields = self.cc.process_field("00000001", field, 'ysa')
-                if tag in valid_time_fields and code in valid_time_fields[tag]:
-                    self.assertEqual(str(result_fields[0]), '=648  \\7$a1900-luku$2yso/fin')
-                else:
-                    self.assertNotEqual(str(result_fields[0]), '=648  \\7$a1900-luku$2yso/fin')
-    
+                code = chr(letter)
+                if not code == "e": 
+                    field = self.new_field(tag, [' ', '7'], [code, '1900-luku', '2', 'ysa']) 
+                    result_fields = self.cc.process_field("00000001", field, 'ysa')
+                    if tag in valid_time_fields and code in valid_time_fields[tag]:
+
+                        self.assertEqual(str(result_fields[0]), '=648  \\7$a1900-luku$2yso/fin')
+                    else:
+                        self.assertNotEqual(str(result_fields[0]), '=648  \\7$a1900-luku$2yso/fin')
+
+
         for test_field in self.numeric_fields:
             field = self.new_field(test_field['tag'], test_field['indicators'], test_field['subfields']) 
             vocabulary_code = test_field['subfields'][-1]
@@ -428,7 +433,7 @@ class YsoConversionTest(unittest.TestCase):
             self.assertTrue(len(test_field['results']) == len(result_fields))
             for r in test_field['results']:
                 self.assertTrue(any(r == str(rf) for rf in result_fields))
-       
+      
     def test_process_record(self):
         for record_type in self.records:
             for r in self.records[record_type]:

@@ -6,8 +6,6 @@ from vocabularies import Vocabularies
 
 
 class VocabulariesTest(unittest.TestCase):
-
-    #def setUp(self):
         
     @classmethod
     def setUpClass(cls): 
@@ -62,7 +60,6 @@ class VocabulariesTest(unittest.TestCase):
      
     def test_search_label_not_found(self):        
         with self.assertRaises(ValueError) as e:
-            #result =  self.vocabularies.search('jotain', ['slm', 'ysa', 'allars'], True)
             result =  self.vocabularies.search('jotain', [('slm', 'fi'), ('ysa', 'fi'), ('allars', 'sv')], True)
         self.assertTrue("1" in str(e.exception))
 
