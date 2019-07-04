@@ -82,6 +82,10 @@ NoFieldsFound: tietueessa ei ole kenttiä
 UnicodeDecodeError: tietueen nimiössä tai hakemistossa on ASCII-merkistön ulkopuolisia merkkejä
 RecordLengthInvalid
 
+***Julkaisutiedot***
+
+Lisää tietoa julkaisuversioista, katso [julkaisutiedot](https://github.com/NatLibFi/yso-marcbib/releases)
+
 **YSO-MARCBIB-converter**
 
 The program takes bibliographic MARC21 records and converts subject headings from  the ysa allars, musa and cilla thesauri to the terms of matching concepts in the yso and slm ontologies.
@@ -154,3 +158,7 @@ RecordDirectoryInvalid:
 NoFieldsFound: 
 UnicodeDecodeError: 
 RecordLengthInvalid
+
+***Release notes***
+
+For information about released versions, see [Release notes](https://github.com/NatLibFi/yso-marcbib/releases)
