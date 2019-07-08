@@ -339,10 +339,12 @@ class YsoConverter():
             output.close()    
 
     def read_records(self):
-        with open(self.removed_fields_log, 'w', encoding = 'utf-8-sig') as self.rf_handler, \
-            open(self.new_fields_log, 'w', encoding = 'utf-8-sig') as self.nf_handler, \
+        with open(self.removed_fields_log, 'w', newline='', encoding = 'utf-8-sig') as self.rf_handler, \
+            open(self.new_fields_log, 'w', newline='', encoding = 'utf-8-sig') as self.nf_handler, \
             open(self.error_log, 'w', newline='', encoding='utf-8-sig') as error_handler:
             
+            self.rf_writer = csv.writer(self.rf_handler , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            self.nf_writer = csv.writer(self.nf_handler , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
             self.error_writer = csv.writer(error_handler , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
             input_files = []
@@ -649,7 +651,7 @@ class YsoConverter():
                             #567-kentistä käsitellään myös sanastokoodittomat:
                             if vocabulary_code or tag == "567":
                                 converted_fields = self.process_field(record_id, field, vocabulary_code, non_fiction, record_type)
-                                self.rf_handler.write(record_id + self.delimiter + str(field) + "\n")
+                                self.rf_writer.writerow([record_id, field])
                                 self.statistics['poistettuja kenttiä'] += 1
                                 if converted_fields:
                                     altered_fields.add(tag)
@@ -749,11 +751,10 @@ class YsoConverter():
                             else:
                                 is_new_field = True
                             if is_new_field:
-                                self.nf_handler.write(record_id + \
-                                                    self.delimiter + \
-                                                    self.get_record_code(non_fiction, record_type) + \
-                                                    self.delimiter + \
-                                                    str(sorted_fields[idx]) + "\n")                
+                                
+                                self.nf_writer.writerow([record_id, \
+                                                self.get_record_code(non_fiction, record_type), \
+                                                str(sorted_fields[idx])])                  
                                 self.statistics['uusia kenttiä'] += 1
                             record.add_ordered_field(sorted_fields[idx])  
             else:
