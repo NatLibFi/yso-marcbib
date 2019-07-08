@@ -3,7 +3,7 @@ from rdflib import Graph, URIRef, Namespace, RDF
 import pymarc
 from pymarc import XmlHandler
 from xml import sax
-from pymarc import MARCReader, MARCWriter, XMLWriter, Record, Field
+from pymarc import MARCReader, MARCWriter, XMLWriter, Record, Field, constants
 from pymarc.exceptions import (BaseAddressInvalid, 
                                RecordLeaderInvalid, 
                                BaseAddressNotFound, 
@@ -25,9 +25,164 @@ import sys
 import re
 import csv
 
+def decode_marc(self, marc, to_unicode=True, force_utf8=False,
+    hide_utf8_warnings=False, utf8_handling='strict',encoding = 'iso8859-1'):
+    """
+    Monkey batched function from pymarc library: https://github.com/edsu/pymarc
+    pymarc assumes that control fields are numeric starting with '00'.
+    If some library system has unconventionally tagged control fields,
+    this batched code will prevent pymarc from changing the control field data 
+    """
+    """
+    decode_marc() accepts a MARC record in transmission format as a
+    a string argument, and will populate the object based on the data
+    found. The Record constructor actually uses decode_marc() behind
+    the scenes when you pass in a chunk of MARC data to it.
+
+    """
+    # extract record leader
+    self.leader = marc[0:constants.LEADER_LEN].decode('ascii')
+    if len(self.leader) != constants.LEADER_LEN:
+        raise RecordLeaderInvalid
+
+    if self.leader[9] == 'a' or self.force_utf8:
+        encoding = 'utf-8'
+
+    # extract the byte offset where the record data starts
+    base_address = int(marc[12:17])
+    if base_address <= 0:
+        raise BaseAddressNotFound
+    if base_address >= len(marc):
+        raise BaseAddressInvalid
+
+    # extract directory, base_address-1 is used since the
+    # director ends with an END_OF_FIELD byte
+    directory = marc[constants.LEADER_LEN:base_address-1].decode('ascii')
+
+    # determine the number of fields in record
+    if len(directory) % constants.DIRECTORY_ENTRY_LEN != 0:
+        raise RecordDirectoryInvalid
+    field_total = len(directory) / constants.DIRECTORY_ENTRY_LEN
+
+    # add fields to our record using directory offsets
+    field_count = 0
+    while field_count < field_total:
+        entry_start = field_count * constants.DIRECTORY_ENTRY_LEN
+        entry_end = entry_start + constants.DIRECTORY_ENTRY_LEN
+        entry = directory[entry_start:entry_end]
+        entry_tag = entry[0:3]
+        entry_length = int(entry[3:7])
+        entry_offset = int(entry[7:12])
+        entry_data = marc[base_address + entry_offset :
+            base_address + entry_offset + entry_length - 1]
+        # assume controlfields are numeric; replicates ruby-marc behavior
+        if entry_tag < '010' and entry_tag.isdigit():
+            if to_unicode:
+                field = Field(tag=entry_tag, data=entry_data.decode(encoding))
+            else:
+                field = RawField(tag=entry_tag, data=entry_data)
+        else:
+            subfields = list()
+            subs = entry_data.split(constants.SUBFIELD_INDICATOR.encode('ascii'))
+
+            # The MARC spec requires there to be two indicators in a
+            # field. However experience in the wild has shown that
+            # indicators are sometimes missing, and sometimes there
+            # are too many. Rather than throwing an exception because
+            # we can't find what we want and rejecting the field, or
+            # barfing on the whole record we'll try to use what we can
+            # find. This means missing indicators will be recorded as
+            # blank spaces, and any more than 2 are dropped on the floor.
+
+            first_indicator = second_indicator = ' '
+            subs[0] = subs[0].decode('ascii')
+            if len(subs[0]) == 0:
+                logging.warning("missing indicators: %s", entry_data)
+                first_indicator = second_indicator = ' '
+            elif len(subs[0]) == 1:
+                logging.warning("only 1 indicator found: %s", entry_data)
+                first_indicator = subs[0][0]
+                second_indicator = ' '
+            elif len(subs[0]) > 2:
+                logging.warning("more than 2 indicators found: %s", entry_data)
+                """
+                batched code: if subfield indicators are not found,
+                leave subfield code empty:
+                """
+                if len(subs) == 1:
+                    if len(subs[0]) > 2:
+                        subfields.append("")
+                        subfields.append(subs[0][2:])
+                first_indicator = subs[0][0]
+                second_indicator = subs[0][1]
+            else:
+                first_indicator = subs[0][0]
+                second_indicator = subs[0][1]
+
+            for subfield in subs[1:]:
+                if len(subfield) == 0:
+                    continue
+                code = subfield[0:1].decode('ascii')
+                data = subfield[1:]
+
+                if to_unicode:
+                    if self.leader[9] == 'a' or force_utf8:
+                        data = data.decode('utf-8', utf8_handling)
+                    elif encoding == 'iso8859-1':
+                        data = marc8_to_unicode(data, hide_utf8_warnings)
+                    else:
+                        data = data.decode(encoding)
+                subfields.append(code)
+                subfields.append(data)
+            if to_unicode:
+                field = Field(
+                    tag = entry_tag,
+                    indicators = [first_indicator, second_indicator],
+                    subfields = subfields,
+                )
+            else:
+                field = RawField(
+                    tag = entry_tag,
+                    indicators = [first_indicator, second_indicator],
+                    subfields = subfields,
+                )
+        self.add_field(field)
+        field_count += 1
+
+    if field_count == 0:
+        raise NoFieldsFound
+
+def as_marc(self, encoding):
+    """
+    Monkey batched function from pymarc library: https://github.com/edsu/pymarc
+    pymarc assumes that control fields are numeric starting with '00'.
+    If some library system has unconventionally tagged control fields,
+    this batched code will prevent pymarc from changing the control field data 
+    If field does not have subfields, this batch prevents pymarc from writing
+    subfield indicators to it.
+    """
+    """
+    used during conversion of a field to raw marc
+    """
+    if self.is_control_field():
+        return (self.data + constants.END_OF_FIELD).encode(encoding)
+    marc = self.indicator1 + self.indicator2
+    for subfield in self:
+        if not subfield[0]:
+            marc += subfield[1]
+        else:
+            marc += constants.SUBFIELD_INDICATOR + subfield[0] + subfield[1]
+            
+    return (marc + constants.END_OF_FIELD).encode(encoding)
+
+# alias for backwards compatibility
+as_marc21 = as_marc
+
 class YsoConverter():
 
     def __init__(self, input_file, input_directory, output_file, output_directory, file_format, all_languages):      
+        Field.as_marc = as_marc
+        Record.decode_marc = decode_marc
         self.log_directory = "logs"
         if not os.path.isdir(self.log_directory):
             os.mkdir(self.log_directory)
@@ -184,16 +339,11 @@ class YsoConverter():
             output.close()    
 
     def read_records(self):
-        with open(self.error_log, 'w', encoding = 'utf-8-sig') as error_handler, \
-            open(self.removed_fields_log, 'w', encoding = 'utf-8-sig') as self.rf_handler, \
+        with open(self.removed_fields_log, 'w', encoding = 'utf-8-sig') as self.rf_handler, \
             open(self.new_fields_log, 'w', encoding = 'utf-8-sig') as self.nf_handler, \
-            open(self.error_log, 'w', newline='', encoding='utf-8-sig') as csvfile:
+            open(self.error_log, 'w', newline='', encoding='utf-8-sig') as error_handler:
             
-            self.csvriter = csv.writer(csvfile , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
-
-            error_logger = logging.getLogger("error logger")
-            error_handler = logging.FileHandler(self.error_log)
-            error_logger.setLevel(logging.ERROR)
+            self.error_writer = csv.writer(error_handler , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
             input_files = []
             o_directory = ""
@@ -249,12 +399,11 @@ class YsoConverter():
                     else:
                         self.writer = MARCWriter(open(output_path,'wb'))
                     try:
-                        reader = MARCReader(open(input_path, 'rb'), force_utf8=True, to_unicode=True)
+                        reader = MARCReader(open(input_path, 'rb'), to_unicode=True)
                         record = Record()
                         while record:                
                             try:
                                 record = next(reader, None)
-                        
                                 if record:
                                     self.read_and_write_record(record)
                             except (BaseAddressInvalid, 
@@ -281,7 +430,7 @@ class YsoConverter():
               
         self.rf_handler.close()
         self.nf_handler.close()
-        csvfile.close()
+        error_handler.close()
         with open(self.results_log, 'w', encoding = 'utf-8-sig') as result_handler:
             self.statistics["käsiteltyjä kenttiä"] = \
             self.statistics["poistettuja kenttiä"] + \
@@ -604,11 +753,9 @@ class YsoConverter():
                                                     self.delimiter + \
                                                     self.get_record_code(non_fiction, record_type) + \
                                                     self.delimiter + \
-                                                    str(sorted_fields[idx]) + "\n")
-
+                                                    str(sorted_fields[idx]) + "\n")                
                                 self.statistics['uusia kenttiä'] += 1
                             record.add_ordered_field(sorted_fields[idx])  
-                            
             else:
                 return
             return record
@@ -631,7 +778,7 @@ class YsoConverter():
         for subfield in field.get_subfields('6'):
             new_field = self.strip_vocabulary_codes(field)
             new_field.indicators[1] = "4"
-            self.csvriter.writerow(["9", record_id, self.get_record_code(non_fiction, record_type), subfield, field, new_field])
+            self.error_writer.writerow(["9", record_id, self.get_record_code(non_fiction, record_type), subfield, field, new_field])
             return [new_field]
         for subfield in subfields:
             if not subfield['code'].isdigit():
@@ -697,9 +844,10 @@ class YsoConverter():
                 subfields = combined_subfields
         #jos kaikki osakenttäkoodit ovat numeroita, tulostetaan kenttä sellaisenaan ilman 0- ja 2-osakenttiä:
         if all(subfield['code'].isdigit() for subfield in subfields):
+            original_field = copy.deepcopy(field)
             field = self.strip_vocabulary_codes(field)
             field.indicators[1] = "4"
-            self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
+            self.error_writer.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", original_field, field])
             return [field]      
 
         if tag in ['650'] and record_type == "movie":
@@ -712,7 +860,7 @@ class YsoConverter():
                         has_topics = False
                     if subfield['value'] == "aiheet":
                         has_topics = True
-                        self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
+                        self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     else:
                         responses = []  
                         converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
@@ -748,10 +896,9 @@ class YsoConverter():
                             instrument_list = []
                     if subfield['value'] == "aiheet" and tag == "650":
                         has_topics = True
-                        self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
+                        self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     elif subfield['value'] == "musiikki":
-
-                        self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
+                        self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     else:
                         responses = []  
                         n = None
@@ -844,13 +991,13 @@ class YsoConverter():
             if not any(subfield['code'] == "a" for subfield in subfields):
                 new_field = self.strip_vocabulary_codes(field)
                 new_field.indicators = [' ', ' ']
-                self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field, new_field])
+                self.error_writer.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field, new_field])
                 return [new_field]
         if tag == "567":
             if not any(subfield['code'] in ['a', 'b'] for subfield in subfields):
                 new_field = self.strip_vocabulary_codes(field)
                 new_field.indicators = [' ', ' ']
-                self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field, new_field])
+                self.error_writer.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field, new_field])
                 return [new_field]
                 
             if not vocabulary_code:
@@ -884,6 +1031,11 @@ class YsoConverter():
                     for cf in converted_fields:
                         cf = self.add_control_subfields(cf, control_subfields)
                         new_fields.append(cf)
+        if not new_fields:
+            original_field = copy.deepcopy(field)
+            field = self.strip_vocabulary_codes(field)
+            self.error_writer.writerow(["1", record_id, self.get_record_code(non_fiction, record_type), "", original_field, field])
+            return [field]
         return new_fields
         
     def process_subfield(self, record_id, original_field, subfield, vocabulary_code, non_fiction=True, record_type=None, has_topics=False):    
@@ -897,8 +1049,7 @@ class YsoConverter():
         tag = original_field.tag
         converted_fields = []
 
-        if not subfield['value']:
-            self.csvriter.writerow(["1", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
+        if not subfield['value']: 
             return
         #alustetaan ensin hakuparametrien oletusarvot
         vocabulary_order = [] #hakujärjestys, jos sanaa haetaan useammasta sanastosta 
@@ -963,7 +1114,7 @@ class YsoConverter():
                     has_music = True
                 if tag == '650' or tag == '651':
                     if subfield['value'].lower() == "fiktio":
-                        self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
+                        self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
                         return
             if tag == "650" and subfield['code'] == "a":
                 if not non_fiction:
@@ -972,11 +1123,11 @@ class YsoConverter():
                         has_music = True
         if tag in ['650', '651']:
             if subfield['code'] == "e":
-                self.csvriter.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
+                self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
                 return 
             elif subfield['code'] == "g":
                 field = self.field_without_voc_code("653", [' ', ' '], subfield)   
-                self.csvriter.writerow(["7", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
+                self.error_writer.writerow(["7", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
                 return [field]    
         if record_type == "music":
             if tag in ['650', '655']:
@@ -1058,13 +1209,13 @@ class YsoConverter():
                     converted_fields.append(field)
                 else:
                     logging.info("Tuntematon virhekoodi %s tietueessa %s virheilmoituksessa: %s"%(e, record_id, original_field))
-                self.csvriter.writerow([e, record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
+                self.error_writer.writerow([e, record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
         else:
             field = copy.deepcopy(original_field)
             field.indicators[1] = "4"
             for number in range(10):
                 field.delete_subfield(str(number))
-            self.csvriter.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
+            self.error_writer.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
             return [field]
 
         return converted_fields
@@ -1304,6 +1455,8 @@ class YsoConverter():
             tup[0] == "slm",
         ))
         return vocabulary_order
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="YSO-konversio-ohjelma.")
