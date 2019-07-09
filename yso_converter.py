@@ -507,12 +507,12 @@ class YsoConverter():
         return True
 
     def get_record_code(self, non_fiction, record_type):
-        if non_fiction:
-            record_code = "t"
-        elif record_type == "movie":
+        if record_type == "movie":
             record_code = "e"
         elif record_type == "music":
             record_code = "m"
+        elif non_fiction:
+            record_code = "t"
         elif not non_fiction:
             record_code = "f"
         return record_code
@@ -595,6 +595,7 @@ class YsoConverter():
 
             elif leader_type in ['c', 'd', 'j']: 
                 record_type = "music"
+                non_fiction = False
             elif leader_type == "g":
                 if record['007']:
                     if len(record['007'].data) > 0:
@@ -607,7 +608,6 @@ class YsoConverter():
                                         record_type = "music"
             if not record_type:
                 record_type = "text"
-
             if record['567']:
                 convertible_record = True
             for tag in tags_of_fields_to_convert:
@@ -641,8 +641,9 @@ class YsoConverter():
                 for tag in tags_of_fields_to_process:                    
                     for field in record.get_fields(tag):
                         converted_fields = []
+                        vocabulary_code = None
                         if tag in tags_of_fields_to_convert:
-                            vocabulary_code = None
+                           
                             for sf in field.get_subfields('2'):
                                 #valitaan ensimmäinen vastaantuleva sanastokoodi:
                                 if not vocabulary_code:
@@ -661,7 +662,8 @@ class YsoConverter():
                                             new_fields[cf.tag].append(cf)
                                         else:
                                             new_fields.update({cf.tag: [cf]})
-                        if not converted_fields:
+                        #jos kentällä on sanastokoodi, mutta mitään osakenttää ei konvertoitu, kenttä pudotetaan tässä pois:                                            
+                        if not converted_fields and not vocabulary_code:
                             if tag in original_fields:
                                 original_fields[tag].append(field)
                             else:
@@ -1032,11 +1034,13 @@ class YsoConverter():
                     for cf in converted_fields:
                         cf = self.add_control_subfields(cf, control_subfields)
                         new_fields.append(cf)
+        """
         if not new_fields:
             original_field = copy.deepcopy(field)
             field = self.strip_vocabulary_codes(field)
             self.error_writer.writerow(["1", record_id, self.get_record_code(non_fiction, record_type), "", original_field, field])
             return [field]
+        """
         return new_fields
         
     def process_subfield(self, record_id, original_field, subfield, vocabulary_code, non_fiction=True, record_type=None, has_topics=False):    
@@ -1050,7 +1054,8 @@ class YsoConverter():
         tag = original_field.tag
         converted_fields = []
 
-        if not subfield['value']: 
+        if not subfield['value']:
+            self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field])
             return
         #alustetaan ensin hakuparametrien oletusarvot
         vocabulary_order = [] #hakujärjestys, jos sanaa haetaan useammasta sanastosta 
@@ -1072,8 +1077,6 @@ class YsoConverter():
             language = "sv"   
             has_music = True  
         
-        #vocabulary_order = self.set_vocabulary_order(language, yso=True, music=has_music)
-
         search_geographical_concepts = True    
         
         """
