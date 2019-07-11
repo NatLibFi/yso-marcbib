@@ -2592,4 +2592,35 @@ Voit ehdottaa uusia käsitteitä ja muutoksia YSAan ja YSOon oheisen &lt;a href=
     <skos:related rdf:resource="http://www.yso.fi/onto/yso/p4600"/>
     <skos:related rdf:resource="http://www.yso.fi/onto/yso/p8299"/>
   </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/yso/p1801">
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2017-08-10</dct:modified>
+    <rdf:type rdf:resource="http://www.yso.fi/onto/yso-meta/Concept"/>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/yso/p6227"/>
+    <skos:closeMatch rdf:resource="http://id.loc.gov/authorities/subjects/sh85022986"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y20649"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/koko/p34195"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y96067"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/yso/"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p11902"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p12401"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p1375"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p14379"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p15887"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p1738"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p1800"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p18527"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p19129"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p19206"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p19301"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p19765"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p23053"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p3201"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p7202"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p7916"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p8276"/>
+    <skos:prefLabel xml:lang="en">chemistry</skos:prefLabel>
+    <skos:prefLabel xml:lang="sv">kemi</skos:prefLabel>
+    <skos:prefLabel xml:lang="fi">kemia</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/yso/p6228"/>
+  </skos:Concept>
 </rdf:RDF>

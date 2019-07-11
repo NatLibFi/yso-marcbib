@@ -16,9 +16,9 @@ class YsoConversionTest(unittest.TestCase):
         #cls.vocabulary = Vocabularies()
         cls.cc = YsoConverter("test.mrc", "", "output.mrc", "", "marc21", "no")
         cls.vocabularies = Vocabularies()
-        cls.cc.csvriter = Mock(writerow=Mock())
-        cls.cc.rf_handler = Mock(write=Mock())
-        cls.cc.nf_handler = Mock(write=Mock())
+        cls.cc.error_writer = Mock(writerow=Mock())
+        cls.cc.rf_writer = Mock(write=Mock())
+        cls.cc.nf_writer = Mock(write=Mock())
         yso_graph = Graph()
         yso_graph.parse('test/yso-skos-test.rdf')
         yso_paikat_graph = Graph()
@@ -104,6 +104,16 @@ class YsoConversionTest(unittest.TestCase):
                 ],
              'converted': ['=651  \\7$aSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
                            '=651  \\7$aSomero$2yso/swe$0http://www.yso.fi/onto/yso/p105361'
+                         ]
+            },
+            {'original': ['=650  \\7$akemi$2allars',
+                ],
+             'converted': ['=650  \\7$akemi$2yso/swe$0http://www.yso.fi/onto/yso/p1801'
+                         ]
+            },
+            {'original': ['=650  \\7$aKemi$2allars',
+                ],
+             'converted': ['=651  \\7$aKemi$2yso/swe$0http://www.yso.fi/onto/yso/p94202'
                          ]
             },
             {'original': ['=648  \\7$a1980-luku$2ysa$9FENNI<KEEP>',

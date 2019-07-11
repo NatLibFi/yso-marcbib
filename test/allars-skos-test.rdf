@@ -90,4 +90,43 @@ Du kan föreslå nya begrepp och ändringar till Allärs och ALLFO med &lt;a hre
     <skos:prefLabel xml:lang="sv">Somero</skos:prefLabel>
     <skos:related rdf:resource="http://www.yso.fi/onto/allars/Y34082"/>
   </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/allars/Y20649">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2004-06-15</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2016-03-29T16:33:17+03:00</dct:modified>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y96067"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p1801"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/allars/"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y15134"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y15504"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y16112"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y17755"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y18453"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y18951"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y19667"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y20375"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y20738"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y21497"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y22006"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y22849"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y23866"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y23945"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y32014"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y39066"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y41291"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y42164"/>
+    <skos:prefLabel xml:lang="sv">kemi</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/allars/Y32293">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1990-05-18</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2016-03-29T16:37:56+03:00</dct:modified>
+    <rdf:type rdf:resource="http://www.yso.fi/onto/allars-meta/GeographicalConcept"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y94202"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/yso/p94202"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/allars/"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y51162"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y51267"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y53392"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/allars/Y53488"/>
+    <skos:prefLabel xml:lang="sv">Kemi</skos:prefLabel>
+  </skos:Concept>
 </rdf:RDF>

@@ -272,12 +272,12 @@ class Vocabulary():
         #luo sanahakuja varten 2 dictionaryä, joissa avaimet pienillä kirjaimilla ja ilman diakriittejä
         temp_labels = {}
         for label in self.labels:
-            uris = self.labels[label]
+            uris = copy.copy(self.labels[label])
             ll = label.lower()
             if ll in self.labels_lowercase:
                 self.labels_lowercase[ll].update(uris)
             else:
-                self.labels_lowercase.update({ll: self.labels[label]})
+                self.labels_lowercase.update({ll: uris})
             #sanasto ilman diakriittejä:
             uris = copy.copy(uris)
             stripped_label = self.remove_diacritical_chars(label).lower()

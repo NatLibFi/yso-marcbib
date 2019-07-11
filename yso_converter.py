@@ -3,12 +3,13 @@ from rdflib import Graph, URIRef, Namespace, RDF
 import pymarc
 from pymarc import XmlHandler
 from xml import sax
-from pymarc import MARCReader, MARCWriter, XMLWriter, Record, Field, constants
+from pymarc import MARCReader, MARCWriter, XMLWriter, Record, Field, RawField, constants
+from pymarc.marc8 import marc8_to_unicode
 from pymarc.exceptions import (BaseAddressInvalid, 
                                RecordLeaderInvalid, 
                                BaseAddressNotFound, 
                                RecordDirectoryInvalid,
-                               NoFieldsFound, 
+                               NoFieldsFound,
                                FieldNotFound, 
                                RecordLengthInvalid) 
 from xml.sax import SAXParseException
@@ -518,250 +519,252 @@ class YsoConverter():
         return record_code
 
     def process_record(self, record):
+        tags_of_fields_to_convert = ['385', '567', '648', '650', '651', '655']
+        tags_of_fields_to_process = ['257', '370', '382', '385', '386', '388', '567', '648', '650', '651', '653', '655']
+        original_fields = {}
+        new_fields = {}
+        altered_fields = set()
+        record_status = record.leader[5]
         if record['001']:
-            tags_of_fields_to_convert = ['385', '567', '648', '650', '651', '655']
-            tags_of_fields_to_process = ['257', '370', '382', '385', '386', '388', '567', '648', '650', '651', '653', '655']
-            original_fields = {}
-            new_fields = {}
-            altered_fields = set()
-            record_status = record.leader[5]
             record_id = record['001'].data
-            self.linking_number = None #käytetään musiikkiaineiston hajotettujen ketjujen yhdistämiseen 8-osakentällä
-            linking_numbers = [] #merkitään 8-osakenttien numerot, joita tietueessa on jo ennestään
-            if record_status == "d":
-                return
-            """
-            KAUNOKIRJALLISUUS
-            leader/06 on a tai t JA leader/07 ei ole b, i eikä s -> 
-            008/33 - Kirjallisuuslaji ei ole 0 eikä u (painetut ja e-kirjat)
-            leader/06 on i ->
-            008/30-31 - Kirjallisuuslaji on d, f tai p (äänikirjat)
-            """
-            leader_type = record.leader[6]
-            record_type = None
-            non_fiction = True
-            control_field_genres = []
-            convertible_record = False
-            if leader_type in ['a', 't']:
-                record_type = "text"
-                if record.leader[7] not in ['b', 'i', 's']:
-                    """ 
-                    008 (BK) merkkipaikka 34 arvo on erittäin oleellinen ja paljon käytetty 
-                    a, niin 655 $a kenttään voidaan tallettaa muistelmat  http://urn.fi/URN:NBN:fi:au:slm:s286
-                    b tai c niin 655 $a kenttään elämäkerrat http://urn.fi/URN:NBN:fi:au:slm:s1006
-                    008 (BK) merkkipaikka 33 samaten
-                    d -  näytelmät  http://urn.fi/URN:NBN:fi:au:slm:s929
-                    f - romaanit http://urn.fi/URN:NBN:fi:au:slm:s518
-                    h - huumori http://urn.fi/URN:NBN:fi:au:slm:s1128
-                    j - novellit http://urn.fi/URN:NBN:fi:au:slm:s27
-                    p - runot  http://urn.fi/URN:NBN:fi:au:slm:s1150
-                    s - puheet http://urn.fi/URN:NBN:fi:au:slm:s775   tai esitelmät  http://urn.fi/URN:NBN:fi:au:slm:s313
-                    """
-                    if record['006']:
-                        if len(record['006'].data) > 16:
-                            if record['006'].data[16] not in ['0', 'u', '|']:
-                                non_fiction = False
-                    elif record['008']:
-                        if len(record['008'].data) > 34:
-                            if record['008'].data[33] not in ['0', 'u', '|']:
-                                non_fiction = False
-                            
-            elif leader_type == "i":
-                record_type = "text"
+        else:
+            record_id = "001 kenttä puuttuu"
+        self.linking_number = None #käytetään musiikkiaineiston hajotettujen ketjujen yhdistämiseen 8-osakentällä
+        linking_numbers = [] #merkitään 8-osakenttien numerot, joita tietueessa on jo ennestään
+        if record_status == "d":
+            return
+        """
+        KAUNOKIRJALLISUUS
+        leader/06 on a tai t JA leader/07 ei ole b, i eikä s -> 
+        008/33 - Kirjallisuuslaji ei ole 0 eikä u (painetut ja e-kirjat)
+        leader/06 on i ->
+        008/30-31 - Kirjallisuuslaji on d, f tai p (äänikirjat)
+        """
+        leader_type = record.leader[6]
+        record_type = None
+        non_fiction = True
+        control_field_genres = []
+        convertible_record = False
+        if leader_type in ['a', 't']:
+            record_type = "text"
+            if record.leader[7] not in ['b', 'i', 's']:
+                """ 
+                008 (BK) merkkipaikka 34 arvo on erittäin oleellinen ja paljon käytetty 
+                a, niin 655 $a kenttään voidaan tallettaa muistelmat  http://urn.fi/URN:NBN:fi:au:slm:s286
+                b tai c niin 655 $a kenttään elämäkerrat http://urn.fi/URN:NBN:fi:au:slm:s1006
+                008 (BK) merkkipaikka 33 samaten
+                d -  näytelmät  http://urn.fi/URN:NBN:fi:au:slm:s929
+                f - romaanit http://urn.fi/URN:NBN:fi:au:slm:s518
+                h - huumori http://urn.fi/URN:NBN:fi:au:slm:s1128
+                j - novellit http://urn.fi/URN:NBN:fi:au:slm:s27
+                p - runot  http://urn.fi/URN:NBN:fi:au:slm:s1150
+                s - puheet http://urn.fi/URN:NBN:fi:au:slm:s775   tai esitelmät  http://urn.fi/URN:NBN:fi:au:slm:s313
+                """
                 if record['006']:
-                    if len(record['008'].data) > 14:
-                        for char in ['d', 'f', 'p']:
-                            if char in record['008'].data[13:14]:
-                                non_fiction = False
+                    if len(record['006'].data) > 16:
+                        if record['006'].data[16] not in ['0', 'u', '|']:
+                            non_fiction = False
                 elif record['008']:
-                    if len(record['008'].data) > 31:
-                        for char in ['d', 'f', 'p']:
-                            if char in record['008'].data[30:31]:
-                                non_fiction = False
-            elif leader_type == "m":
-                #Konsolipelien tunnistaminen 
-                #Leader/06 on m JA kenttä 008/26 on g (eli peli)
-                if record['008']:
-                    if len(record['008'].data) > 33:
-                        if record['008'].data[26] == "g":
+                    if len(record['008'].data) > 34:
+                        if record['008'].data[33] not in ['0', 'u', '|']:
                             non_fiction = False
-            elif leader_type == "r":
-                #Lautapelien tunnistaminen
-                #leader/06 on r JA 008/33 on g
-                if record['008']:
-                    if len(record['008'].data) > 33:
-                        if record['008'].data[33] == "g":
-                            non_fiction = False
-
-            elif leader_type in ['c', 'd', 'j']: 
-                record_type = "music"
-                non_fiction = False
-            elif leader_type == "g":
-                if record['007']:
-                    if len(record['007'].data) > 0:
-                        if record['007'].data[0] == "v":
-                            record_type = "movie"
-                            non_fiction = False
-                            for field in record.get_fields('084'):
-                                for subfield in field.get_subfields('a'):
-                                    if subfield.startswith("78"):
-                                        record_type = "music"
-            if not record_type:
-                record_type = "text"
-            if record['567']:
-                convertible_record = True
-            for tag in tags_of_fields_to_convert:
-                for field in record.get_fields(tag):
-                    self.statistics["kaikki tarkistetut kentät"] += 1
-                    if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
-                        convertible_record = True
-
-            #jos $8-osakenttiä elokuva- tai musiikkitietueessa ennestään, otetaan uusien $8-osakenttien 1. numeroksi viimeistä seuraava numero:
-            if convertible_record:
-                if record_type in ['music', 'movie']:
-                    for field in record.get_fields():
-                        if hasattr(field, 'subfields'):
-                            for subfield in self.subfields_to_dict(field.subfields):
-                                if subfield['code'] == "8":
-                                    value = subfield['value']
-                                    if "\\" in value:
-                                        value = value.split("\\")[0]
-                                    if "." in value:
-                                        value = value.split(".")[0] 
-                                    if value.isdigit():
-                                        linking_numbers.append(int(value))
-                    linking_numbers = sorted(linking_numbers)
-                    if linking_numbers:
-                        self.linking_number = linking_numbers[len(linking_numbers) - 1]
-                    else:
-                        self.linking_number = 0
-                subfields = []
-                
-                #TODO: vaihtoehto: säilytetään alkup. YSA-rivi, jos valittu optio?
-                for tag in tags_of_fields_to_process:                    
-                    for field in record.get_fields(tag):
-                        converted_fields = []
-                        vocabulary_code = None
-                        if tag in tags_of_fields_to_convert:
-                           
-                            for sf in field.get_subfields('2'):
-                                #valitaan ensimmäinen vastaantuleva sanastokoodi:
-                                if not vocabulary_code:
-                                    if sf == "ysa" or sf == "allars" or sf == "musa" or sf == "cilla":
-                                        vocabulary_code = sf    
-                            #567-kentistä käsitellään myös sanastokoodittomat:
-                            if vocabulary_code or tag == "567":
-                                converted_fields = self.process_field(record_id, field, vocabulary_code, non_fiction, record_type)
-                                self.rf_writer.writerow([record_id, field])
-                                self.statistics['poistettuja kenttiä'] += 1
-                                if converted_fields:
-                                    altered_fields.add(tag)
-                                    for cf in converted_fields:
-                                        altered_fields.add(cf.tag)
-                                        if cf.tag in new_fields:
-                                            new_fields[cf.tag].append(cf)
-                                        else:
-                                            new_fields.update({cf.tag: [cf]})
-                        #jos kentällä on sanastokoodi, mutta mitään osakenttää ei konvertoitu, kenttä pudotetaan tässä pois:                                            
-                        if not converted_fields and not vocabulary_code:
-                            if tag in original_fields:
-                                original_fields[tag].append(field)
-                            else:
-                                original_fields.update({tag: [field]})
-                #järjestetään uudet ja alkuperäiset rivit:   
-                altered_fields = sorted(altered_fields)
-                for tag in altered_fields:
-                    record.remove_fields(tag)
-                for tag in altered_fields:
-                    original_fields_with_tag = []
-                    new_fields_with_tag = []
-                    if tag in original_fields:
-                        original_fields_with_tag = original_fields[tag]
-                    if tag in new_fields:
-                        new_fields_with_tag = new_fields[tag]
-                    sorted_fields = self.sort_fields(tag, original_fields_with_tag, new_fields_with_tag)        
-                    #poistetaan identtiset rivit:
-                    removable_fields = set()
-                    for m in range(len(sorted_fields)):
-                        for n in range(m + 1, len(sorted_fields)):
-                            if m not in removable_fields and n not in removable_fields:
-                                if self.is_equal_field(sorted_fields[m].subfields, sorted_fields[n].subfields):
-                                    if sorted_fields[m].indicators == sorted_fields[n].indicators:
-                                        removable_fields.add(n)
-                                    if sorted_fields[m].indicators[1] == " " and not sorted_fields[n].indicators[1] == " ":
-                                        removable_fields.add(m)
-                                    if sorted_fields[n].indicators[1] == " " and not sorted_fields[m].indicators[1] == " ":
-                                        removable_fields.add(n)
-                                elif self.sort_subfields(self.remove_subfields(['0'], sorted_fields[m].subfields)) == \
-                                    self.sort_subfields(self.remove_subfields(['0'], sorted_fields[n].subfields)):
-                                    if sorted_fields[m]['2'] and sorted_fields[m]['0']:
-                                        removable_fields.add(n)
-                                    elif sorted_fields[n]['2'] and sorted_fields[n]['0']:
-                                        removable_fields.add(m)
-                                elif self.sort_subfields(self.remove_subfields(['9'], sorted_fields[m].subfields)) == \
-                                    self.sort_subfields(self.remove_subfields(['9'], sorted_fields[n].subfields)):
-                                    if sorted_fields[m]['9'] and not sorted_fields[n]['9']:
-                                        removable_fields.add(n)
-                                    if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
-                                        removable_fields.add(m)
-
-                    #poistetaan identtiset $8-osakentät ja yhdistellään $8-osakentät samaan kenttään:
-                    for m in range(len(sorted_fields)):
-                        linking_numbers_list = [] #tallentaan erilaiset $8-osakentät, jos on useampia muuten identtisiä kenttiä
-                        if sorted_fields[m]['2']:
-                            if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe'] and m not in removable_fields:
-                                for n in range(m + 1, len(sorted_fields)):
-                                    if m not in removable_fields and n not in removable_fields:
-                                        m_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
-                                        n_subfields = self.subfields_to_dict(sorted_fields[n].subfields)
-                                        if self.similar_fields(['8'], sorted_fields[m], sorted_fields[n]):
-                                            for subfield in m_subfields:
-                                                if subfield['code'] == "8":
-                                                    if subfield['value'] not in linking_numbers_list:
-                                                        linking_numbers_list.append(subfield['value'])
-                                            for subfield in n_subfields:
-                                                if subfield['code'] == "8":
-                                                    if subfield['value'] not in linking_numbers_list:
-                                                        linking_numbers_list.append(subfield['value'])        
-                                            removable_fields.add(n)
-                        if linking_numbers_list:
-                            while (sorted_fields[m]['8']):
-                                sorted_fields[m].delete_subfield('8')
-                        for ln in linking_numbers_list:
-                            sorted_fields[m].add_subfield('8', ln)
                         
-                        if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe']:
-                            new_subfields = self.sort_subfields(self.subfields_to_dict(sorted_fields[m].subfields))
-                        else:
-                            new_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
-                        subfield_list = []
-                        for ns in new_subfields:
-                            subfield_list.extend([ns['code'], ns['value']])
-                        new_field = Field(
-                            tag = tag,
-                            indicators = sorted_fields[m].indicators,
-                            subfields = subfield_list
-                        )
-                        sorted_fields[m] = new_field
+        elif leader_type == "i":
+            record_type = "text"
+            if record['006']:
+                if len(record['008'].data) > 14:
+                    for char in ['d', 'f', 'p']:
+                        if char in record['008'].data[13:14]:
+                            non_fiction = False
+            elif record['008']:
+                if len(record['008'].data) > 31:
+                    for char in ['d', 'f', 'p']:
+                        if char in record['008'].data[30:31]:
+                            non_fiction = False
+        elif leader_type == "m":
+            #Konsolipelien tunnistaminen 
+            #Leader/06 on m JA kenttä 008/26 on g (eli peli)
+            if record['008']:
+                if len(record['008'].data) > 33:
+                    if record['008'].data[26] == "g":
+                        non_fiction = False
+        elif leader_type == "r":
+            #Lautapelien tunnistaminen
+            #leader/06 on r JA 008/33 on g
+            if record['008']:
+                if len(record['008'].data) > 33:
+                    if record['008'].data[33] == "g":
+                        non_fiction = False
 
-                    for idx in range(len(sorted_fields)):
-                        if idx not in removable_fields:
-                            is_new_field = False
-                            if tag in original_fields:
-                                if not any(str(sorted_fields[idx]) == str(field) for field in original_fields[tag]):
-                                    is_new_field = True
-                            else:
+        elif leader_type in ['c', 'd', 'j']: 
+            record_type = "music"
+            non_fiction = False
+        elif leader_type == "g":
+            if record['007']:
+                if len(record['007'].data) > 0:
+                    if record['007'].data[0] == "v":
+                        record_type = "movie"
+                        non_fiction = False
+                        for field in record.get_fields('084'):
+                            for subfield in field.get_subfields('a'):
+                                if subfield.startswith("78"):
+                                    record_type = "music"
+        if not record_type:
+            record_type = "text"
+        if record['567']:
+            convertible_record = True
+        for tag in tags_of_fields_to_convert:
+            for field in record.get_fields(tag):
+                self.statistics["kaikki tarkistetut kentät"] += 1
+                if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
+                    convertible_record = True
+
+        #jos $8-osakenttiä elokuva- tai musiikkitietueessa ennestään, otetaan uusien $8-osakenttien 1. numeroksi viimeistä seuraava numero:
+        if convertible_record:
+            if record_type in ['music', 'movie']:
+                for field in record.get_fields():
+                    if hasattr(field, 'subfields'):
+                        for subfield in self.subfields_to_dict(field.subfields):
+                            if subfield['code'] == "8":
+                                value = subfield['value']
+                                if "\\" in value:
+                                    value = value.split("\\")[0]
+                                if "." in value:
+                                    value = value.split(".")[0] 
+                                if value.isdigit():
+                                    linking_numbers.append(int(value))
+                linking_numbers = sorted(linking_numbers)
+                if linking_numbers:
+                    self.linking_number = linking_numbers[len(linking_numbers) - 1]
+                else:
+                    self.linking_number = 0
+            subfields = []
+            
+            #TODO: vaihtoehto: säilytetään alkup. YSA-rivi, jos valittu optio?
+            for tag in tags_of_fields_to_process:                    
+                for field in record.get_fields(tag):
+                    converted_fields = []
+                    vocabulary_code = None
+                    if tag in tags_of_fields_to_convert:
+                        
+                        for sf in field.get_subfields('2'):
+                            #valitaan ensimmäinen vastaantuleva sanastokoodi:
+                            if not vocabulary_code:
+                                if sf == "ysa" or sf == "allars" or sf == "musa" or sf == "cilla":
+                                    vocabulary_code = sf    
+                        #567-kentistä käsitellään myös sanastokoodittomat:
+                        if vocabulary_code or tag == "567":
+                            converted_fields = self.process_field(record_id, field, vocabulary_code, non_fiction, record_type)
+                            self.rf_writer.writerow([record_id, field])
+                            self.statistics['poistettuja kenttiä'] += 1
+                            if converted_fields:
+                                altered_fields.add(tag)
+                                for cf in converted_fields:
+                                    altered_fields.add(cf.tag)
+                                    if cf.tag in new_fields:
+                                        new_fields[cf.tag].append(cf)
+                                    else:
+                                        new_fields.update({cf.tag: [cf]})
+                    #jos kentällä on sanastokoodi, mutta mitään osakenttää ei konvertoitu, kenttä pudotetaan tässä pois:                                            
+                    if not converted_fields and not vocabulary_code:
+                        if tag in original_fields:
+                            original_fields[tag].append(field)
+                        else:
+                            original_fields.update({tag: [field]})
+            #järjestetään uudet ja alkuperäiset rivit:   
+            altered_fields = sorted(altered_fields)
+            for tag in altered_fields:
+                record.remove_fields(tag)
+            for tag in altered_fields:
+                original_fields_with_tag = []
+                new_fields_with_tag = []
+                if tag in original_fields:
+                    original_fields_with_tag = original_fields[tag]
+                if tag in new_fields:
+                    new_fields_with_tag = new_fields[tag]
+                sorted_fields = self.sort_fields(tag, original_fields_with_tag, new_fields_with_tag)        
+                #poistetaan identtiset rivit:
+                removable_fields = set()
+                for m in range(len(sorted_fields)):
+                    for n in range(m + 1, len(sorted_fields)):
+                        if m not in removable_fields and n not in removable_fields:
+                            if self.is_equal_field(sorted_fields[m].subfields, sorted_fields[n].subfields):
+                                if sorted_fields[m].indicators == sorted_fields[n].indicators:
+                                    removable_fields.add(n)
+                                if sorted_fields[m].indicators[1] == " " and not sorted_fields[n].indicators[1] == " ":
+                                    removable_fields.add(m)
+                                if sorted_fields[n].indicators[1] == " " and not sorted_fields[m].indicators[1] == " ":
+                                    removable_fields.add(n)
+                            elif self.sort_subfields(self.remove_subfields(['0'], sorted_fields[m].subfields)) == \
+                                self.sort_subfields(self.remove_subfields(['0'], sorted_fields[n].subfields)):
+                                if sorted_fields[m]['2'] and sorted_fields[m]['0']:
+                                    removable_fields.add(n)
+                                elif sorted_fields[n]['2'] and sorted_fields[n]['0']:
+                                    removable_fields.add(m)
+                            elif self.sort_subfields(self.remove_subfields(['9'], sorted_fields[m].subfields)) == \
+                                self.sort_subfields(self.remove_subfields(['9'], sorted_fields[n].subfields)):
+                                if sorted_fields[m]['9'] and not sorted_fields[n]['9']:
+                                    removable_fields.add(n)
+                                if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
+                                    removable_fields.add(m)
+
+                #poistetaan identtiset $8-osakentät ja yhdistellään $8-osakentät samaan kenttään:
+                for m in range(len(sorted_fields)):
+                    linking_numbers_list = [] #tallentaan erilaiset $8-osakentät, jos on useampia muuten identtisiä kenttiä
+                    if sorted_fields[m]['2']:
+                        if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe'] and m not in removable_fields:
+                            for n in range(m + 1, len(sorted_fields)):
+                                if m not in removable_fields and n not in removable_fields:
+                                    m_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
+                                    n_subfields = self.subfields_to_dict(sorted_fields[n].subfields)
+                                    if self.similar_fields(['8'], sorted_fields[m], sorted_fields[n]):
+                                        for subfield in m_subfields:
+                                            if subfield['code'] == "8":
+                                                if subfield['value'] not in linking_numbers_list:
+                                                    linking_numbers_list.append(subfield['value'])
+                                        for subfield in n_subfields:
+                                            if subfield['code'] == "8":
+                                                if subfield['value'] not in linking_numbers_list:
+                                                    linking_numbers_list.append(subfield['value'])        
+                                        removable_fields.add(n)
+                    if linking_numbers_list:
+                        while (sorted_fields[m]['8']):
+                            sorted_fields[m].delete_subfield('8')
+                    for ln in linking_numbers_list:
+                        sorted_fields[m].add_subfield('8', ln)
+                    
+                    if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe']:
+                        new_subfields = self.sort_subfields(self.subfields_to_dict(sorted_fields[m].subfields))
+                    else:
+                        new_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
+                    subfield_list = []
+                    for ns in new_subfields:
+                        subfield_list.extend([ns['code'], ns['value']])
+                    new_field = Field(
+                        tag = tag,
+                        indicators = sorted_fields[m].indicators,
+                        subfields = subfield_list
+                    )
+                    sorted_fields[m] = new_field
+
+                for idx in range(len(sorted_fields)):
+                    if idx not in removable_fields:
+                        is_new_field = False
+                        if tag in original_fields:
+                            if not any(str(sorted_fields[idx]) == str(field) for field in original_fields[tag]):
                                 is_new_field = True
-                            if is_new_field:
-                                
-                                self.nf_writer.writerow([record_id, \
-                                                self.get_record_code(non_fiction, record_type), \
-                                                str(sorted_fields[idx])])                  
-                                self.statistics['uusia kenttiä'] += 1
-                            record.add_ordered_field(sorted_fields[idx])  
-            else:
-                return
-            return record
+                        else:
+                            is_new_field = True
+                        if is_new_field:
+                            
+                            self.nf_writer.writerow([record_id, \
+                                            self.get_record_code(non_fiction, record_type), \
+                                            str(sorted_fields[idx])])                  
+                            self.statistics['uusia kenttiä'] += 1
+                        record.add_ordered_field(sorted_fields[idx])  
+        else:
+            return
+        return record
         
     def process_field(self, record_id, field, vocabulary_code, non_fiction=True, record_type=None):
         """
@@ -771,7 +774,6 @@ class YsoConverter():
         non_fiction -- määrittelee, onko tietueen aineisto tietokirjallisuutta
         record_type -- aineistotyyppi joidenkin kenttien erikoiskäsittelyä varten, käyvät arvot: "text", "music", "movie"
         """
-        #record_id: tietueen numero virheiden lokitusta varten
         new_fields = []
         tag = field.tag
         subfields = self.subfields_to_dict(field.subfields)

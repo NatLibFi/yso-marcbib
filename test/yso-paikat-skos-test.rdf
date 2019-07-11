@@ -141,4 +141,44 @@
     <skos:prefLabel xml:lang="sv">Somero</skos:prefLabel>
     <skos:related rdf:resource="http://www.yso.fi/onto/yso/p129754"/>
   </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/yso/p94202">
+    <dc:source xml:lang="fi">Maanmittauslaitoksen paikannimirekisteri; tyyppitieto: Kunta, kaupunki</dc:source>
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1990-05-18</dct:created>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2019-03-11T10:53:24+02:00</dct:modified>
+    <iso-thes:broaderPartitive rdf:resource="http://www.yso.fi/onto/yso/p94256"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p106973"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p110430"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p111001"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p112907"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p138880"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p140946"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p161309"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p194412"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p212035"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p212075"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p227340"/>
+    <iso-thes:narrowerPartitive rdf:resource="http://www.yso.fi/onto/yso/p233574"/>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/yso/p94256"/>
+    <skos:closeMatch rdf:resource="http://paikkatiedot.fi/so/1000772/10746999"/>
+    <skos:closeMatch rdf:resource="http://www.wikidata.org/entity/Q203619"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y32293"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y94202"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/yso/places"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p106973"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p110430"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p111001"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p112907"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p138880"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p140946"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p161309"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p194412"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p212035"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p212075"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p227340"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p233574"/>
+    <skos:prefLabel xml:lang="en">Kemi</skos:prefLabel>
+    <skos:prefLabel xml:lang="fi">Kemi</skos:prefLabel>
+    <skos:prefLabel xml:lang="sv">Kemi</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/yso/p119952"/>
+  </skos:Concept>
 </rdf:RDF>  
