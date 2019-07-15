@@ -10,11 +10,13 @@ Jos tietueet ovat erillisissä tiedostoissa, ne on laitettava samaan kansioon, j
     
 Konvertoidaan vain seuraavat tietueiden kentät 385, 567, 648, 650, 651, 655
 Konversiossa tuotetaan ja päivitetään seuraaavia kenttiä: 257, 370, 382, 385, 388, 567, 648, 650, 651, 653, 655
-Muunnosprosessi on kuvattu Kiwissä: https://www.kiwi.fi/display/ysall2yso
+Muunnosprosessi on kuvattu [Kiwissä](https://www.kiwi.fi/display/ysall2yso/):
 - Konversiosäännöt on kuvailtu erillisessä sääntödokumentissa
 - Konversio kohdistuu kaikkiin aineistotyyppeihin
 - Asiasanakenttiä järjestetään uudelleen mm. sanaston ja kielen mukaan. 
 - Termien alkuperäinen järjestys pyritään säästämään.
+
+Ohjelmassa on korjattu joitain havaittuja puutteita. Ne on listattu [KIWI-sivulle](https://www.kiwi.fi/display/ysall2yso/Konversiossa+havaittuja+ongelmia). Ohjelmistovirheistä voi raportoida [GitHub-issuena](https://github.com/NatLibFi/yso-marcbib/issues).
 
 Ohjelma käyttää Musa (sisältää Cillan), Ysa-, Allärs-, Yso-, SEKO- ja SLM-sanastoja, jotka testiversiossa on ladattava ohjelman pääkansioon rdf-muodossa Finton sivulta: https://finto.fi/
 Ohjelma käyttää Python-kirjastoja pymarc, rdflib, unidecode, jotka on asennettava ennen käyttöä, esim. `pip install <kirjaston nimi>`.

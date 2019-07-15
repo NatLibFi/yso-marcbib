@@ -216,11 +216,15 @@ class Vocabulary():
                             self.translations[uri].update({lc: pref_label})
                         else:
                             self.translations.update({uri: {lc: pref_label}})
-                    self.labels[lc].update({pref_label: {"pref_label": {pref_label}, "uris":{uri}}})
+                    if pref_label in self.labels[lc]:
+                        self.labels[lc][pref_label]["pref_label"].add(pref_label)
+                        self.labels[lc][pref_label]["uris"].add(uri)
+                    else:
+                        self.labels[lc].update({pref_label: {"pref_label": {pref_label}, "uris":{uri}}})
                 alt_labels = g.preferredLabel(conc, lang=lc, labelProperties=[SKOS.altLabel])
                 for al in alt_labels:
                     alt_label = str(al[1])
-                    if alt_label in self.labels:
+                    if alt_label in self.labels[lc]:
                         self.labels[lc][alt_label]["pref_label"].add(pref_label)
                         self.labels[lc][alt_label]["uris"].add(uri)
                     else:

@@ -34,4 +34,38 @@
     <skos:prefLabel xml:lang="fi">rocklyriikka</skos:prefLabel>
     <skos:prefLabel xml:lang="sv">rocklyrik</skos:prefLabel>
   </skos:Concept>
+  <skos:Concept rdf:about="http://urn.fi/URN:NBN:fi:au:slm:s928">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2018-05-16</dct:created>
+    <skos:altLabel xml:lang="fi">todellisuuspohjaiset elokuvat</skos:altLabel>
+    <skos:altLabel xml:lang="sv">verklighetsbaserade filmer</skos:altLabel>
+    <skos:broader rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s1175"/>
+    <skos:closeMatch rdf:resource="http://www.yso.fi/onto/yso/p1234"/>
+    <skos:inScheme rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:"/>
+    <skos:prefLabel xml:lang="sv">biografiska filmer</skos:prefLabel>
+    <skos:prefLabel xml:lang="fi">elämäkertaelokuvat</skos:prefLabel>
+    <skos:related rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s1006"/>
+    <skos:related rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s1078"/>
+    <skos:related rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s230"/>
+    <skos:related rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s849"/>
+    <skos:related rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s958"/>
+    <skos:scopeNote xml:lang="sv">Används om fiktiva filmer, som handlar om någon verklig historisk person och som baserar sig delvis på verkliga händelser.</skos:scopeNote>
+    <skos:scopeNote xml:lang="fi">Käytetään fiktiivisistä elokuvista, jotka kertovat jostakin todellisesta historiallisesta henkilöstä ja jotka pohjautuvat osin todellisiin tapahtumiin.</skos:scopeNote>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://urn.fi/URN:NBN:fi:au:slm:s849">
+    <dct:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2018-05-16</dct:created>
+    <skos:altLabel xml:lang="fi">dokumenttidraamat</skos:altLabel>
+    <skos:altLabel xml:lang="sv">dokumentärdraman</skos:altLabel>
+    <skos:altLabel xml:lang="sv">dokumentärdramer</skos:altLabel>
+    <skos:altLabel xml:lang="sv">fiktiva dokumentärer</skos:altLabel>
+    <skos:broader rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s1175"/>
+    <skos:closeMatch rdf:resource="http://www.yso.fi/onto/yso/p5666"/>
+    <skos:inScheme rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:"/>
+    <skos:prefLabel xml:lang="fi">todellisuuspohjaiset elokuvat</skos:prefLabel>
+    <skos:prefLabel xml:lang="sv">verklighetsbaserade filmer</skos:prefLabel>
+    <skos:related rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s1078"/>
+    <skos:related rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s230"/>
+    <skos:related rdf:resource="http://urn.fi/URN:NBN:fi:au:slm:s928"/>
+    <skos:scopeNote xml:lang="sv">Används om fiktiva filmer som baserar sig på verkliga händelser (t.ex. Silkwood, Ett rop på frihet,  I faderns namn, A Civil Action, Dödens fält).</skos:scopeNote>
+    <skos:scopeNote xml:lang="fi">Käytetään fiktiivisistä elokuvista, jotka pohjautuvat todellisiin tapahtumiin (esim. Tapaus Silkwood, Huuto vapaudelle, Isän nimeen, Siviilirohkeutta, Kuoleman kentät).</skos:scopeNote>
+  </skos:Concept>
 </rdf:RDF>

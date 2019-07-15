@@ -245,6 +245,9 @@ class YsoConversionTest(unittest.TestCase):
              'results': ['=388  1\$8järjestysnumero$a1980-luku$2yso/fin$9FENNI<KEEP>',
              '=655  \\7$8järjestysnumero$arāgat$2slm/fin$0http://urn.fi/URN:NBN:fi:au:slm:s786$9FENNI<KEEP>']
             },        
+            {'original':  '=655  \\7$atodellisuuspohjaiset elokuvat$2ysa',
+             "results": ['=655  \\4$atodellisuuspohjaiset elokuvat']
+            },
             {'original':  '=567  \\7$aragat',
              "results": ['=567  \\\\$brāgat$2yso/fin$0http://www.yso.fi/onto/yso/p30038']
             },

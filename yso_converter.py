@@ -712,7 +712,7 @@ class YsoConverter():
                 for m in range(len(sorted_fields)):
                     linking_numbers_list = [] #tallentaan erilaiset $8-osakentät, jos on useampia muuten identtisiä kenttiä
                     if sorted_fields[m]['2']:
-                        if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe'] and m not in removable_fields:
+                        if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe', 'seko'] and m not in removable_fields:
                             for n in range(m + 1, len(sorted_fields)):
                                 if m not in removable_fields and n not in removable_fields:
                                     m_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
@@ -733,7 +733,7 @@ class YsoConverter():
                     for ln in linking_numbers_list:
                         sorted_fields[m].add_subfield('8', ln)
                     
-                    if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe']:
+                    if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe', 'seko']:
                         new_subfields = self.sort_subfields(self.subfields_to_dict(sorted_fields[m].subfields))
                     else:
                         new_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
