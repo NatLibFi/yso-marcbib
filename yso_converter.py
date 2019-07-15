@@ -338,7 +338,6 @@ class YsoConverter():
                 pickle.dump(self.vocabularies, output, pickle.HIGHEST_PROTOCOL)
             logging.info("sanastot tallennettu muistiin ja tiedostoon vocabularies.pkl")
             output.close()    
-        print(self.vocabularies.vocabularies['allars'].labels['ledare'])
 
     def read_records(self):
         with open(self.removed_fields_log, 'w', newline='', encoding = 'utf-8-sig') as self.rf_handler, \
@@ -409,7 +408,6 @@ class YsoConverter():
                             try:
                                 record = next(reader, None)
                                 if record:
-                                    print(record)
                                     self.read_and_write_record(record)
                             except (BaseAddressInvalid, 
                                     RecordLeaderInvalid, 
@@ -1306,7 +1304,6 @@ class YsoConverter():
             indicators = field.indicators,
         )
         if self.linking_number and linked:
-            print(field)
             new_field.add_subfield("8", "%s\\u"%(self.linking_number))   
         for ns in new_subfields:
             new_field.add_subfield(ns['code'], ns['value'])   
