@@ -338,6 +338,7 @@ class YsoConverter():
                 pickle.dump(self.vocabularies, output, pickle.HIGHEST_PROTOCOL)
             logging.info("sanastot tallennettu muistiin ja tiedostoon vocabularies.pkl")
             output.close()    
+        print(self.vocabularies.vocabularies['allars'].labels['ledare'])
 
     def read_records(self):
         with open(self.removed_fields_log, 'w', newline='', encoding = 'utf-8-sig') as self.rf_handler, \
@@ -408,6 +409,7 @@ class YsoConverter():
                             try:
                                 record = next(reader, None)
                                 if record:
+                                    print(record)
                                     self.read_and_write_record(record)
                             except (BaseAddressInvalid, 
                                     RecordLeaderInvalid, 
@@ -856,6 +858,10 @@ class YsoConverter():
             return [field]      
 
         if tag in ['650'] and record_type == "movie":
+            if len(non_digit_codes) > 1:
+                linked = True
+            else:
+                linked = False
             has_topics = True #alkuoletuksena on, että elokuvatietueen kentät tulkitaan aiheiksi
             has_genre_terms = False #kentän loput termeistä tulkitaan tämän perusteella luomiseen liittyviksi
             for subfield in subfields:
@@ -867,17 +873,16 @@ class YsoConverter():
                         has_topics = True
                         self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     else:
-                        responses = []  
                         converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
                         if converted_fields:
                             for cf in converted_fields:
-                                cf = self.add_control_subfields(cf, control_subfields)
+                                cf = self.add_control_subfields(cf, control_subfields, linked)
                                 new_fields.append(cf) 
                 elif not subfield['code'].isdigit():
                     converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)
                     if converted_fields:
                         for cf in converted_fields:
-                            cf = self.add_control_subfields(cf, control_subfields)
+                            cf = self.add_control_subfields(cf, control_subfields, linked)
                             new_fields.append(cf) 
             return new_fields
     
@@ -889,7 +894,10 @@ class YsoConverter():
             #kerätään SEKO-termejä sisältävät osakentät 382-kenttään siirrettäväksi:
             instrument_lists = []
             instrument_list = []
-            
+            if len(non_digit_codes) > 1:
+                linked = True
+            else:
+                linked = False
             has_topics = False #kentän loput termeistä tulkitaan tämän perusteella aiheiksi
             has_genre_terms = False #kentän loput termeistä tulkitaan tämän perusteella luomiseen liittyviksi
             for subfield in subfields:
@@ -936,13 +944,13 @@ class YsoConverter():
                                         if cf['2'].startswith('yso'):
                                             if not has_genre_terms:
                                                 has_topics = True
-                                    cf = self.add_control_subfields(cf, control_subfields)
+                                    cf = self.add_control_subfields(cf, control_subfields, linked)
                                     new_fields.append(cf) 
                 elif not subfield['code'].isdigit():
                     converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)
                     if converted_fields:
                         for cf in converted_fields:
-                            cf = self.add_control_subfields(cf, control_subfields)
+                            cf = self.add_control_subfields(cf, control_subfields, linked)
                             new_fields.append(cf) 
             if instrument_lists:
                 for instrument_list in instrument_lists:
@@ -953,7 +961,7 @@ class YsoConverter():
                         subfields = instrument_list
                     )
                     new_field.add_subfield("2", "seko")  
-                    new_field = self.add_control_subfields(new_field, control_subfields)
+                    new_field = self.add_control_subfields(new_field, control_subfields, linked)
                     new_fields.append(new_field)
             return new_fields
 
@@ -1286,7 +1294,7 @@ class YsoConverter():
             )         
         return field
 
-    def add_control_subfields(self, field, control_subfields):
+    def add_control_subfields(self, field, control_subfields, linked=False):
         #lisää konvertoituun kenttään numerolla koodatut osakentät
         new_subfields = self.subfields_to_dict(field.subfields)
         for code in control_subfields:
@@ -1297,8 +1305,8 @@ class YsoConverter():
             tag = field.tag,
             indicators = field.indicators,
         )
-        if self.linking_number:
-        #and field.tag in ['650', '651', '655']:
+        if self.linking_number and linked:
+            print(field)
             new_field.add_subfield("8", "%s\\u"%(self.linking_number))   
         for ns in new_subfields:
             new_field.add_subfield(ns['code'], ns['value'])   
