@@ -53,7 +53,6 @@ class Vocabulary():
         secondary_graph: Ysa-sanaston graafi
         """
         #sisältää pelkät prefLabelit (tarvitaan poikkeustapauksiin, jossa voi olla sama termi pref- ja altLabelina):
-        pref_labels = set()
         exact_matches = {}
         for conc in secondary_graph.subjects(RDF.type, SKOS.Concept):
             matches = secondary_graph.preferredLabel(conc, labelProperties=[SKOS.exactMatch]) 
@@ -83,18 +82,19 @@ class Vocabulary():
                 alt_labels = g.preferredLabel(conc, lang=lc, labelProperties=[SKOS.altLabel])
                 for al in alt_labels:
                     alt_label = str(al[1])
-                    if alt_label not in pref_labels:
-                        uris = copy.copy(replacers)
-                        if alt_label in self.labels:
-                            self.labels[alt_label].update(uris)
-                        else:
-                            self.labels.update({alt_label: uris})
+                    uris = copy.copy(replacers)
+                    if alt_label in self.labels:
+                        self.labels[alt_label].update(uris)
+                    else:
+                        self.labels.update({alt_label: uris})
                 pref_label = g.preferredLabel(conc, lang=lc)
                 if pref_label:
                     pref_label = str(pref_label[0][1])
-                    pref_labels.add(pref_label)
                     uris = copy.copy(replacers)
-                    self.labels.update({pref_label: uris})     
+                    if pref_label in self.labels:
+                        self.labels[pref_label].update(uris)
+                    else:
+                        self.labels.update({pref_label: uris})     
         self.create_additional_dicts()
 
     def parse_yso_vocabulary(self, g):
@@ -150,7 +150,6 @@ class Vocabulary():
 
     def parse_origin_vocabulary(self, g):
         #sisältää pelkät prefLabelit (tarvitaan poikkeustapauksiin, jossa voi olla sama termi pref- ja altLabelina):
-        pref_labels = set()
         geographical_namespaces = [URIRef("http://www.yso.fi/onto/ysa-meta/GeographicalConcept"),
         URIRef("http://www.yso.fi/onto/allars-meta/GeographicalConcept")]
         for conc in g.subjects(RDF.type, SKOS.Concept):
@@ -181,20 +180,21 @@ class Vocabulary():
                                 self.geographical_concepts.add(str(m[1]))          
                 for al in alt_labels:
                     alt_label = str(al[1])
-                    if alt_label not in pref_labels:
-                        uris = copy.copy(uris)
-                        if "--" in alt_label and is_geographical:
-                            self.geographical_chained_labels.add(alt_label)     
-                        if alt_label in self.labels:
-                            self.labels[alt_label].update(uris)
-                        else:
-                            self.labels.update({alt_label: uris})
+                    uris = copy.copy(uris)
+                    if "--" in alt_label and is_geographical:
+                        self.geographical_chained_labels.add(alt_label)     
+                    if alt_label in self.labels:
+                        self.labels[alt_label].update(uris)
+                    else:
+                        self.labels.update({alt_label: uris})
                 pref_label = g.preferredLabel(conc, lang=lc)
                 if pref_label:
                     pref_label = str(pref_label[0][1])
                     uris = copy.copy(uris)
-                    self.labels.update({pref_label: uris})
-                    pref_labels.add(pref_label)
+                    if pref_label in self.labels:
+                        self.labels[pref_label].update(uris)
+                    else:
+                        self.labels.update({pref_label: uris})
                     if "--" in pref_label and is_geographical:
                         self.geographical_chained_labels.add(pref_label)
                        

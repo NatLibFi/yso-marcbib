@@ -50,10 +50,10 @@ class YsoConversionTest(unittest.TestCase):
                          ]
              },
              {'original': ['=655  \\7$akaupungit$ztsekkoslovakia$zSomero$y1970-luku$2ysa'],
-              'converted': ['=370  \\\\$81\\u$gTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847',
-                            '=370  \\\\$81\\u$gSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
-                            '=388  \\\\$81\\u$a1970-luku$2yso/fin',
-                            '=653  \\6$81\\u$akaupungit'
+              'converted': ['=370  \\\\$gTšekkoslovakia$2yso/fin$0http://www.yso.fi/onto/yso/p105847',
+                            '=370  \\\\$gSomero$2yso/fin$0http://www.yso.fi/onto/yso/p105361',
+                            '=388  \\\\$a1970-luku$2yso/fin',
+                            '=653  \\6$akaupungit'
                          ]
              },
              {'original': ['=650  \\7$aelokuvat$ztsekkoslovakia$zSomero$y1970-luku$2ysa'],
