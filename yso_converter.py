@@ -422,7 +422,7 @@ class YsoConverter():
                                 else:
                                     self.statistics["virheluokkia"].update({e.__class__.__name__: 1})
                                 self.statistics['MARC21-virheitä'] += 1
-                    except TypeError:
+                    except TypeError as e:
                         logging.error("Tiedosto %s ei ole MARC21-muodossa"%input_path)
                         sys.exit(2)
                     if not self.output_directory and self.input_directory:
@@ -1185,7 +1185,13 @@ class YsoConverter():
                         else:
                             tag = "370"
                     if subfield['code'] in ['y', 'd']:
-                        tag = "388"
+                        if any(r['geographical'] for r in responses):
+                            if record_type == "movie":
+                                tag = "257"
+                            else:
+                                tag = "370"
+                        else:
+                            tag = "388"
                 for r in responses:
                     field = self.field_with_voc_code(tag, r)
                     converted_fields.append(field)
