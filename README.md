@@ -1,6 +1,6 @@
 **YSO-MARCBIB konversio-ohjelma**
 
-Ohjelma konvertoi bibliografisten MARC21-tietueiden Ysa-, Allärs-, Musa- ja Cilla-asiasanat vastaaviin YSO- ja SLM-käsitteisiin.
+Ohjelma konvertoi bibliografisten MARC21-tietueiden Ysa-, Allärs-, Musa- ja Cilla-asiasanat vastaaviin YSO- ja SLM-käsitteisiin. Ohjelma toimii Pythonin versiolla 3.4 ja sitä uudemmilla versiolla. 
 
 **Ohjelman kuvaus**
 
@@ -90,7 +90,7 @@ Lisää tietoa julkaisuversioista, katso [julkaisutiedot](https://github.com/Nat
 
 **YSO-MARCBIB-converter**
 
-The program takes bibliographic MARC21 records and converts subject headings from  the ysa allars, musa and cilla thesauri to the terms of matching concepts in the yso and slm ontologies.
+The program takes bibliographic MARC21 records and converts subject headings from  the ysa allars, musa and cilla thesauri to the terms of matching concepts in the yso and slm ontologies. The program requires Python version 3.4 or higher.
 
 **Description of the converter**
 The program handles bibliographic records in either MARCXML or MARC21 format. The MARC21 records are read as one file. The MARCXML records can be input as one file or each record in a separate file. In the latter case the converted records are written with the same filenames to the subdirectory named in the starting parametres.
