@@ -26,13 +26,14 @@ Ohjelma käyttää Python-kirjastoja pymarc, rdflib, unidecode, jotka on asennet
 Annetaan komentorivillä `python yso_converter.py`
 
 Komentoriviparametrit:
-- -i="input-tiedostonimi" tai -id="input-hakemistopolku"
-- -o="output-tiedostonimi" tai -od="output-hakemistopolku"
+- -i="input-tiedostopolku" tai -id="input-hakemistopolku"
+- -o="output-tiedostopolku" tai -od="output-hakemistopolku"
 - -f="formaatti" ("marc21" tai "marcxml") 
-- -al="yes" ("yes", jos halutaan asiasanat suomeksi ja ruotsiksi tai "no", jos halutaan vain alkuperäisellä kielellä) 
+- --all_languages Jos halutaan asiasanat suomeksi ja ruotsiksi
+- --field_links Jos tämä parametri on valittu ja aineistotyyppinä musiikki tai elokuvat, asiasanaketjuja purkaessa uudet konvertoidut osakentät linkitetään $8-osakentällä 
 
 Jos valitaan input-hakemistopolku, ohjelma kopioi kaikki hakemiston tiedostot (varmista, että kaikki tiedostot ovat samassa formaatissa, joka valittu f-parametrillä)
-Jos on valittu output-tiedostonimi, ohjelma kopioi kaikki uudet tietueet samaan tiedostoon valitulla output-tiedostonimellä
+Jos on valittu output-tiedostonimi, ohjelma kopioi kaikki uudet tietueet yhteen tiedostoon valitulla output-tiedostonimellä
 Jos on valittu output-hakemistopolku, ohjelma kopioi uudet tietueet alkuperäisillä tiedostonimillä output-hakemistopolulla määriteltyyn kansioon
 
 Ohjelma tuottaa automaattisesti lokitiedostot logs-kansion työhakemistoon aikaleimoilla.
@@ -42,7 +43,8 @@ Ohjelma tuottaa automaattisesti lokitiedostot logs-kansion työhakemistoon aikal
 Ohjelma tallentaa 1. ajokerralla sanastot väliaikaiseen tiedostoon vocabularies.pkl, josta sanastot on nopeampi ladata käyttöön uudelleen samana päivänä. Tämän jälkeen ohjelma lataa ja käsittelee sanastot päivän 1. ajokerralla uudelleen ja tallentaa väliaikaisen tiedoston uudestaan.
 
 Ohjelman lokitiedostot tuotetaan logs-nimiseen alikansioon. 
-Jokaiseen lokitiedoston nimeen lisätään ohjelman suorittamisen päivä ja aloitusaika:
+Jokaiseen lokitiedoston nimeen lisätään ohjelman suorittamisen päivä ja aloitusaika.
+Lokitiedostojen ja konvertoimattomien asiasanakenttien käsittelyyn on opastusta [Kiwi-ohjesivulla](https://www.kiwi.fi/display/ysall2yso/Konversio-ohjelman+lokitiedostot)
    
 ***Tarkistettavat kentät***
 
@@ -75,13 +77,13 @@ Mittarit:
 - poistettuja asiasanakenttiä
 - uusia asiasanakenttiä
 - viallisia tietueita:
-- viallisten tietueiden selitykset, Pythonin ja pymarcin virheluokkien nimillä:
+- viallisten tietueiden selitykset, Pythonin ja [pymarcin virheluokkien](https://github.com/edsu/pymarc/blob/master/pymarc/exceptions.py) nimillä:
 BaseAddressInvalid, 
-RecordLeaderInvalid: tietueen nimiö on viallinen
+RecordLeaderInvalid,
 BaseAddressNotFound, 
-RecordDirectoryInvalid: tietueen hakemisto on viallinen
-NoFieldsFound: tietueessa ei ole kenttiä
-UnicodeDecodeError: tietueen nimiössä tai hakemistossa on ASCII-merkistön ulkopuolisia merkkejä
+RecordDirectoryInvalid,
+NoFieldsFound,
+UnicodeDecodeError tai ValueError: tietueen nimiössä tai hakemistossa on ASCII-merkistön ulkopuolisia merkkejä
 RecordLengthInvalid
 
 ***Julkaisutiedot***
@@ -111,7 +113,16 @@ The program uses the following Python-libraries: pymarc, rdflib, unidecode, whic
 
 **Starting parametres**
 
-Command line options `python yso_converter.py -i="input-path" -o="output-path" -f="format" (given as "marc21" or "marcxml") -al="yes/no" (choose "yes" if concept labels are wanted in Finnish and Swedish, "no" if only original language of concept is wanted) `
+Command line options `python yso_converter.py 
+- -i="input-filepath" or -id="input-directory"
+- -o="output-filepath" or -od="output-directory"
+- -f="format" (given as "marc21" or "marcxml") -
+- --all_languages if concept labels are wanted in Finnish and Swedish
+- --field_links If this parameter is chosen and record type is music or movie, fields with multiple subfields are converted to new fields with subfield 8 indicating the connection between subfields
+
+If input directory is chosen, the program copies all the files in the directory (make sure that all the files are in a format chosen with the parameter f)
+If output file path is chosen, the program copies all the records into one file with given file named
+If output direcotry is chosen, the program copies new files into chosen output directory with same files as input file(s).
 
 The converter produces automatically logfiles with timestamps to the logs subfolder working directory
 
@@ -121,6 +132,7 @@ During first run of the day, the converter stores the thesauri into a temporary 
 
 The logfiles are output into a subdirectory named logs.
 A timestamp with date and starting time is added at the end of each of the logfiles produced.
+Guide in Finnish for error logs and their use is in a [Kiwi web page](https://www.kiwi.fi/display/ysall2yso/Konversio-ohjelman+lokitiedostot).
 
 ***Fields to be checked***
 
@@ -152,13 +164,14 @@ The variables
 - number of removed fields
 - number of new fields
 - number of records with errors:
-- explanations of record erros, Pythonin and pymarcin error_classes:
+- MARC21 errors categories and number of errors (explanations can be found in [pymarc source code](https://github.com/edsu/pymarc/blob/master/pymarc/exceptions.py)):
 BaseAddressInvalid, 
-RecordLeaderInvalid: 
+RecordLeaderInvalid, 
 BaseAddressNotFound, 
-RecordDirectoryInvalid: 
-NoFieldsFound: 
-UnicodeDecodeError: 
+RecordDirectoryInvalid, 
+NoFieldsFound,
+UnicodeDecodeError, 
+ValueError,
 RecordLengthInvalid
 
 ***Release notes***

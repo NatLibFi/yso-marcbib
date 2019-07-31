@@ -181,7 +181,7 @@ as_marc21 = as_marc
 
 class YsoConverter():
 
-    def __init__(self, input_file, input_directory, output_file, output_directory, file_format, all_languages):      
+    def __init__(self, input_file, input_directory, output_file, output_directory, file_format, field_links, all_languages):      
         Field.as_marc = as_marc
         Record.decode_marc = decode_marc
         self.log_directory = "logs"
@@ -226,6 +226,11 @@ class YsoConverter():
         self.vocabularies = Vocabularies()
         self.file_format = file_format.lower()
         self.all_languages = False
+        if all_languages:
+            self.all_languages = True
+        self.field_links = False
+        if field_links:
+            self.field_links = True
         self.delimiter = "|"
         if all_languages == "yes":
             self.all_languages = True
@@ -236,9 +241,9 @@ class YsoConverter():
         #korvataan kaksoispisteet Windows-tiedostonimeä varten:
         time = self.conversion_time.replace(":", "")
         
-        self.error_log = self.conversion_name + "_error-log_" + time + ".log"
-        self.removed_fields_log = self.conversion_name + "_removed-fields-log_" + time + ".log"
-        self.new_fields_log = self.conversion_name + "_new-fields-log_" + time + ".log"
+        self.error_log = self.conversion_name + "_error-log_" + time + ".csv"
+        self.removed_fields_log = self.conversion_name + "_removed-fields-log_" + time + ".csv"
+        self.new_fields_log = self.conversion_name + "_new-fields-log_" + time + ".csv"
         self.results_log = self.conversion_name + "_results-log_" + time + ".log"
         self.error_log = os.path.join(self.log_directory, self.error_log)
         self.removed_fields_log = os.path.join(self.log_directory, self.removed_fields_log)
@@ -619,28 +624,34 @@ class YsoConverter():
                 if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
                     convertible_record = True
 
-        #jos $8-osakenttiä elokuva- tai musiikkitietueessa ennestään, otetaan uusien $8-osakenttien 1. numeroksi viimeistä seuraava numero:
+        
         if convertible_record:
-            if record_type in ['music', 'movie']:
-                for field in record.get_fields():
-                    if hasattr(field, 'subfields'):
-                        for subfield in self.subfields_to_dict(field.subfields):
-                            if subfield['code'] == "8":
-                                value = subfield['value']
-                                if "\\" in value:
-                                    value = value.split("\\")[0]
-                                if "." in value:
-                                    value = value.split(".")[0] 
-                                if value.isdigit():
-                                    linking_numbers.append(int(value))
-                linking_numbers = sorted(linking_numbers)
-                if linking_numbers:
-                    self.linking_number = linking_numbers[len(linking_numbers) - 1]
-                else:
-                    self.linking_number = 0
+            """
+            Jos käynnistysparametri field_links annetu,
+            tarkistetaan elokuva- ja musiikkitietueessa aiemmin esiintyvät 8-osakentät
+            mahdollisten uusien $8-osakenttien 1. numeroksi valitaan alkuperäisten 8-osakenttien viimeistä seuraava numero:
+            """
+            if self.field_links:
+                if record_type in ['music', 'movie']:
+                    for field in record.get_fields():
+                        if hasattr(field, 'subfields'):
+                            for subfield in self.subfields_to_dict(field.subfields):
+                                if subfield['code'] == "8":
+                                    value = subfield['value']
+                                    if "\\" in value:
+                                        value = value.split("\\")[0]
+                                    if "." in value:
+                                        value = value.split(".")[0] 
+                                    if value.isdigit():
+                                        linking_numbers.append(int(value))
+                    linking_numbers = sorted(linking_numbers)
+                    if linking_numbers:
+                        self.linking_number = linking_numbers[len(linking_numbers) - 1]
+                    else:
+                        self.linking_number = 0
+
             subfields = []
             
-            #TODO: vaihtoehto: säilytetään alkup. YSA-rivi, jos valittu optio?
             for tag in tags_of_fields_to_process:                    
                 for field in record.get_fields(tag):
                     converted_fields = []
@@ -671,6 +682,7 @@ class YsoConverter():
                             original_fields[tag].append(field)
                         else:
                             original_fields.update({tag: [field]})
+            
             #järjestetään uudet ja alkuperäiset rivit:   
             altered_fields = sorted(altered_fields)
             for tag in altered_fields:
@@ -788,8 +800,8 @@ class YsoConverter():
         for subfield in subfields:
             if not subfield['code'].isdigit():
                 non_digit_codes.append(subfield['code'])   
-        if len(non_digit_codes) > 1 and self.linking_number is not None:
-            #musiikin  asiasanaketjuihin liitetään 8-osakenttä ja linkkinumero: 
+        if len(non_digit_codes) > 1 and self.linking_number is not None and not field['8']:
+            #musiikin asiasanaketjuihin liitetään 8-osakenttä ja linkkinumero ellei sellaista ole ennestään: 
             self.linking_number += 1
         #tallennetaan numeroilla koodatut osakentät, jotka liitetään jokaiseen uuteen kenttään, paitsi $0 ja $2:
         control_subfield_codes = ['1', '3', '4', '5', '6', '7', '8', '9']
@@ -856,7 +868,7 @@ class YsoConverter():
             return [field]      
 
         if tag in ['650'] and record_type == "movie":
-            if len(non_digit_codes) > 1:
+            if len(non_digit_codes) > 1 and not field['8']:
                 linked = True
             else:
                 linked = False
@@ -892,7 +904,7 @@ class YsoConverter():
             #kerätään SEKO-termejä sisältävät osakentät 382-kenttään siirrettäväksi:
             instrument_lists = []
             instrument_list = []
-            if len(non_digit_codes) > 1:
+            if len(non_digit_codes) > 1 and not field['8']:
                 linked = True
             else:
                 linked = False
@@ -932,6 +944,7 @@ class YsoConverter():
                             else: 
                                 instrument_list.extend(["a", responses[0]['label']])
                         else:    
+                            
                             converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
                             if converted_fields:
                                 for cf in converted_fields:
@@ -952,7 +965,6 @@ class YsoConverter():
                             new_fields.append(cf) 
             if instrument_lists:
                 for instrument_list in instrument_lists:
-                  
                     new_field = Field(
                         tag = "382",
                         indicators = ['1', '1'],
@@ -1235,7 +1247,7 @@ class YsoConverter():
                 field.delete_subfield(str(number))
             self.error_writer.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], original_field, field])
             return [field]
-
+        
         return converted_fields
 
     def field_with_voc_code(self, tag, response):
@@ -1309,7 +1321,7 @@ class YsoConverter():
             tag = field.tag,
             indicators = field.indicators,
         )
-        if self.linking_number and linked:
+        if self.linking_number and linked and not field['8']:
             new_field.add_subfield("8", "%s\\u"%(self.linking_number))   
         for ns in new_subfields:
             new_field.add_subfield(ns['code'], ns['value'])   
@@ -1491,12 +1503,14 @@ def main():
 
     parser.add_argument("-f", "--format",
         help="File format", choices=['marc21', 'marcxml'], required=True)
-    parser.add_argument("-al", "--all_languages",
-        help="All languages", choices=['yes', 'no'], required=True)
+    parser.add_argument("-fl", "--field_links", action='store_true',
+        help="Create control subfield 8 for if record type is music or movies")
+    parser.add_argument("-al", "--all_languages", action='store_true',
+        help="Create new converted fields in Finnish and Swedish")
 
     args = parser.parse_args()
 
-    yc = YsoConverter(args.input, args.inputDirectory, args.output, args.outputDirectory, args.format, args.all_languages)
+    yc = YsoConverter(args.input, args.inputDirectory, args.output, args.outputDirectory, args.format, args.field_links, args.all_languages)
     yc.initialize_vocabularies()
     yc.read_records()
     
