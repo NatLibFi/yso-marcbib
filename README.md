@@ -113,7 +113,7 @@ The program uses the following Python-libraries: pymarc, rdflib, unidecode, whic
 
 **Starting parametres**
 
-Command line options `python yso_converter.py 
+Command line options `python yso_converter.py`
 - -i="input-filepath" or -id="input-directory"
 - -o="output-filepath" or -od="output-directory"
 - -f="format" (given as "marc21" or "marcxml") -
