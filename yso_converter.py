@@ -280,6 +280,7 @@ class YsoConverter():
         ladataan sanastot vocabularies.pkl-väliaikaistiedostosta
         jos tiedostoa ei löydy, sanastot ladataan Finto-rajapinnasta 
         """
+
         vocabularies_dump_loaded = False
         if os.path.isfile('vocabularies.pkl'):
             timestamp = os.path.getmtime('vocabularies.pkl')
@@ -1488,6 +1489,10 @@ class YsoConverter():
 
 
 def main():
+    if not (sys.version_info[0] == 3 and sys.version_info[1] > 3):
+        logging.error("Python version on oltava 3.4 tai suurempi")
+        sys.exit(2)
+
     parser = argparse.ArgumentParser(description="YSO-konversio-ohjelma.")
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument("-i", "--input", 
