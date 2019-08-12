@@ -29,7 +29,7 @@ import csv
 def decode_marc(self, marc, to_unicode=True, force_utf8=False,
     hide_utf8_warnings=False, utf8_handling='strict',encoding = 'iso8859-1'):
     """
-    Monkey batched function from pymarc library: https://github.com/edsu/pymarc
+    Monkey patched function from pymarc library: https://github.com/edsu/pymarc
     pymarc assumes that control fields are numeric starting with '00'.
     If some library system has unconventionally tagged control fields,
     this batched code will prevent pymarc from changing the control field data 
@@ -1486,16 +1486,10 @@ class YsoConverter():
         ))
         return vocabulary_order
 
-
-
-def main():
-    if not (sys.version_info[0] == 3 and sys.version_info[1] > 3):
-        logging.error("Python version on oltava 3.4 tai suurempi")
-        sys.exit(2)
-
+def readCommandLineArguments():
     parser = argparse.ArgumentParser(description="YSO-konversio-ohjelma.")
     input_group = parser.add_mutually_exclusive_group(required=True)
-    input_group.add_argument("-i", "--input", 
+    input_group.add_argument("-i", "--input",
         help="Input file path")
     input_group.add_argument("-id", "--inputDirectory",
         help="Directory for input files",)
@@ -1514,6 +1508,14 @@ def main():
         help="Create new converted fields in Finnish and Swedish")
 
     args = parser.parse_args()
+    return args
+
+def main():
+    if not (sys.version_info[0] == 3 and sys.version_info[1] > 3):
+        logging.error("Python-version on oltava 3.4 tai suurempi")
+        sys.exit(2)
+
+    args = readCommandLineArguments()
 
     yc = YsoConverter(args.input, args.inputDirectory, args.output, args.outputDirectory, args.format, args.field_links, args.all_languages)
     yc.initialize_vocabularies()
@@ -1521,3 +1523,4 @@ def main():
     
 if __name__ == "__main__":
     main()
+
