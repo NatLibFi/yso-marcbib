@@ -31,6 +31,7 @@ Komentoriviparametrit:
 - -f="formaatti" ("marc21" tai "marcxml") 
 - --all_languages Jos halutaan asiasanat suomeksi ja ruotsiksi
 - --field_links Jos tämä parametri on valittu ja aineistotyyppinä musiikki tai elokuvat, asiasanaketjuja purkaessa uudet konvertoidut osakentät linkitetään $8-osakentällä 
+- --write_all Jos halutaan tulostaa ohjelman konvertoimatta jättäneetkin tietueet ulostulotiedostoon
 
 Jos valitaan input-hakemistopolku, ohjelma kopioi kaikki hakemiston tiedostot (varmista, että kaikki tiedostot ovat samassa formaatissa, joka valittu f-parametrillä)
 Jos on valittu output-tiedostonimi, ohjelma kopioi kaikki uudet tietueet yhteen tiedostoon valitulla output-tiedostonimellä
@@ -119,10 +120,11 @@ Command line options `python yso_converter.py`
 - -f="format" (given as "marc21" or "marcxml") -
 - --all_languages if concept labels are wanted in Finnish and Swedish
 - --field_links If this parameter is chosen and record type is music or movie, fields with multiple subfields are converted to new fields with subfield 8 indicating the connection between subfields
+- --write_all If one also wants to write unconverted records into the output file
 
 If input directory is chosen, the program copies all the files in the directory (make sure that all the files are in a format chosen with the parameter f)
 If output file path is chosen, the program copies all the records into one file with given file named
-If output direcotry is chosen, the program copies new files into chosen output directory with same files as input file(s).
+If output directory is chosen, the program copies new files into chosen output directory with same files as input file(s).
 
 The converter produces automatically logfiles with timestamps to the logs subfolder working directory
 

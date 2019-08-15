@@ -25,8 +25,17 @@ class YsoConversionTest(unittest.TestCase):
         ])
         args = readCommandLineArguments()
         sys.argv = argv
-
-        cls.cc = YsoConverter(args.input, args.inputDirectory, args.output, args.outputDirectory, args.format, args.field_links, args.all_languages)
+        
+        cls.cc = YsoConverter(
+            input_file = args.input,
+            input_directory = args.input_directory,
+            output_file = args.output,
+            output_directory = args.output_directory,
+            file_format = args.format,
+            field_links = args.field_links,
+            all_languages = args.all_languages,
+            write_all = args.write_all
+        )
         cls.vocabularies = Vocabularies()
         cls.cc.error_writer = Mock(writerow=Mock())
         cls.cc.rf_writer = Mock(write=Mock())

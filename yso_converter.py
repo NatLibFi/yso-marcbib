@@ -32,7 +32,7 @@ def decode_marc(self, marc, to_unicode=True, force_utf8=False,
     Monkey patched function from pymarc library: https://github.com/edsu/pymarc
     pymarc assumes that control fields are numeric starting with '00'.
     If some library system has unconventionally tagged control fields,
-    this batched code will prevent pymarc from changing the control field data 
+    this patched code will prevent pymarc from changing the control field data
     """
     """
     decode_marc() accepts a MARC record in transmission format as a
@@ -107,7 +107,7 @@ def decode_marc(self, marc, to_unicode=True, force_utf8=False,
             elif len(subs[0]) > 2:
                 logging.warning("more than 2 indicators found: %s", entry_data)
                 """
-                batched code: if subfield indicators are not found,
+                patched code: if subfield indicators are not found,
                 leave subfield code empty:
                 """
                 if len(subs) == 1:
@@ -155,11 +155,11 @@ def decode_marc(self, marc, to_unicode=True, force_utf8=False,
 
 def as_marc(self, encoding):
     """
-    Monkey batched function from pymarc library: https://github.com/edsu/pymarc
+    Monkey patched function from pymarc library: https://github.com/edsu/pymarc
     pymarc assumes that control fields are numeric starting with '00'.
     If some library system has unconventionally tagged control fields,
-    this batched code will prevent pymarc from changing the control field data 
-    If field does not have subfields, this batch prevents pymarc from writing
+    this patched code will prevent pymarc from changing the control field data
+    If field does not have subfields, this patch prevents pymarc from writing
     subfield indicators to it.
     """
     """
@@ -181,7 +181,7 @@ as_marc21 = as_marc
 
 class YsoConverter():
 
-    def __init__(self, input_file, input_directory, output_file, output_directory, file_format, field_links, all_languages):      
+    def __init__(self, input_file, input_directory, output_file, output_directory, file_format, field_links, all_languages, write_all=False):
         Field.as_marc = as_marc
         Record.decode_marc = decode_marc
         self.log_directory = "logs"
@@ -234,6 +234,9 @@ class YsoConverter():
         self.delimiter = "|"
         if all_languages == "yes":
             self.all_languages = True
+        self.write_all = False
+        if write_all:
+            self.write_all = True
         self.conversion_time = datetime.datetime.now().replace(microsecond=0).isoformat()
         self.marcdate = str(datetime.date.today()).replace("-","")
         self.conversion_name = "yso-konversio"
@@ -468,6 +471,8 @@ class YsoConverter():
         if new_record:
             self.writer.write(new_record)
             self.statistics['konvertoituja tietueita'] += 1
+        elif self.write_all:
+            self.writer.write(record)
 
     def subfields_to_dict(self, subfields):
         """
@@ -1488,16 +1493,17 @@ class YsoConverter():
 
 def readCommandLineArguments():
     parser = argparse.ArgumentParser(description="YSO-konversio-ohjelma.")
+    
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument("-i", "--input",
         help="Input file path")
-    input_group.add_argument("-id", "--inputDirectory",
+    input_group.add_argument("-id", "--input_directory",
         help="Directory for input files",)
 
     output_group = parser.add_mutually_exclusive_group(required=True)
     output_group.add_argument("-o", "--output",
         help="Output file path")
-    output_group.add_argument("-od", "--outputDirectory",
+    output_group.add_argument("-od", "--output_directory",
         help="Directory for output files")
 
     parser.add_argument("-f", "--format",
@@ -1506,7 +1512,8 @@ def readCommandLineArguments():
         help="Create control subfield 8 for if record type is music or movies")
     parser.add_argument("-al", "--all_languages", action='store_true',
         help="Create new converted fields in Finnish and Swedish")
-
+    parser.add_argument("-wa", "--write_all", action='store_true',
+        help="Also write unconverted records")
     args = parser.parse_args()
     return args
 
@@ -1516,8 +1523,16 @@ def main():
         sys.exit(2)
 
     args = readCommandLineArguments()
-
-    yc = YsoConverter(args.input, args.inputDirectory, args.output, args.outputDirectory, args.format, args.field_links, args.all_languages)
+    yc = YsoConverter(
+        input_file = args.input,
+        input_directory = args.input_directory,
+        output_file = args.output,
+        output_directory = args.output_directory,
+        file_format = args.format,
+        field_links = args.field_links,
+        all_languages = args.all_languages,
+        write_all = args.write_all
+    )
     yc.initialize_vocabularies()
     yc.read_records()
     
