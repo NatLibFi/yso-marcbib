@@ -179,4 +179,3 @@ RecordLengthInvalid
 ***Release notes***
 
 For information about released versions, see [Release notes](https://github.com/NatLibFi/yso-marcbib/releases)
-- js
