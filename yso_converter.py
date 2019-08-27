@@ -558,14 +558,15 @@ class YsoConverter():
         convertible_record = False
 
         if leader_type == "o":
-             if len(record['006'].data) > 16:
-                if record['006'].data[0] in ['a', 't']:
-                    if record['006'].data[16] not in ['0', 'u', '|']:
-                        non_fiction = False
-                elif record['006'].data[0] == "i":
-                    for char in ['d', 'f', 'p']:
-                        if char in record['006'].data[13:15]:
+            if record['006']:
+                if len(record['006'].data) > 16:
+                    if record['006'].data[0] in ['a', 't']:
+                        if record['006'].data[16] not in ['0', 'u', '|']:
                             non_fiction = False
+                    elif record['006'].data[0] == "i":
+                        for char in ['d', 'f', 'p']:
+                            if char in record['006'].data[13:15]:
+                                non_fiction = False
         if leader_type in ['a', 't']:
             record_type = "text"
             if record.leader[7] not in ['b', 'i', 's']:
