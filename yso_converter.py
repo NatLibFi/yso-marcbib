@@ -556,6 +556,16 @@ class YsoConverter():
         non_fiction = True
         control_field_genres = []
         convertible_record = False
+
+        if leader_type == "o":
+             if len(record['006'].data) > 16:
+                if record['006'].data[0] in ['a', 't']:
+                    if record['006'].data[16] not in ['0', 'u', '|']:
+                        non_fiction = False
+                elif record['006'].data[0] == "i":
+                    for char in ['d', 'f', 'p']:
+                        if char in record['006'].data[13:15]:
+                            non_fiction = False
         if leader_type in ['a', 't']:
             record_type = "text"
             if record.leader[7] not in ['b', 'i', 's']:
@@ -571,26 +581,16 @@ class YsoConverter():
                 p - runot  http://urn.fi/URN:NBN:fi:au:slm:s1150
                 s - puheet http://urn.fi/URN:NBN:fi:au:slm:s775   tai esitelmät  http://urn.fi/URN:NBN:fi:au:slm:s313
                 """
-                if record['006']:
-                    if len(record['006'].data) > 16:
-                        if record['006'].data[16] not in ['0', 'u', '|']:
-                            non_fiction = False
-                elif record['008']:
+                if record['008']:
                     if len(record['008'].data) > 34:
                         if record['008'].data[33] not in ['0', 'u', '|']:
                             non_fiction = False
-                        
         elif leader_type == "i":
             record_type = "text"
-            if record['006']:
-                if len(record['008'].data) > 14:
-                    for char in ['d', 'f', 'p']:
-                        if char in record['008'].data[13:14]:
-                            non_fiction = False
-            elif record['008']:
+            if record['008']:
                 if len(record['008'].data) > 31:
                     for char in ['d', 'f', 'p']:
-                        if char in record['008'].data[30:31]:
+                        if char in record['008'].data[30:32]:
                             non_fiction = False
         elif leader_type == "m":
             #Konsolipelien tunnistaminen 
@@ -629,8 +629,6 @@ class YsoConverter():
                 self.statistics["kaikki tarkistetut kentät"] += 1
                 if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
                     convertible_record = True
-
-        
         if convertible_record:
             """
             Jos käynnistysparametri field_links annetu,
