@@ -431,6 +431,7 @@ class YsoConverter():
                                 else:
                                     self.statistics["virheluokkia"].update({e.__class__.__name__: 1})
                                 self.statistics['MARC21-virheitä'] += 1
+                        reader.close()
                     except TypeError as e:
                         logging.error("Tiedosto %s ei ole MARC21-muodossa"%input_path)
                         sys.exit(2)
@@ -556,12 +557,12 @@ class YsoConverter():
         non_fiction = True
         control_field_genres = []
         convertible_record = False
-
+        #moniviestin:
         if leader_type == "o":
             if record['006']:
                 if len(record['006'].data) > 16:
                     if record['006'].data[0] in ['a', 't']:
-                        if record['006'].data[16] not in ['0', 'u', '|']:
+                        if record['006'].data[16] not in ['0', 'u', '|', 'e', 's', 'i']:
                             non_fiction = False
                     elif record['006'].data[0] == "i":
                         for char in ['d', 'f', 'p']:
@@ -584,7 +585,7 @@ class YsoConverter():
                 """
                 if record['008']:
                     if len(record['008'].data) > 34:
-                        if record['008'].data[33] not in ['0', 'u', '|']:
+                        if record['008'].data[33] not in ['0', 'u', '|', 'e', 's', 'i']:
                             non_fiction = False
         elif leader_type == "i":
             record_type = "text"
@@ -676,11 +677,14 @@ class YsoConverter():
                             if converted_fields:
                                 altered_fields.add(tag)
                                 for cf in converted_fields:
-                                    altered_fields.add(cf.tag)
-                                    if cf.tag in new_fields:
-                                        new_fields[cf.tag].append(cf)
+                                    if len(cf.subfields) == 0:
+                                        self.error_writer.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field])
                                     else:
-                                        new_fields.update({cf.tag: [cf]})
+                                        altered_fields.add(cf.tag)
+                                        if cf.tag in new_fields:
+                                            new_fields[cf.tag].append(cf)
+                                        else:
+                                            new_fields.update({cf.tag: [cf]})
                     #jos kentällä on sanastokoodi, mutta mitään osakenttää ei konvertoitu, kenttä pudotetaan tässä pois:                                            
                     if not converted_fields and not vocabulary_code:
                         if tag in original_fields:
