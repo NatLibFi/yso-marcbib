@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:afometa="http://www.yso.fi/onto/afo-meta/"
+   xmlns:allars-meta="http://www.yso.fi/onto/allars-meta/"
+   xmlns:allars="http://www.yso.fi/onto/allars/"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:dcam="http://purl.org/dc/dcam/"
+   xmlns:dct="http://purl.org/dc/terms/"
+   xmlns:dsv="http://purl.org/iso25964/DataSet/Versioning#"
+   xmlns:foaf="http://xmlns.com/foaf/0.1/"
+   xmlns:gtkmeta="http://www.yso.fi/onto/gtk-meta/"
+   xmlns:isothes="http://purl.org/iso25964/skos-thes#"
+   xmlns:juho="http://www.yso.fi/onto/juho/"
+   xmlns:juhometa="http://www.yso.fi/onto/juho-meta/"
+   xmlns:jupometa="http://www.yso.fi/onto/jupo-meta/"
+   xmlns:kauno="http://www.yso.fi/onto/kauno/"
+   xmlns:kaunometa="http://www.yso.fi/onto/kauno-meta/"
+   xmlns:kitometa="http://www.yso.fi/onto/kito-meta/"
+   xmlns:koko-meta="http://www.yso.fi/onto/koko-meta/"
+   xmlns:koko="http://www.yso.fi/onto/koko/"
+   xmlns:ktometa="http://www.yso.fi/onto/kto-meta/"
+   xmlns:kulometa="http://www.yso.fi/onto/kulo-meta/"
+   xmlns:lcsh="http://id.loc.gov/authorities/subjects"
+   xmlns:liitometa="http://www.yso.fi/onto/liito-meta/"
+   xmlns:lukemeta="http://www.yso.fi/onto/luke-meta/"
+   xmlns:maometa="http://www.yso.fi/onto/mao-meta/"
+   xmlns:merometa="http://www.yso.fi/onto/mero-meta/"
+   xmlns:musometa="http://www.yso.fi/onto/muso-meta/"
+   xmlns:myrdfs="http://www.w3.org/2000/01/rdf-schema#"
+   xmlns:ns1="http://spinrdf.org/sp#"
+   xmlns:ns2="http://spinrdf.org/spin#"
+   xmlns:ns3="http://metadataregistry.org/uri/profile/regap/"
+   xmlns:oikometa="http://www.yso.fi/onto/oiko-meta/"
+   xmlns:om="http://www.yso.fi/onto/yso-peilaus/2007-03-02/"
+   xmlns:owl="http://www.w3.org/2002/07/owl#"
+   xmlns:puhometa="http://www.yso.fi/onto/puho-meta/"
+   xmlns:rdau="http://rdaregistry.info/Elements/u/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:sd="http://www.w3.org/ns/sparql-service-description#"
+   xmlns:sh="http://purl.org/skos-history/"
+   xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+   xmlns:skosext="http://purl.org/finnonto/schema/skosext#"
+   xmlns:sotometa="http://www.yso.fi/onto/soto-meta/"
+   xmlns:taometa="http://www.yso.fi/onto/tao-meta/"
+   xmlns:termed="termed:property:"
+   xmlns:terometa="http://www.yso.fi/onto/tero-meta/"
+   xmlns:tsrmeta="http://www.yso.fi/onto/tsr-meta/"
+   xmlns:v1="http://www.loc.gov/standards/mads/rdf/v1.rdf#"
+   xmlns:valometa="http://www.yso.fi/onto/valo-meta/"
+   xmlns:xhv="http://www.w3.org/1999/xhtml/vocab#"
+   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+   xmlns:ysa-meta="http://www.yso.fi/onto/ysa-meta/"
+   xmlns:ysa="http://www.yso.fi/onto/ysa/"
+   xmlns:yso-kehitys="http://www.yso.fi/onto/yso-kehitys/"
+   xmlns:yso-meta1="http://www.yso.fi/onto/yso-meta/2007-03-02/"
+   xmlns:yso-meta="http://www.yso.fi/onto/yso-meta/"
+   xmlns:yso-translate="http://www.yso.fi/onto/yso-translate/"
+   xmlns:yso-update="http://www.yso.fi/onto/yso-update/"
+   xmlns:yso="http://www.yso.fi/onto/yso/"
+   xmlns:zbwext="http://zbw.eu/namespaces/zbw-extensions/">
+  <myrdfs:Resource rdf:about="http://id.loc.gov/authorities/subjects">
+    <myrdfs:label xml:lang="en">Library of Congress Subject Headings</myrdfs:label>
+  </myrdfs:Resource>
+  <dct:LinguisticSystem rdf:about="http://lexvo.org/id/iso639-3/eng"/>
+  <dct:LinguisticSystem rdf:about="http://lexvo.org/id/iso639-3/fin"/>
+  <dct:LinguisticSystem rdf:about="http://lexvo.org/id/iso639-3/swe"/>
+  <rdf:Property rdf:about="http://rdaregistry.info/Elements/u/P60683">
+    <ns3:hasSubproperty rdf:resource="http://rdaregistry.info/Elements/a/P50012"/>
+    <ns3:hasSubproperty rdf:resource="http://rdaregistry.info/Elements/a/P50055"/>
+    <ns3:lexicalAlias rdf:resource="http://rdaregistry.info/Elements/u/predecessor.en"/>
+    <ns3:name xml:lang="en">predecessor</ns3:name>
+    <ns3:status rdf:resource="http://metadataregistry.org/uri/RegStatus/1001"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <myrdfs:isDefinedBy rdf:resource="http://rdaregistry.info/Elements/u/"/>
+    <myrdfs:label xml:lang="fi">edeltäjä</myrdfs:label>
+    <myrdfs:label xml:lang="sv">företrädare</myrdfs:label>
+    <myrdfs:label xml:lang="en">has predecessor</myrdfs:label>
+    <owl:inverseOf rdf:resource="http://rdaregistry.info/Elements/u/P60686"/>
+    <skos:definition xml:lang="en">Relates an agent that precedes the other agent to the agent.</skos:definition>
+  </rdf:Property>
+  <rdf:Property rdf:about="http://rdaregistry.info/Elements/u/P60686">
+    <ns3:hasSubproperty rdf:resource="http://rdaregistry.info/Elements/a/P50016"/>
+    <ns3:hasSubproperty rdf:resource="http://rdaregistry.info/Elements/a/P50053"/>
+    <ns3:hasSubproperty rdf:resource="http://rdaregistry.info/Elements/a/P50099"/>
+    <ns3:lexicalAlias rdf:resource="http://rdaregistry.info/Elements/u/successor.en"/>
+    <ns3:name xml:lang="en">successor</ns3:name>
+    <ns3:status rdf:resource="http://metadataregistry.org/uri/RegStatus/1001"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <myrdfs:isDefinedBy rdf:resource="http://rdaregistry.info/Elements/u/"/>
+    <myrdfs:label xml:lang="sv">efterträdare</myrdfs:label>
+    <myrdfs:label xml:lang="en">has successor</myrdfs:label>
+    <myrdfs:label xml:lang="fi">seuraaja</myrdfs:label>
+    <owl:inverseOf rdf:resource="http://rdaregistry.info/Elements/u/P60683"/>
+    <skos:definition xml:lang="en">Relates an agent that succeeds or follows the other agent to the agent.</skos:definition>
+  </rdf:Property>
+  <myrdfs:Resource rdf:about="http://www.yso.fi/onto/allars/allars_juuri"/>
+  <myrdfs:Resource rdf:about="http://www.yso.fi/onto/ysa/ysa_juuri"/>
+  <owl:Class rdf:about="http://www.yso.fi/onto/yso-meta/2007-03-02/DeprecatedConcept">
+    <myrdfs:comment xml:lang="fi">Käytöstä poistettujen käsitteiden luokka</myrdfs:comment>
+    <myrdfs:comment xml:lang="fi">Käytöstä poistettujen käsitteiden yläluokka</myrdfs:comment>
+    <myrdfs:subClassOf rdf:resource="http://www.yso.fi/onto/yso-meta/2007-03-02/DeprecatedClass"/>
+    <skos:altLabel xml:lang="fi">käytöstä poistettu käsite</skos:altLabel>
+    <skos:note xml:lang="fi">Käytöstä poistettujen käsitteiden luokka</skos:note>
+    <skos:note xml:lang="fi">Käytöstä poistettujen käsitteiden yläluokka</skos:note>
+    <skos:prefLabel xml:lang="fi">deprecated concept</skos:prefLabel>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://www.yso.fi/onto/yso-meta/2007-03-02/deprecatedHasPart">
+    <myrdfs:domain rdf:resource="http://www.yso.fi/onto/yso-meta/2007-03-02/DeprecatedConcept"/>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.yso.fi/onto/yso-meta/2007-03-02/deprecatedPartOf">
+    <myrdfs:domain rdf:resource="http://www.yso.fi/onto/yso-meta/2007-03-02/DeprecatedConcept"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://www.yso.fi/onto/yso-meta/Concept">
+    <myrdfs:label xml:lang="sv">Allmänbegrepp</myrdfs:label>
+    <myrdfs:label xml:lang="en">General concept</myrdfs:label>
+    <myrdfs:label xml:lang="fi">Yleiskäsite</myrdfs:label>
+    <myrdfs:subClassOf rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.yso.fi/onto/yso-meta/Hierarchy">
+    <myrdfs:label xml:lang="en">Hierarchical concept</myrdfs:label>
+    <myrdfs:label xml:lang="sv">Hierarkiserande begrepp</myrdfs:label>
+    <myrdfs:label xml:lang="fi">Hierarkisoiva käsite</myrdfs:label>
+    <myrdfs:subClassOf rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.yso.fi/onto/yso-meta/Individual">
+    <myrdfs:label xml:lang="en">Individual concept</myrdfs:label>
+    <myrdfs:label xml:lang="sv">Individualbegrepp</myrdfs:label>
+    <myrdfs:label xml:lang="fi">Yksilökäsite</myrdfs:label>
+    <myrdfs:subClassOf rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+  </owl:Class>
+  <owl:DatatypeProperty rdf:about="http://www.yso.fi/onto/yso-meta/singularAltLabel">
+    <myrdfs:domain rdf:resource="http://www.yso.fi/onto/yso-meta/Concept"/>
+    <myrdfs:label xml:lang="sv">hänvisningsterm i singular</myrdfs:label>
+    <myrdfs:label xml:lang="fi">ohjaustermin yksikkömuoto</myrdfs:label>
+    <myrdfs:label xml:lang="en">singular entry term</myrdfs:label>
+    <myrdfs:subPropertyOf rdf:resource="http://www.w3.org/2004/02/skos/core#hiddenLabel"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.yso.fi/onto/yso-meta/singularPrefLabel">
+    <myrdfs:domain rdf:resource="http://www.yso.fi/onto/yso-meta/Concept"/>
+    <myrdfs:label xml:lang="sv">föredragen term i singular</myrdfs:label>
+    <myrdfs:label xml:lang="fi">käytettävän termin yksikkömuoto</myrdfs:label>
+    <myrdfs:label xml:lang="en">singular preferred term</myrdfs:label>
+    <myrdfs:subPropertyOf rdf:resource="http://www.w3.org/2004/02/skos/core#hiddenLabel"/>
+  </owl:DatatypeProperty>
+  <skos:ConceptScheme rdf:about="http://www.yso.fi/onto/yso/">
+    <dc:creator xml:lang="sv">Forskningsgruppen för semantisk beräkning (SeCo)</dc:creator>
+    <dc:creator xml:lang="fi">Kansalliskirjasto</dc:creator>
+    <dc:creator xml:lang="en">National Library of Finland</dc:creator>
+    <dc:creator xml:lang="sv">Nationalbiblioteket i Finland</dc:creator>
+    <dc:creator xml:lang="fi">Sanastokeskus TSK</dc:creator>
+    <dc:creator xml:lang="en">Semantic Computing Research Group (SeCo)</dc:creator>
+    <dc:creator xml:lang="fi">Semanttisen laskennan tutkimusryhmä (SeCo)</dc:creator>
+    <dc:creator xml:lang="sv">Terminologicentralen TSK</dc:creator>
+    <dc:creator xml:lang="en">The Finnish Terminology Centre TSK</dc:creator>
+    <dc:description xml:lang="sv">Allmän finländsk ontologi - ALLFO (på finska Yleinen suomalainen ontologia - YSO) är en trespråkig ontologi som innehåller huvudsakligen allmänbegrepp. ALLFO är uppbyggd utifrån de innehållsbeskrivningens behov och begreppsapparater som finns inom den finländska kulturkretsen. Ontologin är avsedd att användas särskilt när ämnesområdena för materialet som ska beskrivas är mångsidiga. &#xD;
+ &#xD;
+ALLFO är till sin struktur en hierarkisk helhet, som grundar sig på över- och underordnade relationer mellan begrepp. Utöver de hierarkiska relationerna finns också associativa och del- helhetsrelationer.&#xD;
+ &#xD;
+Varje begrepp i ALLFO hör till en eller flera tematiska grupper. En del av begreppen hör dessutom till en egen grupperande begreppshelhet (t.ex. kläder enligt material).&#xD;
+ &#xD;
+Begreppen i ALLFO är i enlighet med tesaurusstandarderna oftast substantiv i pluralform. I singularform står t.ex. ämnesord, abstrakta begrepp och termer som beskriver aktivitet. En del termer har olika betydelser i singular- och pluralform, t.ex. ordet balett hänvisar till en konstform och baletter till enskilda konstverk. &#xD;
+ &#xD;
+ALLFO baserar sig på den allmänna tesaurusen på svenska (Allärs) och den allmänna tesaurusen på finska (YSA). Korrelationsförhållanden till termerna i Allärs och YSA har bestämts för begreppen i ALLFO. Därtill är ontologin länkad till Kongressbibliotekets tesaurus  (Library of Congress Subject Headings, LCSH).&#xD;
+&#xD;
+Du kan föreslå nya begrepp och ändringar till Allärs och ALLFO med &lt;a href="//ehdotus.finto.fi/"&gt;denna blankett&lt;/a&gt;. Begreppsförslag som är under behandling kan du också söka &lt;a href="../yse/sv"&gt;i Finto&lt;/a&gt;.</dc:description>
+    <dc:description xml:lang="en">General Finnish Ontology YSO is a trilingual ontology consisting mainly of general concepts. YSO has been founded on the basis of concepts in Finnish cultural sphere. As an indexing tool it is best applicable when indexed material is interdiscliplinary and its themes vary to a great extent.&#xD;
+&#xD;
+YSO's hierarchical construction is founded on parent-child relationships. In addition to this, some concepts are supplemented with associative and part-whole relations.&#xD;
+&#xD;
+Each concept in YSO is issued to at least one thematic group and some concepts have also been grouped with a non-hierarchical collection label (such as "clothes by materials").&#xD;
+&#xD;
+Following the international standards for thesauri, the terms for concepts are usually plural nouns.  Terms in singular are usually mass nouns or terms referring to actions or abstract concepts. Some terms carry a different meaning when used in plural and in singular. For example, ballet refers to an art form and ballets to individual works of art.&#xD;
+&#xD;
+YSO is based on General Finnish Thesaurus (YSA) and General Finnish Thesaurus in Swedish (Allärs). Concepts in YSO and concepts in YSA and Allärs have been linked to each other with equivalence relationships. YSO has also been linked to Library of Congress Subject Headings (LCSH).</dc:description>
+    <dc:description xml:lang="fi">Yleinen suomalainen ontologia YSO on kolmikielinen, etupäässä yleiskäsitteistä koostuva ontologia. YSO on rakennettu suomalaisen kulttuuripiirin sisällönkuvailutarpeiden ja käsitteistön pohjalta, ja se on tarkoitettu käytettäväksi kuvailuun erityisesti silloin, kun kuvailtavien aineistojen aihealueet ovat monipuolisia. &#xD;
+ &#xD;
+YSO on rakenteeltaan hierarkkinen kokonaisuus, joka perustuu käsitteiden välisille yläkäsite-alakäsite-suhteille. Hierarkiasuhteiden lisäksi YSOssa on assosiatiivisia ja osa-kokonaisuussuhteita. &#xD;
+ &#xD;
+Jokainen YSOn käsite kuuluu yhteen tai useampaan temaattiseen ryhmään. Osa käsitteistä kuuluu lisäksi omaan ryhmittelevään käsitekokonaisuuteensa (esim. ”vaatteet materiaalin mukaan”). &#xD;
+ &#xD;
+YSOn käsitteiden termit ovat tesaurusstandardien mukaisesti useimmiten monikkomuotoisia substantiiveja. Yksikössä esitetään esim. ainesanat sekä abstrakteja käsitteitä ja toimintaa kuvaavat termit. Joillain termeillä on yksikkö- ja monikkomuodossa eri merkitys, esim. termi baletti viittaa taidemuotoon ja baletit yksittäisiin taideteoksiin.&#xD;
+ &#xD;
+YSO pohjautuu yleiseen suomalaiseen asiasanastoon (YSA) sekä yleiseen ruotsinkieliseen tesaurukseen (Allärs). YSOn käsitteille on määritelty vastaavuussuhteet YSAn ja Allärsin käsitteisiin. YSO on lisäksi linkitetty Yhdysvaltain Kongressin kirjaston asiasanastoon (Library of Congress Subject Headings, LCSH). &#xD;
+&lt;a href="https://www.kiwi.fi/display/Asiasanastotjaontologiat/YSOn+tietomalli"&gt;YSOn tietomalli&lt;/a&gt;&#xD;
+&#xD;
+Voit ehdottaa uusia käsitteitä ja muutoksia YSAan ja YSOon oheisen &lt;a href="//ehdotus.finto.fi/"&gt;lomakkeen avulla&lt;/a&gt;. Käsittelyssä olevia käsite-ehdotuksia voit selata &lt;a href="../yse/fi"&gt;myös Fintossa&lt;/a&gt;.</dc:description>
+    <dc:publisher xml:lang="fi">Kansalliskirjasto</dc:publisher>
+    <dc:publisher xml:lang="en">National Library of Finland</dc:publisher>
+    <dc:publisher xml:lang="sv">Nationalbiblioteket i Finland</dc:publisher>
+    <dc:source xml:lang="fi">YSO pohjautuu yleiseen suomalaiseen asiasanastoon (YSA) sekä yleiseen ruotsinkieliseen tesaurukseen (Allärs).</dc:source>
+    <dc:title xml:lang="sv">ALLFO - Allmän finländsk ontologi ALLFO</dc:title>
+    <dc:title xml:lang="en">YSO - General Finnish ontology</dc:title>
+    <dc:title xml:lang="fi">YSO - Yleinen suomalainen ontologia</dc:title>
+    <dct:language rdf:resource="http://lexvo.org/id/iso639-3/eng"/>
+    <dct:language rdf:resource="http://lexvo.org/id/iso639-3/fin"/>
+    <dct:language rdf:resource="http://lexvo.org/id/iso639-3/swe"/>
+    <dct:license rdf:resource="http://creativecommons.org/licenses/by/4.0/"/>
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2018-11-27T04:55:26+00:00</dct:modified>
+    <dct:relation rdf:resource="http://id.loc.gov/authorities/subjects"/>
+    <dct:relation rdf:resource="http://www.yso.fi/onto/allars/"/>
+    <dct:relation rdf:resource="http://www.yso.fi/onto/ysa/"/>
+    <dct:subject rdf:resource="http://www.yso.fi/onto/yso/p19469"/>
+    <myrdfs:label xml:lang="sv">ALLFO - Allmän finländsk ontologi</myrdfs:label>
+    <myrdfs:label xml:lang="en">YSO - General Finnish ontology</myrdfs:label>
+    <myrdfs:label xml:lang="fi">YSO - Yleinen suomalainen ontologia</myrdfs:label>
+    <skos:hasTopConcept rdf:resource="http://www.yso.fi/onto/yso/p15238"/>
+    <skos:hasTopConcept rdf:resource="http://www.yso.fi/onto/yso/p4762"/>
+    <skos:hasTopConcept rdf:resource="http://www.yso.fi/onto/yso/p8691"/>
+  </skos:ConceptScheme>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/yso/p8107">
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2017-05-10</dct:modified>
+    <rdf:type rdf:resource="http://www.yso.fi/onto/yso-meta/Concept"/>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/yso/p1780"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y26773"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/koko/p31725"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y96024"/>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/yso/"/>
+    <skos:prefLabel xml:lang="fi">kaupunkihistoria</skos:prefLabel>
+    <skos:prefLabel xml:lang="sv">stadshistoria</skos:prefLabel>
+    <skos:prefLabel xml:lang="en">urban history</skos:prefLabel>
+  </skos:Concept>
+  <skos:Concept rdf:about="http://www.yso.fi/onto/yso/p4600">
+    <dct:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2018-12-04</dct:modified>
+    <rdf:type rdf:resource="http://www.yso.fi/onto/yso-meta/Concept"/>
+    <skos:altLabel xml:lang="sv">sömnsvårigheter</skos:altLabel>
+    <skos:altLabel xml:lang="fi">unenpuute</skos:altLabel>
+    <skos:altLabel xml:lang="fi">univaikeudet</skos:altLabel>
+    <skos:broader rdf:resource="http://www.yso.fi/onto/yso/p132"/>
+    <skos:closeMatch rdf:resource="http://id.loc.gov/authorities/subjects/sh85123404"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/allars/Y27363"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/koko/p9980"/>
+    <skos:exactMatch rdf:resource="http://www.yso.fi/onto/ysa/Y99890"/>
+    <skos:hiddenLabel xml:lang="en">sleep disorder</skos:hiddenLabel>
+    <skos:hiddenLabel xml:lang="sv">sömnstörning</skos:hiddenLabel>
+    <skos:hiddenLabel xml:lang="sv">sömnsvårighet</skos:hiddenLabel>
+    <skos:hiddenLabel xml:lang="fi">unihäiriö</skos:hiddenLabel>
+    <skos:hiddenLabel xml:lang="fi">univaikeus</skos:hiddenLabel>
+    <skos:inScheme rdf:resource="http://www.yso.fi/onto/yso/"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p18224"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p24788"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p26927"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p38163"/>
+    <skos:narrower rdf:resource="http://www.yso.fi/onto/yso/p9684"/>
+    <skos:prefLabel xml:lang="en">sleep disorders</skos:prefLabel>
+    <skos:prefLabel xml:lang="sv">sömnstörningar</skos:prefLabel>
+    <skos:prefLabel xml:lang="fi">unihäiriöt</skos:prefLabel>
+    <skos:related rdf:resource="http://www.yso.fi/onto/yso/p20788"/>
+    <skos:related rdf:resource="http://www.yso.fi/onto/yso/p21006"/>
+    <skos:related rdf:resource="http://www.yso.fi/onto/yso/p4599"/>
+    <skos:related rdf:resource="http://www.yso.fi/onto/yso/p5664"/>
+    <skos:related rdf:resource="http://www.yso.fi/onto/yso/p8299"/>
+    <yso-meta:singularAltLabel xml:lang="sv">sömnsvårighet</yso-meta:singularAltLabel>
+    <yso-meta:singularAltLabel xml:lang="fi">univaikeus</yso-meta:singularAltLabel>
+    <yso-meta:singularPrefLabel xml:lang="en">sleep disorder</yso-meta:singularPrefLabel>
+    <yso-meta:singularPrefLabel xml:lang="sv">sömnstörning</yso-meta:singularPrefLabel>
+    <yso-meta:singularPrefLabel xml:lang="fi">unihäiriö</yso-meta:singularPrefLabel>
+  </skos:Concept>
+</rdf:RDF>

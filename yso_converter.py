@@ -247,11 +247,16 @@ class YsoConverter():
         self.error_log = self.conversion_name + "_error-log_" + time + ".csv"
         self.removed_fields_log = self.conversion_name + "_removed-fields-log_" + time + ".csv"
         self.new_fields_log = self.conversion_name + "_new-fields-log_" + time + ".csv"
+        self.remaining_log = self.conversion_name + "_remaining-log_" + time + ".csv"
         self.results_log = self.conversion_name + "_results-log_" + time + ".log"
+        self.missing_uris_log = self.conversion_name + "_missing-uris-log_" + time + ".log"
+
         self.error_log = os.path.join(self.log_directory, self.error_log)
         self.removed_fields_log = os.path.join(self.log_directory, self.removed_fields_log)
         self.new_fields_log = os.path.join(self.log_directory, self.new_fields_log)
+        self.remaining_log = os.path.join(self.log_directory, self.remaining_log)
         self.results_log = os.path.join(self.log_directory, self.results_log)
+        self.missing_uris_log = os.path.join(self.log_directory, self.missing_uris_log)
 
         logging.basicConfig(level=logging.INFO)
 
@@ -300,8 +305,7 @@ class YsoConverter():
                     if vn not in self.vocabularies.vocabularies:
                         #jos kaikki sanastot eivät löydy dumpista, sanastot on käsiteltävä uudelleen:
                         vocabularies_dump_loaded = False
-
-        if not vocabularies_dump_loaded: 
+        if not vocabularies_dump_loaded:  
             urllib_errors = False
             for vf in self.vocabulary_files:
                 try:
@@ -329,7 +333,9 @@ class YsoConverter():
                 except FileNotFoundError:
                     logging.error("Tiedostoa %s ei löytynyt levyltä. "
                         "Tiedoston automaattinen lataaminen ei ole onnistunut tai tiedosto on poistettu. "
-                        "Käy hakemassa kaikki tarvittavat sanastot 'ysa', 'yso', 'yso-paikat', 'allars', 'slm', 'musa', 'cilla', 'seko' "
+                        "Siirrä sanastotiedosto ohjelman kansioon tai"
+                        "käy hakemassa kaikki tarvittavat sanastot 'ysa', 'yso', 'yso-paikat', 'allars', 'slm', 'musa', 'cilla', 'seko' "
+                        "ja tallenna ne ohjelman kansioon"
                         "osoitteesta finto.fi ttl-tiedostomuodossa"%self.vocabulary_files[vf])
                     sys.exit(2)
             logging.info("valmistellaan sanastot konversiokäyttöä varten")
@@ -346,16 +352,37 @@ class YsoConverter():
             with open('vocabularies.pkl', 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self.vocabularies, output, pickle.HIGHEST_PROTOCOL)
             logging.info("sanastot tallennettu muistiin ja tiedostoon vocabularies.pkl")
-            output.close()    
+            output.close()  
+        
+        missing_relations = self.vocabularies.get_missing_relations(['ysa', 'allars', 'musa', 'cilla'], ['yso', 'yso_paikat'])
+        if missing_relations:
+            with open(self.missing_uris_log, 'w', encoding='utf-8') as output:
+                for vocabulary in missing_relations:
+                    if len(missing_relations[vocabulary]) > 0:
+                        output.write("Näillä sanaston %s linkeillä ei ole vastinetta YSOssa:\n"%vocabulary)
+                    for label in missing_relations[vocabulary]:
+                        output.write(label + " " + missing_relations[vocabulary][label] + "\n")
+            output.close()
+            logging.warning("YSO-sanastossa mahdollinen vika: Muista sanastoista YSOon vieviä linkkejä puuttuu YSO:sta")
+            logging.warning("Viallisten käsitteiden lista on luettavissa tiedostossa %s"%self.missing_uris_log)
+            logging.warning("Viallisia käsitteitä ei konvertoida vaan jätetään tietueeseen ennalleen ilman sanastotunnusta" )
+            while True:
+                answer = input("Haluatko jatkaa ohjelman suoritusta (K/E)?")
+                if answer.lower() == "k":
+                    break
+                if answer.lower() == "e":
+                    sys.exit(2)
 
     def read_records(self):
-        with open(self.removed_fields_log, 'w', newline='', encoding = 'utf-8-sig') as self.rf_handler, \
-            open(self.new_fields_log, 'w', newline='', encoding = 'utf-8-sig') as self.nf_handler, \
-            open(self.error_log, 'w', newline='', encoding='utf-8-sig') as error_handler:
+        with open(self.removed_fields_log, 'w', newline='', encoding = 'utf-8-sig') as rf_handler, \
+            open(self.new_fields_log, 'w', newline='', encoding = 'utf-8-sig') as nf_handler, \
+            open(self.error_log, 'w', newline='', encoding='utf-8-sig') as error_handler, \
+            open(self.remaining_log , 'w', newline='', encoding='utf-8-sig') as r_handler:
             
-            self.rf_writer = csv.writer(self.rf_handler , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            self.nf_writer = csv.writer(self.nf_handler , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            self.error_writer = csv.writer(error_handler , delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            self.rf_writer = csv.writer(rf_handler, delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            self.nf_writer = csv.writer(nf_handler, delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            self.error_writer = csv.writer(error_handler, delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            self.remaining_writer = csv.writer(r_handler, delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
             input_files = []
             o_directory = ""
@@ -441,9 +468,11 @@ class YsoConverter():
                 if not self.output_directory and self.input_directory:
                     self.writer.close()
               
-        self.rf_handler.close()
-        self.nf_handler.close()
+        rf_handler.close()
+        nf_handler.close()
         error_handler.close()
+        r_handler.close()
+
         with open(self.results_log, 'w', encoding = 'utf-8-sig') as result_handler:
             self.statistics["käsiteltyjä kenttiä"] = \
             self.statistics["poistettuja kenttiä"] + \
@@ -541,6 +570,13 @@ class YsoConverter():
             record_id = record['001'].data
         else:
             record_id = "001 kenttä puuttuu"
+
+        #laitetaan lokitiedostoon konvertoinnin ulkopuolisista kentistä löytyneet konvertoitavat kentät: 
+        for field in record.get_fields():
+            if field.tag not in tags_of_fields_to_convert and field.tag.isdigit():
+                if any (sf in ['musa', 'cilla', 'ysa', 'allars'] for sf in field.get_subfields("2")):
+                    self.remaining_writer.writerow([record_id, field])
+
         self.linking_number = None #käytetään musiikkiaineiston hajotettujen ketjujen yhdistämiseen 8-osakentällä
         linking_numbers = [] #merkitään 8-osakenttien numerot, joita tietueessa on jo ennestään
         if record_status == "d":

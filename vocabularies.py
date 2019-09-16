@@ -1,7 +1,6 @@
 from vocabulary import Vocabulary
 from rdflib import Graph, URIRef, Namespace, RDF
 import unicodedata
-import unicodedata
 
 class Vocabularies:
 
@@ -97,6 +96,23 @@ class Vocabularies:
                     response.update({'geographical': geographical_concept})
                     return [response]
         raise ValueError("1")
+
+    def get_missing_relations(self, source_vocabularies, target_vocabularies):
+        """
+        Testataan, löytyykö kaikille YSOon skos:related-suhteessa oleville käsitteille vastinetta YSOsta.
+        source_vocabularies: konvertoitavien sanastojen koodit
+        target_vocabularies: konversion kohdesanastot muodossa "yso", "yso-paikat"
+        """  
+        missing_relations = {}
+        for source_vocabulary in source_vocabularies:
+            for label in self.vocabularies[source_vocabulary].labels:
+                for uri in self.vocabularies[source_vocabulary].labels[label]:
+                    if not any(uri in self.vocabularies[vc].labels for vc in target_vocabularies):
+                        if source_vocabulary in missing_relations:
+                            missing_relations[source_vocabulary].update({label: uri})
+                        else:
+                            missing_relations.update({source_vocabulary: {label: uri}})
+        return missing_relations
 
     def is_numeric(self, keyword):
         numeric = False
