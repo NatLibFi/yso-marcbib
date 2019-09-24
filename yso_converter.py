@@ -410,9 +410,8 @@ class YsoConverter():
                     try:
                         pymarc.map_xml(self.read_and_write_record, input_path)
                     except SAXParseException as e:
-                        logging.warning("XML-rakenne viallinen, suoritus keskeytetään")
+                        logging.warning("XML-rakenne viallinen")
                         logging.warning(e)
-                        sys.exit(2)
                     if not self.output_directory and self.input_directory:
                         continue
                 if not self.output_directory:
