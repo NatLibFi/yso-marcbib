@@ -9,7 +9,7 @@ Ohjelma käsittelee bibliografisia tietueita MARCXML- tai MARC21-muodossa. MARC2
 Jos tietueet ovat erillisissä tiedostoissa, ne on laitettava samaan kansioon, joka ei sisällä muita tiedostoja.
     
 Konvertoidaan vain seuraavat tietueiden kentät 385, 567, 648, 650, 651, 655
-Konversiossa tuotetaan ja päivitetään seuraaavia kenttiä: 257, 370, 382, 385, 388, 567, 648, 650, 651, 653, 655
+Konversiossa tuotetaan ja päivitetään seuraavia kenttiä: 257, 370, 382, 385, 388, 567, 648, 650, 651, 653, 655
 Muunnosprosessi on kuvattu [Kiwissä](https://www.kiwi.fi/display/ysall2yso/):
 - Konversiosäännöt on kuvailtu erillisessä sääntödokumentissa
 - Konversio kohdistuu kaikkiin aineistotyyppeihin
@@ -66,6 +66,14 @@ Tarkistuskoodit:
 - 8 = Kenttä sisältää MARC-formaattiin kuulumattomia osakenttäkoodeja tai ei sisällä asiasanaosakenttiä
 - 9 = Kentässä on osakenttä 6 (tällaisia kenttiä ei voi konvertoida, sillä viitatussa 880-kentässä on vastaavat osakentät)
  
+Tiedostonimi: finto-yso-konversio_remaining-log 
+
+Lokitiedosto MARC21-kentistä, joissa on merkitty sanastokoodi ysa, allars, musa tai cilla mutta eivät kuulu konvertoitaviin kenttiin 385, 567, 648, 650, 651 tai 655.
+
+Tiedostonimi: finto-yso-konversio_missing_uris_log
+
+Jos konvertoitavissa sanastoissa oleville käsitteille ei ole vastaavaa URIa YSO-sanaston tuoreimmassa versiossa, ohjelma tuottaa lokin viallisista käsitteistä. Ohjelman suoritusta on mahdollista jatkaa, mutta vialliset käsitteet viedään konvertoimatta 653-kenttään.
+
 ***Tilastot***
     
 Tiedostonimi: finto-yso-konversio_stats-log_
@@ -154,6 +162,14 @@ Error-codes:
 - 7 = The content fo subfield $g in fields 650 or 651 was moved to field 653##$a.
 - 8 = Field contains subfield codes not registered in the MARC-format or has no concept labels.
 - 9 = Field contains subfield $6 (not converted, as the corresponding 880-fields have the same subfields)
+
+Filename: finto-yso-konversio_remaining-log 
+
+The logfile for MARC21 fields that have vocabulary code ysa, allars, musa or cilla, but do not have tag 385, 567, 648, 650, 651 or 655.
+
+Filename: finto-yso-konversio_missing_uris_log
+
+If the matching URI of a concept is not found in YSO vocabulary, the program make a logfile of such concepts. It is possible to proceed, but these concepts are taken to field 653 without alterations.
 
 ***Statistics***
 

@@ -204,15 +204,17 @@ class YsoConverter():
                 logging.warning("Lähdetiedoston ja kohdetiedoston tiedostopolku on sama.")
                 sys.exit(2)
         if output_file:
-            if os.path.isfile(output_file):
+            if os.path.exists(output_file):
                 while True:
                     answer = input("Kirjoitettava tiedosto on olemassa. Kirjoitetaanko päälle (K/E)?")
                     if answer.lower() == "k":
                         break
                     if answer.lower() == "e":
-                        sys.exit(2)
+                        sys.exit(2)            
         if output_directory:
-            if os.path.isdir(output_directory):
+            if not os.path.isdir(output_directory):
+                os.makedirs(output_directory)
+            elif os.path.isdir(output_directory):
                 while True:
                     answer = input("Kirjoitettava tiedostopolku on olemassa. Kirjoitetaanko päälle (K/E)?")
                     if answer.lower() == "k":
@@ -393,22 +395,18 @@ class YsoConverter():
                 input_files.append(self.input_file)    
            
             if self.file_format == "marcxml":
-                if not self.output_directory and self.input_directory:
-                    self.writer = XMLWriter(open(self.output_file, 'wb'))
+                if self.output_file:
+                    self.open_writer(XMLWriter, self.output_file)
                 for i_file in input_files:
                     if self.output_directory:
                         self.output_file = i_file
-                        output_path = os.path.join(self.output_directory, self.output_file)
+                        self.output_path = os.path.join(self.output_directory, self.output_file)
                     else:
-                        output_path = self.output_file
+                        self.output_path = self.output_file
                     if self.input_directory:
                         input_path = os.path.join(self.input_directory, i_file)
                     else:
                         input_path = i_file
-                    if not self.output_directory and self.input_directory:
-                        pass
-                    else:
-                        self.writer = XMLWriter(open(output_path, 'wb'))
                     try:
                         pymarc.map_xml(self.read_and_write_record, input_path)
                     except SAXParseException as e:
@@ -417,18 +415,17 @@ class YsoConverter():
                         sys.exit(2)
                     if not self.output_directory and self.input_directory:
                         continue
-                    self.writer.close()
-                if not self.output_directory and self.input_directory:
+                if not self.output_directory:
                     self.writer.close()
             if self.file_format == "marc21":
                 if not self.output_directory and self.input_directory:
-                    self.writer = MARCWriter(open(self.output_file,'wb'))
+                    self.open_writer(MARCWriter, self.output_file)
                 for i_file in input_files:
                     if self.output_directory:
                         self.output_file = i_file
-                        output_path = os.path.join(self.output_directory, self.output_file)
+                        self.output_path = os.path.join(self.output_directory, self.output_file)
                     else:
-                        output_path = self.output_file
+                        self.output_path = self.output_file
                     if self.input_directory:
                         input_path = os.path.join(self.input_directory, i_file)
                     else:
@@ -436,32 +433,33 @@ class YsoConverter():
                     if not self.output_directory and self.input_directory:
                         pass
                     else:
-                        self.writer = MARCWriter(open(output_path,'wb'))
+                        self.open_writer(MARCWriter, self.output_path)
                     try:
                         reader = MARCReader(open(input_path, 'rb'), to_unicode=True)
-                        record = Record()
-                        while record:                
-                            try:
-                                record = next(reader, None)
-                                if record:
-                                    self.read_and_write_record(record)
-                            except (BaseAddressInvalid, 
-                                    RecordLeaderInvalid, 
-                                    BaseAddressNotFound, 
-                                    RecordDirectoryInvalid,
-                                    NoFieldsFound, 
-                                    UnicodeDecodeError,
-                                    ValueError,
-                                    RecordLengthInvalid) as e:
-                                if e.__class__.__name__ in self.statistics["virheluokkia"]:
-                                    self.statistics["virheluokkia"][e.__class__.__name__] += 1
-                                else:
-                                    self.statistics["virheluokkia"].update({e.__class__.__name__: 1})
-                                self.statistics['MARC21-virheitä'] += 1
-                        reader.close()
                     except TypeError as e:
                         logging.error("Tiedosto %s ei ole MARC21-muodossa"%input_path)
                         sys.exit(2)
+                    record = Record()
+                    while record:                
+                        try:
+                            record = next(reader, None)
+                            if record:
+                                self.read_and_write_record(record)
+                        except (BaseAddressInvalid, 
+                                RecordLeaderInvalid, 
+                                BaseAddressNotFound, 
+                                RecordDirectoryInvalid,
+                                NoFieldsFound, 
+                                UnicodeDecodeError,
+                                ValueError,
+                                RecordLengthInvalid) as e:
+                            if e.__class__.__name__ in self.statistics["virheluokkia"]:
+                                self.statistics["virheluokkia"][e.__class__.__name__] += 1
+                            else:
+                                self.statistics["virheluokkia"].update({e.__class__.__name__: 1})
+                            self.statistics['MARC21-virheitä'] += 1
+                    reader.close()
+                    
                     if not self.output_directory and self.input_directory:
                         continue
                     self.writer.close()
@@ -494,15 +492,44 @@ class YsoConverter():
             try:
                 raw = record.as_marc()
                 new_record = Record(data=raw)
-            except ValueError as e:
-                self.statistics['virheitä'] += 1
+            except (ValueError, IndexError) as e:
+                self.statistics['MARC21-virheitä'] += 1
         new_record = self.process_record(record)
         self.statistics['käsiteltyjä tietueita'] += 1
-        if new_record:
-            self.writer.write(new_record)
-            self.statistics['konvertoituja tietueita'] += 1
-        elif self.write_all:
-            self.writer.write(record)
+        if new_record or self.write_all:
+            if self.file_format == "marcxml" and self.output_directory:
+                self.open_writer(XMLWriter, self.output_path)
+            if new_record:
+                try:
+                    self.writer.write(new_record)
+                    self.statistics['konvertoituja tietueita'] += 1
+                except (ValueError, IndexError) as e:
+                    record_id = "tuntematon"
+                    if record['001']:
+                        record_id = record['001'].data
+                    logging.error("Viallinen tietue id:%s"%record_id)
+            elif self.write_all:
+                try:
+                    self.writer.write(record)
+                except (ValueError, IndexError) as e:
+                    record_id = "tuntematon"
+                    if record['001']:
+                        record_id = record['001'].data
+                    logging.error("Viallinen tietue id:%s"%record_id)
+            if self.file_format == "marcxml" and self.output_directory:
+                self.writer.close()
+
+    def open_writer(self, writer, path):
+        """
+        apufunktio, joka avaa tiedostokirjoittimen ja luo hakemiston, jos sitä ei vielä ole olemassa
+        writer: MARCWriter- tai XMLWriter-luokka
+        path: tiedostopolku
+        """
+        try:
+            self.writer = writer(open(path,'wb'))
+        except FileNotFoundError:
+            os.makedirs(os.path.dirname(path))
+            self.writer = writer(open(path,'wb'))
 
     def subfields_to_dict(self, subfields):
         """
