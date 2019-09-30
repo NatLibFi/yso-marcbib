@@ -30,7 +30,7 @@ class VocabularyTest(unittest.TestCase):
         cls.yso_paikat.parse_yso_vocabulary(yso_paikat_graph)
         cls.ysa = Vocabulary("ysa", ['fi'])
         cls.ysa.parse_origin_vocabulary(ysa_graph)
-        cls.allars = Vocabulary("allars", ['fi'])
+        cls.allars = Vocabulary("allars", ['sv'])
         cls.allars.parse_origin_vocabulary(allars_graph)
         cls.slm = Vocabulary("slm", ['fi', 'sv'])
         cls.slm.parse_label_vocabulary(slm_graph)

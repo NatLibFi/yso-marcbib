@@ -10,36 +10,25 @@ class VocabulariesTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls): 
         cls.vocabularies = Vocabularies()
-        #testi-YSAa, jonka kaikille käsitteille on vastine testi-YSOssa:
-        mini_ysa_graph = Graph()
-        mini_ysa_graph.parse('test/mini-ysa-skos-test.rdf')
-        mini_yso_graph = Graph()
-        mini_yso_graph.parse('test/mini-yso-skos-test.rdf')
-        #muut sanastot testejä varten, YSO:ssa ei vastinetta kaikille muiden sanastojen ureille:
-        yso_graph = Graph()
-        yso_graph.parse('test/yso-skos-test.rdf')
-        yso_paikat_graph = Graph()
-        yso_paikat_graph.parse('test/yso-paikat-skos-test.rdf')
-        ysa_graph = Graph()
-        ysa_graph.parse('test/ysa-skos-test.rdf')
-        allars_graph = Graph()
-        allars_graph.parse('test/allars-skos-test.rdf')
-        slm_graph = Graph()
-        slm_graph.parse('test/slm-skos-test.rdf')
-        musa_graph = Graph()
-        musa_graph.parse('test/musa-skos-test.rdf')
-        seko_graph = Graph()
-        seko_graph.parse('test/seko-skos-test.rdf')
-        cls.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
-        cls.vocabularies.parse_vocabulary(mini_yso_graph, 'mini_yso', ['fi', 'sv'])
-        cls.vocabularies.parse_vocabulary(mini_ysa_graph, 'mini_ysa', ['fi'])
-        cls.vocabularies.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
-        cls.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
-        cls.vocabularies.parse_vocabulary(allars_graph, 'allars', ['sv'])
-        cls.vocabularies.parse_vocabulary(slm_graph, 'slm', ['fi', 'sv'])
-        cls.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
-        cls.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
-        cls.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
+        vocabulary_files = {
+            'allars': 'test/allars-skos-test.rdf',
+            'musa': 'test/musa-skos-test.rdf',
+            'seko': 'test/seko-skos-test.rdf',
+            'slm': 'test/slm-skos-test.rdf',
+            'ysa': 'test/ysa-skos-test.rdf',
+            'yso-paikat': 'test/yso-paikat-skos-test.rdf',
+            'yso': 'test/yso-skos-test.rdf'
+        }
+        graphs = {}      
+        vocabulary_names = ['ysa', 'yso', 'yso-paikat', 'allars', 'slm', 'musa', 'cilla', 'seko']
+        
+        for vf in vocabulary_files:
+            g = Graph()
+            graphs.update({vf: g})
+            g.parse(vocabulary_files[vf])
+    
+        for vocabulary_name in vocabulary_names:
+            cls.vocabularies.parse_vocabulary(vocabulary_name, graphs)
         return super(VocabulariesTest, cls).setUpClass()
 
     def test_search(self):
@@ -90,12 +79,21 @@ class VocabulariesTest(unittest.TestCase):
         with self.assertRaises(ValueError) as e:
             result = self.vocabularies.search('tuomarit', [('ysa', 'fi')], True)
         self.assertTrue("4" in str(e.exception)) 
-
+    """
     def test_get_missing_relations(self):
+        #testi-YSAa, jonka kaikille käsitteille on vastine testi-YSOssa:
+        
+        mini_ysa_graph = Graph()
+        mini_ysa_graph.parse('test/mini-ysa-skos-test.rdf')
+        mini_yso_graph = Graph()
+        mini_yso_graph.parse('test/mini-yso-skos-test.rdf')
+        for vf in vocabulary_files:
+            g = Graph()
+            graphs.update({vf: g})
         missing_relations = self.vocabularies.get_missing_relations(['mini_ysa'], ['mini_yso'])
         self.assertFalse(missing_relations)
         missing_relations = self.vocabularies.get_missing_relations(['ysa', 'allars', 'musa', 'cilla'], ['yso', 'yso_paikat'])
         self.assertTrue(missing_relations)
-
+    """
 if __name__ == "__main__":
     unittest.main()

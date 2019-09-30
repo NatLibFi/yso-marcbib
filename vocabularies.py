@@ -8,19 +8,27 @@ class Vocabularies:
         
         self.vocabularies = {}
 
-    def parse_vocabulary(self, graph, vocabulary_code, language_codes, language_code = None, secondary_graph = None):
-        #secondary_vocabulary: tarvitaan luomaan musa -> ysa ja cilla -> ysa -vastaavuudet
+    def parse_vocabulary(self, vocabulary_code, graphs):
+        if vocabulary_code == "cilla":
+            graph = graphs["musa"]
+        else:
+            graph = graphs[vocabulary_code]
+        if vocabulary_code in ['ysa', 'musa', 'seko']:
+            language_codes = ['fi']
+        elif vocabulary_code in ['allars', 'cilla']:
+            language_codes = ['sv']
+        elif vocabulary_code in ['yso', 'yso-paikat', 'slm']:
+            language_codes = ['fi', 'sv']
         vocabulary = Vocabulary(vocabulary_code, language_codes)
         if vocabulary_code.startswith("yso"):
             vocabulary.parse_yso_vocabulary(graph)
         elif vocabulary_code == "ysa" or vocabulary_code == "allars":
             vocabulary.parse_origin_vocabulary(graph)
         elif vocabulary_code == "musa" or vocabulary_code == "cilla":
-            vocabulary.parse_musa_vocabulary(graph, secondary_graph)    
-        elif vocabulary_code == "slm":
+            vocabulary.parse_musa_vocabulary(graph, graphs['ysa'])    
+        elif vocabulary_code in ['slm', 'seko']:
             vocabulary.parse_label_vocabulary(graph)
-        elif vocabulary_code.startswith("seko"):
-            vocabulary.parse_label_vocabulary(graph)
+
         self.vocabularies.update({vocabulary_code: vocabulary})
 
     def search(self, keyword, vocabulary_codes, search_geographical_concepts=False, all_languages=False):
@@ -61,7 +69,7 @@ class Vocabularies:
                             raise ValueError("2")
                         if response["uris"][0] in self.vocabularies[vc[0]].geographical_concepts:
                             if search_geographical_concepts:
-                                response = self.vocabularies['yso_paikat'].get_concept_with_uri(response["uris"][0], vc[1]) 
+                                response = self.vocabularies['yso-paikat'].get_concept_with_uri(response["uris"][0], vc[1]) 
                                 geographical_concept = True
                             else:
                                 response = None
@@ -80,7 +88,7 @@ class Vocabularies:
                         if response['code'].startswith("yso"):
                             vocabulary_code = "yso"
                             if geographical_concept:
-                                vocabulary_code = "yso_paikat"
+                                vocabulary_code = "yso-paikat"
                         translated_response = self.vocabularies[vocabulary_code].translate_label(response['uris'][0], vc[1])
                         if translated_response:
                             responses.append(self.vocabularies[vocabulary_code].translate_label(response['uris'][0], vc[1]))
@@ -100,18 +108,31 @@ class Vocabularies:
     def get_missing_relations(self, source_vocabularies, target_vocabularies):
         """
         Testataan, löytyykö kaikille YSOon skos:related-suhteessa oleville käsitteille vastinetta YSOsta.
+        Parametrit:
         source_vocabularies: konvertoitavien sanastojen koodit
         target_vocabularies: konversion kohdesanastot muodossa "yso", "yso-paikat"
+        Paluuarvot:
+        missing_matches: ne lähdesanastojen käsitteet, joista puuttuu close- tai exactMatch 
+        missing_uris: ne kohdesanastojen käsitteet, joista puuttuu uri
         """  
-        missing_relations = {}
+        missing_relations = []
+        missing_matches = {}
+        missing_uris = {}
+        missing_relations.append(missing_matches)
+        missing_relations.append(missing_uris)
         for source_vocabulary in source_vocabularies:
             for label in self.vocabularies[source_vocabulary].labels:
+                if len(self.vocabularies[source_vocabulary].labels[label]) == 0:
+                    if source_vocabulary in missing_matches:
+                        missing_matches[source_vocabulary].append(label)
+                    else:
+                        missing_matches.update({source_vocabulary: [label]})
                 for uri in self.vocabularies[source_vocabulary].labels[label]:
                     if not any(uri in self.vocabularies[vc].labels for vc in target_vocabularies):
-                        if source_vocabulary in missing_relations:
-                            missing_relations[source_vocabulary].update({label: uri})
+                        if source_vocabulary in missing_uris:
+                            missing_uris[source_vocabulary].update({label: uri})
                         else:
-                            missing_relations.update({source_vocabulary: {label: uri}})
+                            missing_uris.update({source_vocabulary: {label: uri}})
         return missing_relations
 
     def is_numeric(self, keyword):

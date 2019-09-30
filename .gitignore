@@ -1,4 +1,3 @@
-*.ttl
 logs/
 
 __pycache__/

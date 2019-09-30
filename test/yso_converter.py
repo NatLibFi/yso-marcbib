@@ -40,28 +40,33 @@ class YsoConversionTest(unittest.TestCase):
         cls.cc.error_writer = Mock(writerow=Mock())
         cls.cc.rf_writer = Mock(write=Mock())
         cls.cc.nf_writer = Mock(write=Mock())
+        graphs = {}
         yso_graph = Graph()
         yso_graph.parse('test/yso-skos-test.rdf')
+        graphs.update({"yso": yso_graph})
         yso_paikat_graph = Graph()
         yso_paikat_graph.parse('test/yso-paikat-skos-test.rdf')
+        graphs.update({"yso-paikat": yso_paikat_graph})
         ysa_graph = Graph()
         ysa_graph.parse('test/ysa-skos-test.rdf')
+        graphs.update({"ysa": ysa_graph})
         allars_graph = Graph()
         allars_graph.parse('test/allars-skos-test.rdf')
+        graphs.update({"allars": allars_graph})
         slm_graph = Graph()
         slm_graph.parse('test/slm-skos-test.rdf')
+        graphs.update({"slm": slm_graph})
         musa_graph = Graph()
         musa_graph.parse('test/musa-skos-test.rdf')
+        graphs.update({"musa": musa_graph})
+        graphs.update({"cilla": musa_graph})
         seko_graph = Graph()
         seko_graph.parse('test/seko-skos-test.rdf')
-        cls.cc.vocabularies.parse_vocabulary(yso_graph, 'yso', ['fi', 'sv'])
-        cls.cc.vocabularies.parse_vocabulary(yso_paikat_graph, 'yso_paikat', ['fi', 'sv'])
-        cls.cc.vocabularies.parse_vocabulary(ysa_graph, 'ysa', ['fi'])
-        cls.cc.vocabularies.parse_vocabulary(allars_graph, 'allars', ['sv'])
-        cls.cc.vocabularies.parse_vocabulary(slm_graph, 'slm', ['fi', 'sv'])
-        cls.cc.vocabularies.parse_vocabulary(musa_graph, 'musa', ['fi'], secondary_graph = ysa_graph)
-        cls.cc.vocabularies.parse_vocabulary(musa_graph, 'cilla', ['sv'], secondary_graph = ysa_graph)
-        cls.cc.vocabularies.parse_vocabulary(seko_graph, 'seko', ['fi'])
+        graphs.update({"seko": seko_graph})
+        vocabulary_names = ['ysa', 'yso', 'yso-paikat', 'allars', 'slm', 'musa', 'cilla', 'seko']
+        for vn in vocabulary_names:
+            cls.cc.vocabularies.parse_vocabulary(vn, graphs)
+
         cls.records = {
             "movie":
             [{'original': ['=650  \\7$aelokuvat$zSomero$y1900$2ysa'],

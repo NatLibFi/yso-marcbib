@@ -275,7 +275,14 @@ class YsoConverter():
         #ladattavien sanastojen sijainti:
         self.data_url = "http://api.finto.fi/download/"
         #ladattavien sanastojen kansio- ja tiedostonimi:
-        self.vocabulary_files = {
+
+    def initialize_vocabularies(self):
+        """
+        ladataan sanastot vocabularies.pkl-väliaikaistiedostosta
+        jos tiedostoa ei löydy, sanastot ladataan Finto-rajapinnasta 
+        """
+
+        vocabulary_files = {
             "yso": "yso-skos.ttl",
             "yso-paikat": "yso-paikat-skos.ttl",
             "ysa": "ysa-skos.ttl",
@@ -284,13 +291,21 @@ class YsoConverter():
             "musa": "musa-skos.ttl",
             "seko": "seko-skos.ttl"
             }
-
-    def initialize_vocabularies(self):
-        """
-        ladataan sanastot vocabularies.pkl-väliaikaistiedostosta
-        jos tiedostoa ei löydy, sanastot ladataan Finto-rajapinnasta 
-        """
-
+        #työhakemistossa olevien varatiedostojen sijainnit, jos verkkosanastoissa on vikaa: 
+        static_vocabulary_directory = "static_vocabularies"
+        static_vocabulary_files = {
+            "yso": "static-yso-skos.ttl",
+            "yso-paikat": "static-yso-paikat-skos.ttl",
+            "ysa": "static-ysa-skos.ttl",
+            "allars": "static-allars-skos.ttl",
+            "slm": "static-slm-skos.ttl",
+            "musa": "static-musa-skos.ttl",
+            "cilla": "static-musa-skos.ttl",
+            "seko": "static-seko-skos.ttl"
+        }
+        #HUOM! Cillalla ei ole omaa tiedostoa:
+        vocabulary_names = ['ysa', 'yso', 'yso-paikat', 'allars', 'slm', 'musa', 'cilla', 'seko']
+        
         vocabularies_dump_loaded = False
         if os.path.isfile('vocabularies.pkl'):
             timestamp = os.path.getmtime('vocabularies.pkl')
@@ -302,20 +317,21 @@ class YsoConverter():
                         vocabularies_dump_loaded = True
                     except EOFError:
                         vocabularies_dump_loaded = False    
-                vocabulary_names = ['ysa', 'yso', 'yso_paikat', 'allars', 'slm', 'musa', 'cilla', 'seko']
                 for vn in vocabulary_names:
                     if vn not in self.vocabularies.vocabularies:
                         #jos kaikki sanastot eivät löydy dumpista, sanastot on käsiteltävä uudelleen:
                         vocabularies_dump_loaded = False
+        
         if not vocabularies_dump_loaded:  
             urllib_errors = False
-            for vf in self.vocabulary_files:
+            
+            for vf in vocabulary_files:
                 try:
-                    with urllib.request.urlopen(self.data_url + "/" + vf + "/" + self.vocabulary_files[vf]) as turtle, \
-                        open(self.vocabulary_files[vf], 'wb') as out_file:
+                    with urllib.request.urlopen(self.data_url + "/" + vf + "/" + vocabulary_files[vf]) as turtle, \
+                        open(vocabulary_files[vf], 'wb') as out_file:
                         shutil.copyfileobj(turtle, out_file)
                 except urllib.error.URLError as e:
-                    logging.warning("Ei onnistuttu lataamaan sanastoa %s")
+                    logging.warning("Ei onnistuttu lataamaan sanastoa %s"%vf)
                     urllib_errors = True
             if urllib_errors:
                 while True:
@@ -324,57 +340,77 @@ class YsoConverter():
                         break
                     if answer.lower() == "e":
                         sys.exit(2)
-            graphs = {}
-            
-            for vf in self.vocabulary_files:
+            graphs = {}      
+            for vf in vocabulary_files:
                 g = Graph()
                 graphs.update({vf: g})
                 try:
                     logging.info("parsitaan sanastoa %s"%vf)
-                    g.parse(self.vocabulary_files[vf], format='ttl')
+                    g.parse(vocabulary_files[vf], format='ttl')
                 except FileNotFoundError:
                     logging.error("Tiedostoa %s ei löytynyt levyltä. "
                         "Tiedoston automaattinen lataaminen ei ole onnistunut tai tiedosto on poistettu. "
                         "Siirrä sanastotiedosto ohjelman kansioon tai"
                         "käy hakemassa kaikki tarvittavat sanastot 'ysa', 'yso', 'yso-paikat', 'allars', 'slm', 'musa', 'cilla', 'seko' "
                         "ja tallenna ne ohjelman kansioon"
-                        "osoitteesta finto.fi ttl-tiedostomuodossa"%self.vocabulary_files[vf])
+                        "osoitteesta finto.fi ttl-tiedostomuodossa"%vocabulary_files[vf])
                     sys.exit(2)
             logging.info("valmistellaan sanastot konversiokäyttöä varten")
             
-            self.vocabularies.parse_vocabulary(graphs['ysa'], 'ysa', ['fi'])
-            self.vocabularies.parse_vocabulary(graphs['yso'], 'yso', ['fi', 'sv'])
-            self.vocabularies.parse_vocabulary(graphs['yso-paikat'], 'yso_paikat', ['fi', 'sv'])
-            self.vocabularies.parse_vocabulary(graphs['allars'], 'allars', ['sv'])
-            self.vocabularies.parse_vocabulary(graphs['slm'], 'slm', ['fi', 'sv'])
-            self.vocabularies.parse_vocabulary(graphs['musa'], 'musa', ['fi'], secondary_graph = graphs['ysa'])
-            self.vocabularies.parse_vocabulary(graphs['musa'], 'cilla', ['sv'], secondary_graph = graphs['ysa'])
-            self.vocabularies.parse_vocabulary(graphs['seko'], 'seko', ['fi'])
+            for vocabulary_name in vocabulary_names:
+                self.vocabularies.parse_vocabulary(vocabulary_name, graphs)
 
+            missing_relations = self.vocabularies.get_missing_relations(['ysa', 'allars', 'musa', 'cilla'], ['yso', 'yso-paikat'])
+            if any(len(mr) > 0 for mr in missing_relations):
+                faulty_vocabularies = []
+                for voc in missing_relations[0]:
+                    if len(missing_relations[0][voc]) / len(self.vocabularies.vocabularies[voc].labels) > 0.05:
+                        faulty_vocabularies.append(voc)
+
+                if faulty_vocabularies:
+                    logging.warning("Viallisia sanastoja löytyi: %s"%faulty_vocabularies) 
+                if any(len(voc) > 0 for voc in missing_relations[1]):
+                    faulty_vocabularies.extend(['yso', 'yso-paikat'])
+                    logging.warning("YSO- tai YSO-paikoista ei löydy vastinetta kaikille konvertoitaville käsitteille")
+                    logging.warning("Viallisten YSO-käsitteiden lista on luettavissa tiedostossa %s"%self.missing_uris_log)
+                    with open(self.missing_uris_log, 'w', encoding='utf-8') as output:
+                        for voc in missing_relations[1]:
+                            if len( missing_relations[1][voc]) > 0:
+                                output.write("Näillä sanaston %s linkeillä ei ole vastinetta YSOssa:\n"%vocabulary)
+                                for label in missing_relations[1][voc]:
+                                    output.write(label + " " + missing_relations[1][voc][label] + "\n")
+                        output.close()
+                if faulty_vocabularies:      
+                    logging.warning("Korvataan vialliset sanastot työhakemiston static-alkuisilla sanastoilla" )
+                    while True:
+                        answer = input("Haluatko jatkaa ohjelman suoritusta (K/E)?")
+                        if answer.lower() == "k":
+                            break
+                        if answer.lower() == "e":
+                            sys.exit(2)
+
+                    for fv in faulty_vocabularies:
+                        g = Graph()
+                        graphs.update({fv: g})
+                        try:
+                            logging.info("parsitaan uudestaan sanastoa %s"%fv)
+                            path = os.path.join(static_vocabulary_directory, static_vocabulary_files[fv])
+                            g.parse(path, format='ttl')
+                        except FileNotFoundError:
+                            logging.error("Tiedostoa %s ei löytynyt levyltä. "
+                                "Korvaavan tiedoston lataaminen ei ole onnistunut tai tiedosto on poistettu. "
+                                "Hae static-alkuinen tiedosto projektin GitHub-repositoriosta "
+                                "ja tallenna ne ohjelman kansioon")
+                            sys.exit(2)
+
+                    for fv in faulty_vocabularies:
+                        self.vocabularies.parse_vocabulary(fv, graphs)
+            
             with open('vocabularies.pkl', 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self.vocabularies, output, pickle.HIGHEST_PROTOCOL)
             logging.info("sanastot tallennettu muistiin ja tiedostoon vocabularies.pkl")
             output.close()  
-        
-        missing_relations = self.vocabularies.get_missing_relations(['ysa', 'allars', 'musa', 'cilla'], ['yso', 'yso_paikat'])
-        if missing_relations:
-            with open(self.missing_uris_log, 'w', encoding='utf-8') as output:
-                for vocabulary in missing_relations:
-                    if len(missing_relations[vocabulary]) > 0:
-                        output.write("Näillä sanaston %s linkeillä ei ole vastinetta YSOssa:\n"%vocabulary)
-                    for label in missing_relations[vocabulary]:
-                        output.write(label + " " + missing_relations[vocabulary][label] + "\n")
-            output.close()
-            logging.warning("YSO-sanastossa mahdollinen vika: Muista sanastoista YSOon vieviä linkkejä puuttuu YSO:sta")
-            logging.warning("Viallisten käsitteiden lista on luettavissa tiedostossa %s"%self.missing_uris_log)
-            logging.warning("Viallisia käsitteitä ei konvertoida vaan jätetään tietueeseen ennalleen ilman sanastotunnusta" )
-            while True:
-                answer = input("Haluatko jatkaa ohjelman suoritusta (K/E)?")
-                if answer.lower() == "k":
-                    break
-                if answer.lower() == "e":
-                    sys.exit(2)
-
+   
     def read_records(self):
         with open(self.removed_fields_log, 'w', newline='', encoding = 'utf-8-sig') as rf_handler, \
             open(self.new_fields_log, 'w', newline='', encoding = 'utf-8-sig') as nf_handler, \
@@ -736,8 +772,12 @@ class YsoConverter():
                             converted_fields = self.process_field(record_id, field, vocabulary_code, non_fiction, record_type)
                             self.rf_writer.writerow([record_id, field])
                             self.statistics['poistettuja kenttiä'] += 1
+                            """
+                            HUOM! Jos samannumeroiset kentät sisältävät vain poistettavia asiasanoja, 
+                            kentät pitää tulkita muuttuneeksi lisäämällä kenttänumero tässä
+                            """
+                            altered_fields.add(tag)
                             if converted_fields:
-                                altered_fields.add(tag)
                                 for cf in converted_fields:
                                     if len(cf.subfields) == 0:
                                         self.error_writer.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", field])
@@ -753,9 +793,7 @@ class YsoConverter():
                             original_fields[tag].append(field)
                         else:
                             original_fields.update({tag: [field]})
-            
-            #järjestetään uudet ja alkuperäiset rivit:   
-            altered_fields = sorted(altered_fields)
+            #järjestetään uudet ja alkuperäiset rivit:
             for tag in altered_fields:
                 record.remove_fields(tag)
             for tag in altered_fields:
@@ -838,8 +876,7 @@ class YsoConverter():
                                 is_new_field = True
                         else:
                             is_new_field = True
-                        if is_new_field:
-                            
+                        if is_new_field:               
                             self.nf_writer.writerow([record_id, \
                                             self.get_record_code(non_fiction, record_type), \
                                             str(sorted_fields[idx])])                  
@@ -980,6 +1017,7 @@ class YsoConverter():
             else:
                 linked = False
             has_topics = False #kentän loput termeistä tulkitaan tämän perusteella aiheiksi
+            aiheet = False #jos kentästä on soittimia, niitä ei tulkita aiheeksi paitsi, jos on "aiheet"-asiasana sitä ennen
             has_genre_terms = False #kentän loput termeistä tulkitaan tämän perusteella luomiseen liittyviksi
             for subfield in subfields:
                 if subfield['code'] in ['a', 'x']:
@@ -990,30 +1028,36 @@ class YsoConverter():
                             instrument_list = []
                     if subfield['value'] == "aiheet" and tag == "650":
                         has_topics = True
+                        aiheet = True
                         self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     elif subfield['value'] == "musiikki":
                         self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     else:
                         responses = []  
-                        n = None
-                        matches = re.findall('\((.*?)\)', subfield['value'])
-                        for m in matches:
-                            if m.isdigit():
-                                n = m
-                                subfield['value'] = subfield['value'].replace("("+n+")", "")
-                                subfield['value'] = subfield['value'].replace("  ", " ")
-                                subfield['value'] = subfield['value'].strip()
-                        try:
-                            responses = self.vocabularies.search(subfield['value'], [('seko', 'fi')])
-                        except ValueError:
-                            pass    
+                        if not aiheet:
+                            n = None
+                            matches = re.findall('\((.*?)\)', subfield['value'])
+                            for m in matches:
+                                if m.isdigit():
+                                    n = m
+                                    subfield['value'] = subfield['value'].replace("("+n+")", "")
+                                    subfield['value'] = subfield['value'].replace("  ", " ")
+                                    subfield['value'] = subfield['value'].strip()
+                            try:
+                                responses = self.vocabularies.search(subfield['value'], [('seko', 'fi')])
+                            except ValueError:
+                                pass    
                         if responses:
+                            if vocabulary_code in ['allars', 'cilla']:
+                                instrument = subfield['value']
+                            else:
+                                instrument = responses[0]['label']
                             if not instrument_list: 
                                 instrument_lists.append(instrument_list)
                             if n:
-                                instrument_list.extend(["a", responses[0]['label'], "n", n])     
+                                instrument_list.extend(["a", instrument, "n", n])     
                             else: 
-                                instrument_list.extend(["a", responses[0]['label']])
+                                instrument_list.extend(["a", instrument])
                         else:    
                             
                             converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
@@ -1041,7 +1085,8 @@ class YsoConverter():
                         indicators = ['1', '1'],
                         subfields = instrument_list
                     )
-                    new_field.add_subfield("2", "seko")  
+                    if vocabulary_code not in ['allars', 'cilla']:
+                        new_field.add_subfield("2", "seko")  
                     new_field = self.add_control_subfields(new_field, control_subfields, linked)
                     new_fields.append(new_field)
             return new_fields
