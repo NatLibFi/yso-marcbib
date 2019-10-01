@@ -4368,7 +4368,7 @@ musa:p364 a skos:Concept ;
 
 musa:p369 a skos:Concept ;
     dct:created "1996-02-09"^^xsd:date ;
-    dct:isReplacedBy ysa:Y103611 ;
+    dct:isReplacedBy ysa:Y233572 ;
     dct:modified "2017-05-09T08:36:26+03:00"^^xsd:dateTime ;
     skos:altLabel "variaatiot"@fi ;
     skos:definition "Sävellystyyppi, joka perustuu teemaan ja sen muuntelevaan käsittelyyn."@fi ;
@@ -5150,7 +5150,7 @@ musa:p66088 a skos:Concept ;
 
 musa:p66092 a skos:Concept ;
     dct:created "2005-06-17"^^xsd:date ;
-    dct:isReplacedBy ysa:Y107435 ;
+    dct:isReplacedBy ysa:Y98732 ;
     dct:modified "2017-05-09T08:36:47+03:00"^^xsd:dateTime ;
     skos:definition "Laulusävellyksiin erikseen tehty teksti tai laulusävellyksissä käytetty runo."@fi ;
     skos:inScheme musa: ;

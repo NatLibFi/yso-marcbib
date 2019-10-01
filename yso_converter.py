@@ -278,8 +278,10 @@ class YsoConverter():
 
     def initialize_vocabularies(self):
         """
-        ladataan sanastot vocabularies.pkl-väliaikaistiedostosta
-        jos tiedostoa ei löydy, sanastot ladataan Finto-rajapinnasta 
+        Ladataan sanastot vocabularies.pkl-väliaikaistiedostosta.
+        Jos tiedostoa ei löydy, sanastot ladataan Finto-rajapinnasta.
+        Musa-sanasto ladataan aina paikallisesta static_vocabularies-kansiosta
+        (Musaan tehty pari muutosta verrattuna)
         """
 
         vocabulary_files = {
@@ -288,7 +290,6 @@ class YsoConverter():
             "ysa": "ysa-skos.ttl",
             "allars": "allars-skos.ttl",
             "slm": "slm-skos.ttl",
-            "musa": "musa-skos.ttl",
             "seko": "seko-skos.ttl"
             }
         #työhakemistossa olevien varatiedostojen sijainnit, jos verkkosanastoissa on vikaa: 
@@ -321,10 +322,8 @@ class YsoConverter():
                     if vn not in self.vocabularies.vocabularies:
                         #jos kaikki sanastot eivät löydy dumpista, sanastot on käsiteltävä uudelleen:
                         vocabularies_dump_loaded = False
-        
         if not vocabularies_dump_loaded:  
-            urllib_errors = False
-            
+            urllib_errors = False            
             for vf in vocabulary_files:
                 try:
                     with urllib.request.urlopen(self.data_url + "/" + vf + "/" + vocabulary_files[vf]) as turtle, \
@@ -340,13 +339,16 @@ class YsoConverter():
                         break
                     if answer.lower() == "e":
                         sys.exit(2)
-            graphs = {}      
+            graphs = {}  
+            #lisätään tässä vaiheessa Musa paikallisesta kansiosta:
+            musa_path = os.path.join(static_vocabulary_directory, static_vocabulary_files['musa'])
+            vocabulary_files['musa'] = musa_path
             for vf in vocabulary_files:
                 g = Graph()
                 graphs.update({vf: g})
                 try:
                     logging.info("parsitaan sanastoa %s"%vf)
-                    g.parse(vocabulary_files[vf], format='ttl')
+                    g.parse(vocabulary_files[vf], format='ttl')     
                 except FileNotFoundError:
                     logging.error("Tiedostoa %s ei löytynyt levyltä. "
                         "Tiedoston automaattinen lataaminen ei ole onnistunut tai tiedosto on poistettu. "
@@ -1059,7 +1061,6 @@ class YsoConverter():
                             else: 
                                 instrument_list.extend(["a", instrument])
                         else:    
-                            
                             converted_fields = self.process_subfield(record_id, field, subfield, vocabulary_code, non_fiction, record_type, has_topics)  
                             if converted_fields:
                                 for cf in converted_fields:
