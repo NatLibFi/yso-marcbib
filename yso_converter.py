@@ -181,7 +181,7 @@ as_marc21 = as_marc
 
 class YsoConverter():
 
-    def __init__(self, input_file, input_directory, output_file, output_directory, file_format, field_links, all_languages, write_all=False):
+    def __init__(self, input_file, input_directory, output_file, output_directory, file_format, field_links=False, all_languages=False, write_all=False):
         Field.as_marc = as_marc
         Record.decode_marc = decode_marc
         self.log_directory = "logs"
@@ -590,8 +590,9 @@ class YsoConverter():
     
     def is_equal_field(self, first_subfields, second_subfields):
         #apufunktio identtisten rivien poistamiseen, kun konvertoidut kentät ovat valmiina
-        return self.sort_subfields(self.subfields_to_dict(first_subfields)) == \
-               self.sort_subfields(self.subfields_to_dict(second_subfields))
+        first_subfields = self.sort_subfields(self.subfields_to_dict(first_subfields))
+        second_subfields = self.sort_subfields(self.subfields_to_dict(second_subfields))
+        return first_subfields == second_subfields
 
     def similar_fields(self, ignored_codes, *fields):
         """
@@ -757,7 +758,7 @@ class YsoConverter():
                         self.linking_number = 0
 
             subfields = []
-            
+
             for tag in tags_of_fields_to_process:                    
                 for field in record.get_fields(tag):
                     converted_fields = []
@@ -830,7 +831,6 @@ class YsoConverter():
                                     removable_fields.add(n)
                                 if sorted_fields[n]['9'] and not sorted_fields[m]['9']:
                                     removable_fields.add(m)
-
                 #poistetaan identtiset $8-osakentät ja yhdistellään $8-osakentät samaan kenttään:
                 for m in range(len(sorted_fields)):
                     linking_numbers_list = [] #tallentaan erilaiset $8-osakentät, jos on useampia muuten identtisiä kenttiä
@@ -856,10 +856,18 @@ class YsoConverter():
                     for ln in linking_numbers_list:
                         sorted_fields[m].add_subfield('8', ln)
                     
-                    if sorted_fields[m]['2'] in ['yso/fin', 'yso/swe', 'slm/fin', 'slm/swe', 'seko']:
-                        new_subfields = self.sort_subfields(self.subfields_to_dict(sorted_fields[m].subfields))
-                    else:
-                        new_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
+                    new_subfields = self.subfields_to_dict(sorted_fields[m].subfields)
+                    #lajitellaan 8-osakentät kentän ensimmäisiksi osakentiksi:
+                    if '8' in sorted_fields[m]:
+                        temp_subfields = []
+                        for ns in new_subfields:
+                            if ns['code'] == "8":
+                                temp_subfields.append(ns)
+                        for ns in new_subfields:
+                            if not ns['code'] == "8":
+                                temp_subfields.append(ns)    
+                        new_subfields = temp_subfields
+
                     subfield_list = []
                     for ns in new_subfields:
                         subfield_list.extend([ns['code'], ns['value']])
@@ -869,7 +877,6 @@ class YsoConverter():
                         subfields = subfield_list
                     )
                     sorted_fields[m] = new_field
-
                 for idx in range(len(sorted_fields)):
                     if idx not in removable_fields:
                         is_new_field = False
@@ -915,7 +922,6 @@ class YsoConverter():
             self.linking_number += 1
         #tallennetaan numeroilla koodatut osakentät, jotka liitetään jokaiseen uuteen kenttään, paitsi $0 ja $2:
         control_subfield_codes = ['1', '3', '4', '5', '6', '7', '8', '9']
-        
         if tag == "567":
             for sf in field.get_subfields('2'):
                 if sf not in ['ysa', 'allars']:
