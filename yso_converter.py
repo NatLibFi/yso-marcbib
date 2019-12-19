@@ -1439,7 +1439,7 @@ class YsoConverter():
         for code in control_subfields:
             for cs in control_subfields[code]:
                 new_subfields.append({"code": code, "value": cs})
-                new_subfields = self.sort_subfields(new_subfields)
+                new_subfields = self.sort_subfields(new_subfields, field.tag)
         new_field = Field(
             tag = field.tag,
             indicators = field.indicators,
@@ -1475,7 +1475,20 @@ class YsoConverter():
             new_field.add_subfield(ns['code'], ns['value'])   
         return new_field
 
-    def sort_subfields(self, subfields):
+    def sort_subfields(self, subfields, tag=None):
+        if tag == "382":
+            return sorted(subfields, key=lambda subfield: (  
+                subfield['code'] == "9", 
+                subfield['code'] == "5", 
+                subfield['code'] == "0", 
+                subfield['code'] == "2",
+                subfield['code'] != "3",            
+                subfield['code'] != "6",
+                subfield['code'] != "8",
+                subfield['code'].isdigit(),
+                subfield['code'] == "3",
+                subfield['code'] == "6",
+                subfield['code'] == "8"))
         return sorted(subfields, key=lambda subfield: (  
             subfield['code'] == "9", 
             subfield['code'] == "5", 
