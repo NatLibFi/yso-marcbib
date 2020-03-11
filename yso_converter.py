@@ -366,11 +366,10 @@ class YsoConverter():
             if any(len(mr) > 0 for mr in missing_relations):
                 faulty_vocabularies = []
                 for voc in missing_relations[0]:
-                    if len(missing_relations[0][voc]) / len(self.vocabularies.vocabularies[voc].labels) > 0.05:
+                    fault_number =  len(missing_relations[0][voc]) / len(self.vocabularies.vocabularies[voc].labels)
+                    if fault_number > 0.05:
+                        logging.warning('Sanaston %s käsitteistä puuttuu vastineita YSOsta: '%voc + '{:.1%}'.format(fault_number))
                         faulty_vocabularies.append(voc)
-
-                if faulty_vocabularies:
-                    logging.warning("Viallisia sanastoja löytyi: %s"%faulty_vocabularies) 
                 if any(len(voc) > 0 for voc in missing_relations[1]):
                     faulty_vocabularies.extend(['yso', 'yso-paikat'])
                     logging.warning("YSO- tai YSO-paikoista ei löydy vastinetta kaikille konvertoitaville käsitteille")
@@ -378,36 +377,34 @@ class YsoConverter():
                     with open(self.missing_uris_log, 'w', encoding='utf-8') as output:
                         for voc in missing_relations[1]:
                             if len( missing_relations[1][voc]) > 0:
-                                output.write("Näillä sanaston %s linkeillä ei ole vastinetta YSOssa:\n"%vocabulary)
+                                output.write("Näillä sanaston %s linkeillä ei ole vastinetta YSOssa:\n"%voc)
                                 for label in missing_relations[1][voc]:
                                     output.write(label + " " + missing_relations[1][voc][label] + "\n")
                         output.close()
                 if faulty_vocabularies:      
-                    logging.warning("Korvataan vialliset sanastot työhakemiston static-alkuisilla sanastoilla" )
+                    logging.warning("Korvataan puutteelliset sanastot vuoden 2019 static-alkuisilla sanastoilla" )
                     while True:
-                        answer = input("Haluatko jatkaa ohjelman suoritusta (K/E)?")
-                        if answer.lower() == "k":
+                        answer = input("1. Jatka ohjelman suoritusta tämän päivän sanastoilla vai 2. Suorita konversio työhakemiston vanhoilla static-alkuisilla sanastoilla (1/2)?")
+                        if answer.lower() == "1":
                             break
-                        if answer.lower() == "e":
-                            sys.exit(2)
+                        if answer.lower() == "2":
+                            for fv in faulty_vocabularies:
+                                g = Graph()
+                                graphs.update({fv: g})
+                                try:
+                                    logging.info("parsitaan uudestaan sanastoa %s"%fv)
+                                    path = os.path.join(static_vocabulary_directory, static_vocabulary_files[fv])
+                                    g.parse(path, format='ttl')
+                                except FileNotFoundError:
+                                    logging.error("Tiedostoa %s ei löytynyt levyltä. "
+                                        "Korvaavan tiedoston lataaminen ei ole onnistunut tai tiedosto on poistettu. "
+                                        "Hae static-alkuinen tiedosto projektin GitHub-repositoriosta "
+                                        "ja tallenna ne ohjelman kansioon")
+                                    sys.exit(2)
 
-                    for fv in faulty_vocabularies:
-                        g = Graph()
-                        graphs.update({fv: g})
-                        try:
-                            logging.info("parsitaan uudestaan sanastoa %s"%fv)
-                            path = os.path.join(static_vocabulary_directory, static_vocabulary_files[fv])
-                            g.parse(path, format='ttl')
-                        except FileNotFoundError:
-                            logging.error("Tiedostoa %s ei löytynyt levyltä. "
-                                "Korvaavan tiedoston lataaminen ei ole onnistunut tai tiedosto on poistettu. "
-                                "Hae static-alkuinen tiedosto projektin GitHub-repositoriosta "
-                                "ja tallenna ne ohjelman kansioon")
-                            sys.exit(2)
-
-                    for fv in faulty_vocabularies:
-                        self.vocabularies.parse_vocabulary(fv, graphs)
-            
+                            for fv in faulty_vocabularies:
+                                self.vocabularies.parse_vocabulary(fv, graphs)
+                            break
             with open('vocabularies.pkl', 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self.vocabularies, output, pickle.HIGHEST_PROTOCOL)
             logging.info("sanastot tallennettu muistiin ja tiedostoon vocabularies.pkl")
@@ -983,7 +980,7 @@ class YsoConverter():
             self.error_writer.writerow(["8", record_id, self.get_record_code(non_fiction, record_type), "", original_field, field])
             return [field]      
 
-        if tag in ['650'] and record_type == "movie":
+        if tag in ['650', '655'] and record_type == "movie":
             if len(non_digit_codes) > 1 and not field['8']:
                 linked = True
             else:
@@ -995,7 +992,7 @@ class YsoConverter():
                     if subfield['code'] == "a" and "elokuvat" in subfield['value']:
                         has_genre_terms = True
                         has_topics = False
-                    if subfield['value'] == "aiheet":
+                    if tag == "650" and subfield['value'] == "aiheet":
                         has_topics = True
                         self.error_writer.writerow(["6", record_id, self.get_record_code(non_fiction, record_type), subfield['value'], field])
                     else:

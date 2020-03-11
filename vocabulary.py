@@ -1,18 +1,10 @@
 from rdflib import Graph, URIRef, Namespace, RDF
 from rdflib.namespace import SKOS, XSD, OWL, DC
+import logging
 import copy
 import re
 import unicodedata
 import unidecode
-
-class Container():
-    #apuluokka get_replacers-funktiolle, joka etsii deprekoiduille käsitteille voimassaolevat korvaajat
-    def __init__(self):
-        self.nodes = []
-    def delete_node(self, node):
-        self.nodes.remove(node)
-    def add_node(self, node):
-        self.nodes.append(node)
 
 class Vocabulary():
 
@@ -117,11 +109,6 @@ class Vocabulary():
                     else:
                         deprecated_temp.update({uri: [replacer]})
             else:
-                """
-                value = g.value(conc, RDF.type)
-                if value in aggregateconceptscheme:
-                    aggregate_concepts.add(uri)
-                """
                 for lc in self.language_codes:
                     pref_label = g.preferredLabel(conc, lang=lc)
                     if pref_label:
@@ -133,20 +120,16 @@ class Vocabulary():
 
         #selvitetään deprekoitujen käsitteiden korvaajat:
         for dc in deprecated_temp:
-            c = Container()
-            replaced_by = self.get_replacers(c, deprecated_temp, dc)
             replacers = []
-            self.deprecated_concepts.update({dc: c.nodes})
+            self.get_replacers(deprecated_temp, dc, replacers)
+            self.deprecated_concepts.update({dc: replacers})
 
-    def get_replacers(self, container, replacers, key):
-        if key in replacers:
-            for r in replacers[key]:
-                if key in container.nodes:
-                    container.delete_node(key)
-                container.add_node(r)
-                self.get_replacers(container, replacers, r)
-        else: 
-            return
+    def get_replacers(self, deprecated_dict, concept_uri, replacers):
+        if concept_uri in deprecated_dict:
+            for replacer in deprecated_dict[concept_uri]:
+                if not replacer in deprecated_dict:
+                    replacers.append(replacer)
+                self.get_replacers(deprecated_dict, replacer, replacers)
 
     def parse_origin_vocabulary(self, g):
         #sisältää pelkät prefLabelit (tarvitaan poikkeustapauksiin, jossa voi olla sama termi pref- ja altLabelina):
@@ -315,8 +298,6 @@ class Vocabulary():
         
     def get_concept_with_uri(self, uri, language):
         #muutetaan kaksikirjaimiset kielikoodit kolmikirjaimiseksi sanastokoodia varten:
-        concept = None
-        response = {}
         if uri in self.deprecated_concepts:
             replacers = self.deprecated_concepts[uri]
             valid_uris = []
@@ -325,13 +306,12 @@ class Vocabulary():
                     if not r in self.deprecated_concepts:
                         valid_uris.append(r)
                 if len(valid_uris) == 0 or len(valid_uris) > 1:
-                    raise ValueError("9")
+                    raise ValueError("2")
             if valid_uris:
                 label = self.labels[valid_uris[0]][language]
                 return {"label": label, "uris": valid_uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}  
             else:
-                #raise ValueError("ei löydy YSO-vastinetta")
-                return {"label": None, "uris": uris, "code": self.target_vocabulary_code + "/" + self.convert_to_ISO_639_2(language)}  
+                raise ValueError("2")
         elif uri in self.labels:
             if language in self.labels[uri]:
                 label = self.labels[uri][language]
@@ -343,7 +323,6 @@ class Vocabulary():
         language: kieliversio, jota haetaan
         all_languages: jos True, niin tuotetaan kummatkin kieliversiot
         """
-        concept = None
         uris = []
         valid_uris = []
         labels = {}
