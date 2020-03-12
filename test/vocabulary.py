@@ -83,7 +83,7 @@ class VocabularyTest(unittest.TestCase):
     def test_search_label_with_multiple_replacers(self):
         with self.assertRaises(ValueError) as e:
             result = self.yso.get_concept_with_uri('http://www.yso.fi/onto/yso/p113', 'fi')
-        self.assertTrue("9" in str(e.exception)) 
+        self.assertTrue("2" in str(e.exception)) 
 
     def test_get_uris_with_concept_without_replacedby(self):
         result = self.ysa.get_uris_with_concept('roudarit')

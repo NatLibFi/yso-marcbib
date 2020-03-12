@@ -1,6 +1,7 @@
 from vocabulary import Vocabulary
 from rdflib import Graph, URIRef, Namespace, RDF
 import unicodedata
+import re
 
 class Vocabularies:
 
@@ -136,11 +137,7 @@ class Vocabularies:
         return missing_relations
 
     def is_numeric(self, keyword):
-        numeric = False
         if keyword:
-            keyword = keyword.replace(" ", "")
-            if keyword.isdigit() and 1 < len(keyword) < 5:
-                numeric = True
             suffixes = ['-luku', '-luvut', '-talet', '-tal', 'ekr.', 'jkr.', 'fkr.', 'eaa.', 'jaa.', 'ekr', 'jkr', 'fkr', 'eaa', 'jaa']
             dashes = {"\u002D": "hyphen-minus",
                       "\u007E": "tilde",
@@ -171,19 +168,21 @@ class Vocabularies:
                       "\uFE63": "small hyphen-minus",
                       "\uFF0D": "fullwidth hyphen-minus",
                       "\u002E": "full stop"}
-            for s in suffixes:
-                if keyword.lower().endswith(s):
-                    numeric = True
-            if not numeric:
-                if not any (not char.isdigit() and not char in dashes for char in keyword):
-                    numeric = True
+            
+            keyword = keyword.replace(" ", "")
+            for suffix in suffixes:
+                keyword = keyword.replace(suffix, "")
+                keyword = re.sub(r'(?i)' + suffix, '', keyword)
+            if any(not char.isdigit() and char not in dashes for char in keyword):
+                return False            
             """
             TAL/TALET?
             Kongressin kirjasto on auktorisoinut aiheina käytettäviä ajanjaksoja LCSH sanastossa.  Esimerkkejä sivun lopun taulukossa.
             Esitettävän vuosiluvun sijainti ennen tai jälkeen vuoden 0 ilmaistaan liitteellä eaa. tai jaa.
             Tällöin konversiossa voidaan [^.*eKr.$|^.*e\.Kr.$|^.*jKr.$|^.*j\.Kr.$]  muuttaa muotoon  [^.*eaa.$|^.*jaa.$]
             """
-        return numeric
+            return True
+        return False
 
     def normalize_characters(self, string):
         #koodaa skandinaaviset merkit yksiosaisiksi ja muut kaksiosaisiksi: 
