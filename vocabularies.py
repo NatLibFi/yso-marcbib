@@ -129,11 +129,20 @@ class Vocabularies:
                     else:
                         missing_matches.update({source_vocabulary: [label]})
                 for uri in self.vocabularies[source_vocabulary].labels[label]:
+                    replaced_by = False
                     if not any(uri in self.vocabularies[vc].labels for vc in target_vocabularies):
-                        if source_vocabulary in missing_uris:
-                            missing_uris[source_vocabulary].update({label: uri})
-                        else:
-                            missing_uris.update({source_vocabulary: {label: uri}})
+                        for vc in target_vocabularies:
+                            if uri in self.vocabularies[vc].deprecated_concepts:
+                                replacers = self.vocabularies[vc].deprecated_concepts[uri]
+                                if replacers:
+                                    if any(r not in self.vocabularies[vc].deprecated_concepts for r in replacers):
+                                        replaced_by = True
+                        #rekisteröidään käsitteet, jotka on deprekoitu ja joille ei ole korvaajaa:
+                        if not replaced_by:
+                            if source_vocabulary in missing_uris:
+                                missing_uris[source_vocabulary].update({label: uri})
+                            else:
+                                missing_uris.update({source_vocabulary: {label: uri}})
         return missing_relations
 
     def is_numeric(self, keyword):
