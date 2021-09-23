@@ -1,3 +1,6 @@
+#Projektisivun ylläpito on lakkautettu 2021
+#This repository will no longer be maintained by National Library of Finland.
+
 **YSO-MARCBIB konversio-ohjelma**
 
 Ohjelma konvertoi bibliografisten MARC21-tietueiden Ysa-, Allärs-, Musa- ja Cilla-asiasanat vastaaviin YSO- ja SLM-käsitteisiin. Ohjelma toimii Pythonin versiolla 3.4 ja sitä uudemmilla versiolla. 
