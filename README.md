@@ -1,5 +1,5 @@
-#Projektisivun ylläpito on lakkautettu 2021
-#This repository will no longer be maintained by National Library of Finland.
+# Konversio-ohjelman ylläpito on lakkautettu 2021
+# This repository will no longer be maintained by National Library of Finland.
 
 **YSO-MARCBIB konversio-ohjelma**
 
